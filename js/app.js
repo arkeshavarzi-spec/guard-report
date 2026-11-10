@@ -100,9 +100,7 @@ function initRecentActions() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `guard-reports-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("📥 خروجی CSV دانلود شد", "success");
+    smartDownload(url, a.download, blob);
   });
 
   $("#clearBtn").addEventListener("click", () => {
@@ -319,5 +317,32 @@ function initPersonnelSearch() {
   searchInput.addEventListener("input", () => {
     renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
   });
+}
+
+
+function smartDownload(url, fileName, blob) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    const file = new File([blob], fileName, { type: "text/csv;charset=utf-8;" });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "گزارش‌های حفاظت فیزیکی" })
+        .then(() => showToast("📥 فایل آماده ذخیره/اشتراک شد", "success"))
+        .catch((err) => {
+          if (err && err.name === "AbortError") return;
+          window.open(url, "_blank");
+          showToast("📥 فایل در تب جدید باز شد", "success");
+        });
+      return;
+    }
+    window.open(url, "_blank");
+    showToast("📥 فایل در تب جدید باز شد. از منوی مرورگر ذخیره کنید.", "success");
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("📥 خروجی CSV دانلود شد", "success");
 }
 

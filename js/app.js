@@ -321,25 +321,18 @@ function initPersonnelSearch() {
 
 
 
+
+
 function smartDownload(url, fileName, blob) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
   if (isMobile) {
-    const file = new File([blob], fileName, { type: "text/csv" });
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "گزارش‌های حفاظت فیزیکی" })
-        .then(() => showToast("📥 فایل آماده ذخیره/اشتراک شد", "success"))
-        .catch((err) => {
-          if (err.name !== "AbortError") {
-            fallbackDownload(url, fileName);
-          }
-        });
-      return;
-    }
-    fallbackDownload(url, fileName);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      showCsvModal(e.target.result, fileName);
+    };
+    reader.readAsText(blob, "utf-8");
     return;
   }
-
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
@@ -348,15 +341,57 @@ function smartDownload(url, fileName, blob) {
   showToast("📥 خروجی CSV دانلود شد", "success");
 }
 
-function fallbackDownload(url, fileName) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.target = "_blank";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast("📥 فایل دانلود شد. در پوشه Downloads ببینید.", "success");
+function showCsvModal(csvText, fileName) {
+  const existing = document.getElementById("csvModal");
+  if (existing) existing.remove();
+  const cleanText = csvText.replace(/^\uFEFF/, "");
+  const overlay = document.createElement("div");
+  overlay.id = "csvModal";
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>خروجی CSV</h2>
+        <button class="modal-close" type="button">×</button>
+      </div>
+      <p class="modal-hint">متن زیر را کپی کنید و در Excel یا Google Sheets پیست کنید:</p>
+      <textarea class="csv-text" readonly></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-primary csv-copy" type="button">📋 کپی متن</button>
+        <button class="btn btn-secondary csv-download" type="button">📥 دانلود فایل</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const textarea = overlay.querySelector(".csv-text");
+  textarea.value = cleanText;
+  overlay.querySelector(".modal-close").onclick = () => overlay.remove();
+  overlay.querySelector(".csv-copy").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(cleanText);
+      showToast("✅ متن کپی شد. در Excel پیست کنید.", "success");
+    } catch (err) {
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      try {
+        document.execCommand("copy");
+        showToast("✅ متن کپی شد.", "success");
+      } catch (e) {
+        showToast("⚠️ کپی نشد. دستی انتخاب کنید.", "error");
+      }
+    }
+  };
+  overlay.querySelector(".csv-download").onclick = () => {
+    const blob = new Blob(["\uFEFF" + cleanText], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("📥 دانلود شروع شد", "success");
+  };
 }
 

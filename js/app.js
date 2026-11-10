@@ -623,17 +623,33 @@ function initPersonnelSearch() {
 
 function smartDownload(url, fileName, blob) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isExcel = fileName.endsWith(".xlsx");
 
-  if (isMobile && !isExcel) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      showCsvModal(e.target.result, fileName);
-    };
-    reader.readAsText(blob, "utf-8");
+  if (isMobile) {
+    // استفاده از Web Share برای همه فایل‌ها در موبایل (مخصوصا کروم)
+    const file = new File([blob], fileName, { type: blob.type || "application/octet-stream" });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "گزارش‌های حفاظت فیزیکی" })
+        .catch(err => {
+          if (err.name !== "AbortError") {
+            // اگر Share خطا داد، فایل را در تب جدید باز کن
+            window.open(url, "_blank");
+            showToast("📥 فایل در تب جدید باز شد", "success");
+          }
+        });
+      return;
+    }
+    // فال‌بک برای موبایل‌های قدیمی
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     return;
   }
 
+  // دسکتاپ
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
@@ -908,17 +924,20 @@ function initCeremonyStaff() {
     const shabaInput = clone.querySelector(".staff-shaba");
     
     // وقتی کاربر نامی را از لیست انتخاب می‌کند یا کامل تایپ می‌کند
-    searchInput.addEventListener("change", (e) => {
-      const val = e.target.value;
+    const handleStaffSearch = (e) => {
+      const val = e.target.value.trim();
       const person = PERSONNEL.find(p => p.fullName === val);
       if (person) {
         natIdInput.value = person.nationalId || "";
         shabaInput.value = person.shaba || "";
-      } else {
+      } else if (e.type === 'blur') {
         natIdInput.value = "";
         shabaInput.value = "";
       }
-    });
+    };
+    searchInput.addEventListener("input", handleStaffSearch);
+    searchInput.addEventListener("change", handleStaffSearch);
+    searchInput.addEventListener("blur", handleStaffSearch);
 
     const removeBtn = clone.querySelector(".btn-remove-staff");
     removeBtn.addEventListener("click", (e) => {

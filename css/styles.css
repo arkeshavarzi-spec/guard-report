@@ -900,3 +900,47 @@ textarea {
   }
 }
 
+
+/* ---------- Cross-Browser Time Input ---------- */
+input[type="time"] {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+}
+input[type="time"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+  opacity: 0;
+}
+
+/* ---------- Custom Reporter List Styling ---------- */
+#reporterList {
+  margin-top: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  max-height: 200px;
+  box-shadow: var(--shadow-md);
+  padding: 6px;
+}
+
+#reporterList::-webkit-scrollbar {
+  width: 10px;
+}
+#reporterList::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+#reporterList::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+}

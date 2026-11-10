@@ -103,11 +103,157 @@
         </div>
       </section>
 
+      <section class="form-section hidden" id="illnessSection">
+        <div class="section-title">
+          <span class="step-badge">۳</span>
+          <h2>اطلاعات گزارش بیماری</h2>
+        </div>
 
+        <div class="field-row">
+          <div class="field">
+            <label for="patientType">نوع بیمار</label>
+            <select id="patientType" name="patientType">
+              <option value="">— انتخاب کنید —</option>
+              <option value="student">دانشجو</option>
+              <option value="professor">استاد</option>
+              <option value="employee">کارمند</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field hidden" id="patientOtherReasonField">
+            <label for="patientOtherReason">علت حضور در دانشگاه</label>
+            <input type="text" id="patientOtherReason" name="patientOtherReason" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="patientName">نام و نام خانوادگی بیمار</label>
+            <input type="text" id="patientName" name="patientName" />
+          </div>
+          <div class="field">
+            <label for="patientId">شماره دانشجویی/پرسنلی</label>
+            <input type="text" id="patientId" name="patientId" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="patientUnit">دانشکده / واحد / خوابگاه</label>
+          <input type="text" id="patientUnit" name="patientUnit" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="illnessLocation">محل دقیق وقوع</label>
+            <input type="text" id="illnessLocation" name="illnessLocation" placeholder="مثلاً خوابگاه ۱۲، اتاق ۳۰۵" />
+          </div>
+          <div class="field">
+            <label for="visitReason">علت مراجعه</label>
+            <select id="visitReason" name="visitReason">
+              <option value="">— انتخاب کنید —</option>
+              <option value="cardiac">قلبی</option>
+              <option value="respiratory">تنفسی</option>
+              <option value="digestive">گوارشی</option>
+              <option value="headache">سردرد</option>
+              <option value="injury">آسیب دیدگی</option>
+              <option value="fever">تب</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="companionName">نام همراه</label>
+            <input type="text" id="companionName" name="companionName" />
+          </div>
+          <div class="field">
+            <label for="companionId">شماره دانشجویی همراه</label>
+            <input type="text" id="companionId" name="companionId" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="companionPhone">شماره تماس همراه</label>
+          <input type="text" id="companionPhone" name="companionPhone" />
+        </div>
+
+        <div class="field">
+          <label for="actionType">نوع اقدام</label>
+          <select id="actionType" name="actionType">
+            <option value="">— انتخاب کنید —</option>
+            <option value="clinic">انتقال به درمانگاه</option>
+            <option value="hospital">انتقال به بیمارستان</option>
+            <option value="onSiteEmergency">درمان در محل توسط اورژانس</option>
+            <option value="onSitePersonnel">درمان در محل توسط پرسنل</option>
+            <option value="other">سایر</option>
+          </select>
+        </div>
+
+        <div class="field-row hidden" id="emergencyTimesField">
+          <div class="field">
+            <label for="emergencyCalledTime">ساعت تماس با اورژانس</label>
+            <input type="time" id="emergencyCalledTime" name="emergencyCalledTime" />
+          </div>
+          <div class="field">
+            <label for="emergencyArrivedTime">ساعت رسیدن اورژانس</label>
+            <input type="time" id="emergencyArrivedTime" name="emergencyArrivedTime" />
+          </div>
+        </div>
+
+        <div class="field-row hidden" id="transferFields">
+          <div class="field">
+            <label for="illnessDestination">مقصد</label>
+            <select id="illnessDestination" name="illnessDestination">
+              <option value="">— انتخاب کنید —</option>
+              <option value="mosleminClinic">درمانگاه مسلمین</option>
+              <option value="namaziHospital">بیمارستان نمازی</option>
+              <option value="uniClinic">درمانگاه دانشگاه</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="transportMethod">نحوه انتقال</label>
+            <select id="transportMethod" name="transportMethod">
+              <option value="">— انتخاب کنید —</option>
+              <option value="emergency">اورژانس</option>
+              <option value="personalCar">خودروی شخصی</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="reportSource">منبع اعلام</label>
+          <select id="reportSource" name="reportSource">
+            <option value="">— انتخاب کنید —</option>
+            <option value="external">از بیرون</option>
+            <option value="internal">داخلی</option>
+            <option value="self">خود بیمار</option>
+          </select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="returnTime">ساعت بازگشت</label>
+            <input type="time" id="returnTime" name="returnTime" />
+          </div>
+          <div class="field">
+            <label for="returnDestination">مقصد بازگشت</label>
+            <select id="returnDestination" name="returnDestination">
+              <option value="">— انتخاب کنید —</option>
+              <option value="university">دانشگاه</option>
+              <option value="dorm">خوابگاه</option>
+              <option value="home">منزل</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+        </div>
+      </section>
 
       <section class="form-section" id="locationSection">
         <div class="section-title">
-          <span class="step-badge">۳</span>
+          <span class="step-badge">۴</span>
           <h2>محل بازدید و پست حفاظتی</h2>
         </div>
 
@@ -128,7 +274,7 @@
 
       <section class="form-section" id="personnelSection">
         <div class="section-title">
-          <span class="step-badge">۴</span>
+          <span class="step-badge">۵</span>
           <h2>پرسنل و زمان</h2>
         </div>
 
@@ -156,7 +302,7 @@
 
       <section class="form-section" id="detailsSection">
         <div class="section-title">
-          <span class="step-badge">۵</span>
+          <span class="step-badge">۶</span>
           <h2>توضیحات و پیوست</h2>
         </div>
 
@@ -204,6 +350,7 @@
   <div id="toast" class="toast"></div>
 
   <script src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
+  <script src="js/xlsx.full.min.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 </body>

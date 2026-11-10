@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initReporterSelect();
   initJalaliDatePicker();
   initReportTypeToggle();
+  initIllnessConditionals();
   initPersonnelSearch();
   initStatusToggle();
   initPhotoUploader();
@@ -88,22 +89,80 @@ function initRecentActions() {
     const reports = loadReports();
     if (!reports.length) return showToast("گزارشی برای خروجی وجود ندارد", "error");
 
-    const headers = ["نوع گزارش", "محل", "پست", "پرسنل", "ساعت", "وضعیت", "توضیحات", "تاریخ ثبت"];
-    const rows = reports.map(r => [
-      r.reportType, r.locationLabel, r.postLabel, (r.personnelNames || []).join(" | "),
-      r.visitTime, r.status, r.notes || "", r.createdAt
-    ]);
+    const labels = {
+      reportDate: "تاریخ گزارش", reportTime: "ساعت گزارش", reporterName: "ثبت‌کننده", 
+      locationLabel: "محل", postLabel: "پست", status: "وضعیت", personnelNames: "پرسنل حاضر", notes: "توضیحات",
+      patientType: "نوع بیمار", patientOtherReason: "علت حضور", patientName: "نام بیمار",
+      patientId: "شماره دانشجویی/پرسنلی", patientUnit: "دانشکده/واحد/خوابگاه",
+      illnessLocation: "محل دقیق وقوع", visitReason: "علت مراجعه", companionName: "همراه", 
+      companionId: "شماره همراه", companionPhone: "تلفن همراه", actionType: "نوع اقدام", 
+      emergencyCalledTime: "ساعت تماس با اورژانس", emergencyArrivedTime: "ساعت رسیدن اورژانس", 
+      illnessDestination: "مقصد", transportMethod: "نحوه انتقال", reportSource: "منبع اعلام",
+      returnTime: "ساعت بازگشت", returnDestination: "مقصد بازگشت",
+      theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال", theftValue: "تخمین ارزش",
+      theftLocation: "محل سرقت", theftDiscoverTime: "زمان کشف", theftProbableTime: "زمان وقوع احتمالی",
+      theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته", theftDoorStatus: "وضعیت قفل/درب",
+      theftEvidence: "شواهد", theftActions: "اقدامات", theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
+      discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد",
+      discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", 
+      discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
+      cerName: "نام برنامه", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع",
+      cerEndTime: "ساعت پایان", cerOrganizer: "برگزارکننده", cerStaff: "نیروها"
+    };
 
-    const csv = "\uFEFF" + [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell).replace(/"/g, `""`)}"`).join(","))
-      .join("\n");
+    const valueTranslations = {
+      status: { normal: "عادی", needs_attention: "نیازمند توجه", issue: "مشکل‌دار" },
+      patientType: { student: "دانشجو", professor: "استاد", employee: "کارمند", other: "سایر" },
+      visitReason: { cardiac: "قلبی", respiratory: "تنفسی", digestive: "گوارشی", headache: "سردرد", injury: "آسیب دیدگی", fever: "تب", other: "سایر" },
+      actionType: { clinic: "انتقال به درمانگاه", hospital: "انتقال به بیمارستان", onSiteEmergency: "درمان در محل توسط اورژانس", onSitePersonnel: "درمان در محل توسط پرسنل", other: "سایر" },
+      illnessDestination: { mosleminClinic: "درمانگاه مسلمین", namaziHospital: "بیمارستان نمازی", uniClinic: "درمانگاه دانشگاه", other: "سایر" },
+      transportMethod: { emergency: "اورژانس", personalCar: "خودروی شخصی", other: "سایر" },
+      reportSource: { external: "از بیرون", internal: "داخلی", self: "خود بیمار" },
+      returnDestination: { university: "دانشگاه", dorm: "خوابگاه", home: "منزل", other: "سایر" }
+    };
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const wb = XLSX.utils.book_new();
+    const typesMap = { patrol: "گشت شبانه", illness: "گزارش بیماری", incident: "گزارش موردی", theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات" };
+    let hasData = false;
+
+    for (const type in typesMap) {
+      const typeReports = reports.filter(r => r.reportType === type);
+      if (typeReports.length === 0) continue;
+      hasData = true;
+
+      let cols = [];
+      if (type === 'patrol') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'locationLabel', 'postLabel', 'status', 'personnelNames', 'notes'];
+      } else if (type === 'illness') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'patientType', 'patientName', 'patientId', 'patientUnit', 'patientOtherReason', 'illnessLocation', 'visitReason', 'companionName', 'companionId', 'companionPhone', 'actionType', 'emergencyCalledTime', 'emergencyArrivedTime', 'illnessDestination', 'transportMethod', 'reportSource', 'returnTime', 'returnDestination', 'notes'];
+      } else {
+        const keys = new Set();
+        typeReports.forEach(r => Object.keys(r).forEach(k => { if (!['id','createdAt','photo','reportType'].includes(k)) keys.add(k); }));
+        cols = Array.from(keys);
+      }
+
+      const data = typeReports.map(r => {
+        const row = {};
+        cols.forEach(c => {
+          let val = r[c];
+          if (Array.isArray(val)) val = val.join(" | ");
+          else if (valueTranslations[c] && valueTranslations[c][val]) val = valueTranslations[c][val];
+          if (val === undefined || val === null) val = "";
+          row[labels[c] || c] = val;
+        });
+        return row;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, typesMap[type]);
+    }
+
+    if (!hasData) return showToast("گزارشی برای خروجی وجود ندارد", "error");
+
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob = new Blob([wbout], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `guard-reports-${new Date().toISOString().slice(0,10)}.csv`;
-    smartDownload(url, a.download, blob);
+    smartDownload(url, `guard-reports-${new Date().toISOString().slice(0,10)}.xlsx`, blob);
   });
 
   $("#clearBtn").addEventListener("click", () => {
@@ -134,6 +193,7 @@ function initStatusToggle() {
     } else {
       details.classList.remove("hidden");
     }
+    renumberSections();
   }
 
   statusSelect.addEventListener("change", syncDetailsVisibility);
@@ -150,51 +210,78 @@ function initFormSubmit() {
     e.preventDefault();
 
     const reportType = form.querySelector(`input[name="reportType"]:checked`)?.value;
-    const location = $("#location").value;
-    const post = $("#post").value;
-    const personnelIdsRaw = $("#personnelIds").value;
-    const visitTime = $("#visitTime").value;
-    const status = $("#status").value;
+    const reportDate = $("#reportDate").value.trim();
+    const reportTime = $("#reportTime").value;
+    const reporterId = $("#reporterId").value;
     const notes = $("#notes").value.trim();
     const photoFile = $("#photo").files[0];
 
-    let personnelIds = [];
-    try {
-      personnelIds = JSON.parse(personnelIdsRaw || "[]");
-    } catch (err) {
-      personnelIds = [];
-    }
+    if (!reportDate) return showToast("لطفاً تاریخ را وارد کنید", "error");
+    if (!reportTime) return showToast("لطفاً ساعت را وارد کنید", "error");
+    if (!reporterId) return showToast("لطفاً ثبت‌کننده گزارش را انتخاب کنید", "error");
 
-    if (!location) return showToast("لطفاً محل بازدید را انتخاب کنید", "error");
-    if (!post) return showToast("لطفاً نوع پست را انتخاب کنید", "error");
-    if (!personnelIds.length) return showToast("لطفاً حداقل یک پرسنل انتخاب کنید", "error");
-    if (!visitTime) return showToast("لطفاً ساعت بازدید را وارد کنید", "error");
-    if (!status) return showToast("لطفاً وضعیت پست را انتخاب کنید", "error");
-
-    const personnelNames = personnelIds.map(id => {
-      const p = PERSONNEL.find(x => x.id === id);
-      return p ? p.fullName : id;
-    });
-
-    const locationLabel = LOCATIONS.find(l => l.name === location)?.label || location;
-    const postLabel = POSTS.find(p => p.name === post)?.label || post;
+    const reporterPerson = PERSONNEL.find(p => p.id === reporterId);
+    const reporterName = reporterPerson ? reporterPerson.fullName : "";
 
     const report = {
       id: "r_" + Date.now(),
       reportType,
-      location,
-      locationLabel,
-      post,
-      postLabel,
-      personnelIds,
-      personnelNames,
-      visitTime,
-      status,
-      notes: status === "normal" ? "" : notes,
+      reportDate,
+      reportTime,
+      reporterId,
+      reporterName,
+      notes,
       createdAt: new Date().toISOString()
     };
 
-    if (photoFile && status !== "normal") {
+    // فیلدهای اختصاصی بر اساس نوع
+    if (reportType === "patrol") {
+      const location = $("#location").value;
+      const post = $("#post").value;
+      const status = $("#status").value;
+      const personnelIdsRaw = $("#personnelIds").value;
+      let personnelIds = [];
+      try { personnelIds = JSON.parse(personnelIdsRaw || "[]"); } catch (err) { personnelIds = []; }
+
+      if (!location) return showToast("لطفاً محل بازدید را انتخاب کنید", "error");
+      if (!post) return showToast("لطفاً نوع پست را انتخاب کنید", "error");
+      if (!status) return showToast("لطفاً وضعیت پست را انتخاب کنید", "error");
+
+      report.location = location;
+      report.locationLabel = LOCATIONS.find(l => l.name === location)?.label || location;
+      report.post = post;
+      report.postLabel = POSTS.find(p => p.name === post)?.label || post;
+      report.status = status;
+      report.personnelIds = personnelIds;
+      report.personnelNames = personnelIds.map(id => {
+        const p = PERSONNEL.find(x => x.id === id);
+        return p ? p.fullName : id;
+      });
+      if (status === "normal") report.notes = "";
+    } else if (reportType === "illness") {
+      report.patientType = $("#patientType").value;
+      report.patientOtherReason = $("#patientOtherReason").value.trim();
+      report.patientName = $("#patientName").value.trim();
+      report.patientId = $("#patientId").value.trim();
+      report.patientUnit = $("#patientUnit").value.trim();
+      report.illnessLocation = $("#illnessLocation").value.trim();
+      report.visitReason = $("#visitReason").value;
+      report.companionName = $("#companionName").value.trim();
+      report.companionId = $("#companionId").value.trim();
+      report.companionPhone = $("#companionPhone").value.trim();
+      report.actionType = $("#actionType").value;
+      report.emergencyCalledTime = $("#emergencyCalledTime").value;
+      report.emergencyArrivedTime = $("#emergencyArrivedTime").value;
+      report.illnessDestination = $("#illnessDestination").value;
+      report.transportMethod = $("#transportMethod").value;
+      report.reportSource = $("#reportSource").value;
+      report.returnTime = $("#returnTime").value;
+      report.returnDestination = $("#returnDestination").value;
+
+      if (!report.patientName) return showToast("لطفاً نام بیمار را وارد کنید", "error");
+    }
+
+    if (photoFile) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         report.photo = ev.target.result;
@@ -207,20 +294,34 @@ function initFormSubmit() {
   });
 }
 
-
 function saveReport(report) {
   const all = loadReports();
   all.unshift(report);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   showToast("✅ گزارش با موفقیت ثبت شد", "success");
   $("#guardForm").reset();
+  $("#location").innerHTML = `<option value="">— انتخاب کنید —</option>`;
+  LOCATIONS.forEach(loc => {
+    const opt = document.createElement("option");
+    opt.value = loc.name;
+    opt.textContent = loc.label;
+    $("#location").appendChild(opt);
+  });
   $("#post").disabled = true;
   $("#post").innerHTML = `<option value="">ابتدا محل را انتخاب کنید</option>`;
   $("#personnelIds").value = "[]";
   $("#selectedChips").innerHTML = "";
+  $("#reporterId").value = "";
+  $("#reporterList").innerHTML = "";
+  $("#selectedReporter").innerHTML = "";
+  initReporterSelect();
   $("#photoPreview").hidden = true;
   $("#photoPlaceholder").hidden = false;
   $("#detailsSection").classList.remove("hidden");
+  $("#illnessSection").classList.add("hidden");
+  $("#locationSection").classList.remove("hidden");
+  $("#personnelSection").classList.remove("hidden");
+  if (typeof renumberSections === "function") renumberSections();
   renderRecentReports();
 }
 
@@ -234,19 +335,35 @@ function renderRecentReports() {
   }
 
   const statusLabels = { normal: "عادی", needs_attention: "نیازمند توجه", issue: "مشکل‌دار" };
-  const typeLabels = { patrol: "گشت شبانه", incident: "گزارش موردی", illness: "گزارش بیماری" };
+  const typeLabels = { 
+    patrol: "گشت شبانه", illness: "گزارش بیماری", incident: "گزارش موردی", 
+    theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات" 
+  };
 
   list.innerHTML = reports.slice(0, 8).map(r => {
-    const names = (r.personnelNames || []).map(n => `<span class="chip-mini">${n}</span>`).join("");
+    let title = typeLabels[r.reportType] || "گزارش";
+    let metaText = "";
+    
+    if (r.reportType === "patrol") {
+      title += ` — ${r.locationLabel || "—"} / ${r.postLabel || "—"}`;
+      const names = (r.personnelNames || []).map(n => `<span class="chip-mini">${n}</span>`).join("");
+      metaText = `${names}`;
+    } else if (r.reportType === "illness") {
+      title += ` — ${r.patientName || "بدون نام"}`;
+    } else {
+      title += ` — ${r.notes ? r.notes.substring(0, 30) + "..." : "—"}`;
+    }
+
+    const statusHtml = r.status ? `<span class="status-pill status-${r.status}">${statusLabels[r.status] || r.status}</span>` : "";
+    
     return `
       <div class="recent-item">
         <div class="recent-item-main">
           <div class="recent-item-title">
-            ${typeLabels[r.reportType] || "—"} — ${r.locationLabel} / ${r.postLabel}
+            ${title}
           </div>
           <div class="recent-item-meta">
-            ${names} • ساعت ${r.visitTime}
-            <span class="status-pill status-${r.status}">${statusLabels[r.status] || r.status}</span>
+            ${metaText} • ساعت ${r.reportTime || "—"} • تاریخ ${r.reportDate || "—"} ${statusHtml}
           </div>
         </div>
       </div>
@@ -328,7 +445,9 @@ function initPersonnelSearch() {
 
 function smartDownload(url, fileName, blob) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
+  const isExcel = fileName.endsWith(".xlsx");
+
+  if (isMobile && !isExcel) {
     const reader = new FileReader();
     reader.onload = (e) => {
       showCsvModal(e.target.result, fileName);
@@ -336,12 +455,15 @@ function smartDownload(url, fileName, blob) {
     reader.readAsText(blob, "utf-8");
     return;
   }
+
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
-  showToast("📥 خروجی CSV دانلود شد", "success");
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast("📥 دانلود شروع شد", "success");
 }
 
 function showCsvModal(csvText, fileName) {
@@ -406,34 +528,6 @@ function initJalaliDatePicker() {
   }
 }
 
-function initReportTypeToggle() {
-  const locationSection = $("#locationSection");
-  const personnelSection = $("#personnelSection");
-  const detailsSection = $("#detailsSection");
-  const statusSelect = $("#status");
-  const radios = document.querySelectorAll(`input[name="reportType"]`);
-
-  function sync() {
-    const selected = document.querySelector(`input[name="reportType"]:checked`);
-    const type = selected ? selected.value : "patrol";
-    if (type === "patrol") {
-      locationSection.classList.remove("hidden");
-      personnelSection.classList.remove("hidden");
-      if (statusSelect.value === "normal") {
-        detailsSection.classList.add("hidden");
-      } else {
-        detailsSection.classList.remove("hidden");
-      }
-    } else {
-      locationSection.classList.add("hidden");
-      personnelSection.classList.add("hidden");
-      detailsSection.classList.remove("hidden");
-    }
-  }
-
-  radios.forEach(r => r.addEventListener("change", sync));
-  sync();
-}
 
 
 function initReporterSelect() {
@@ -496,6 +590,95 @@ function initReporterSelect() {
 
   searchInput.addEventListener("input", () => {
     renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+}
+
+
+function initReportTypeToggle() {
+  const locationSection = $("#locationSection");
+  const personnelSection = $("#personnelSection");
+  const detailsSection = $("#detailsSection");
+  const illnessSection = $("#illnessSection");
+  const statusSelect = $("#status");
+  const radios = document.querySelectorAll(`input[name="reportType"]`);
+
+  function sync() {
+    const selected = document.querySelector(`input[name="reportType"]:checked`);
+    const type = selected ? selected.value : "patrol";
+    locationSection.classList.add("hidden");
+    personnelSection.classList.add("hidden");
+    illnessSection.classList.add("hidden");
+    if (type === "patrol") {
+      locationSection.classList.remove("hidden");
+      personnelSection.classList.remove("hidden");
+      if (statusSelect.value === "normal") {
+        detailsSection.classList.add("hidden");
+      } else {
+        detailsSection.classList.remove("hidden");
+      }
+    } else if (type === "illness") {
+      illnessSection.classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else {
+      detailsSection.classList.remove("hidden");
+    }
+    renumberSections();
+  }
+
+  radios.forEach(r => r.addEventListener("change", sync));
+  sync();
+}
+
+function initIllnessConditionals() {
+  const patientType = $("#patientType");
+  const otherReasonField = $("#patientOtherReasonField");
+  const actionType = $("#actionType");
+  const emergencyTimesField = $("#emergencyTimesField");
+  const transferFields = $("#transferFields");
+
+  function syncPatientType() {
+    if (patientType && patientType.value === "other") {
+      otherReasonField.classList.remove("hidden");
+    } else if (otherReasonField) {
+      otherReasonField.classList.add("hidden");
+    }
+  }
+
+  function syncActionType() {
+    if (!actionType) return;
+    const val = actionType.value;
+    if (val === "clinic" || val === "hospital") {
+      transferFields.classList.remove("hidden");
+      emergencyTimesField.classList.remove("hidden");
+    } else if (val === "onSiteEmergency") {
+      transferFields.classList.add("hidden");
+      emergencyTimesField.classList.remove("hidden");
+    } else {
+      transferFields.classList.add("hidden");
+      emergencyTimesField.classList.add("hidden");
+    }
+  }
+
+  if (patientType) patientType.addEventListener("change", syncPatientType);
+  if (actionType) actionType.addEventListener("change", syncActionType);
+  syncPatientType();
+  syncActionType();
+}
+
+
+function toPersianDigit(n) {
+  const map = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+  return String(n).split("").map(d => map[+d]).join("");
+}
+
+function renumberSections() {
+  const sections = document.querySelectorAll(".form-section");
+  let counter = 0;
+  sections.forEach(sec => {
+    if (sec.classList.contains("hidden")) return;
+    counter++;
+    const badge = sec.querySelector(".step-badge");
+    if (badge) badge.textContent = toPersianDigit(counter);
   });
 }
 

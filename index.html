@@ -399,6 +399,97 @@
         </div>
       </section>
 
+
+      <section class="form-section hidden" id="discSection">
+        <div class="section-title">
+          <span class="step-badge">۳</span>
+          <h2>اطلاعات تخلف انضباطی</h2>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="discDate">تاریخ وقوع (شمسی)</label>
+            <input type="text" id="discDate" name="discDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" />
+          </div>
+          <div class="field">
+            <label for="discTime">ساعت وقوع</label>
+            <input type="time" id="discTime" name="discTime" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="discType">نوع تخلف</label>
+            <select id="discType" name="discType">
+              <option value="">— انتخاب کنید —</option>
+              <option value="student">تخلفات دانشجویی</option>
+              <option value="employee">تخلفات اداری</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="discName">نام متخلف</label>
+            <input type="text" id="discName" name="discName" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="discId">شماره دانشجویی/پرسنلی</label>
+            <input type="text" id="discId" name="discId" />
+          </div>
+          <div class="field">
+            <label for="discUnit">واحد/دانشکده/خوابگاه</label>
+            <input type="text" id="discUnit" name="discUnit" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="discLocation">محل وقوع</label>
+          <input type="text" id="discLocation" name="discLocation" />
+        </div>
+
+        <div class="field">
+          <label for="discDesc">شرح تخلف</label>
+          <textarea id="discDesc" name="discDesc" rows="3"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="discWitness">شاهدان (نام و شماره)</label>
+          <textarea id="discWitness" name="discWitness" rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="discActions">اقدامات اولیه</label>
+          <textarea id="discActions" name="discActions" rows="2"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="discRef">ارجاع به مرجع</label>
+            <select id="discRef" name="discRef">
+              <option value="">— انتخاب کنید —</option>
+              <option value="committee">کمیته انضباطی</option>
+              <option value="security">حراست</option>
+              <option value="education">آموزش</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="discCaseNo">شماره پرونده (اختیاری)</label>
+            <input type="text" id="discCaseNo" name="discCaseNo" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="discFollowUp">نیاز به پیگیری دارد؟</label>
+          <select id="discFollowUp" name="discFollowUp">
+            <option value="">— انتخاب کنید —</option>
+            <option value="yes">بله</option>
+            <option value="no">خیر</option>
+          </select>
+        </div>
+      </section>
+
       <section class="form-section" id="locationSection">
         <div class="section-title">
           <span class="step-badge">۴</span>

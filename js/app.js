@@ -106,10 +106,12 @@ function initRecentActions() {
       theftProbableTime: "زمان وقوع احتمالی", theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته",
       theftDoorStatus: "وضعیت قفل/درب", theftEvidence: "شواهد", theftActions: "اقدامات",
       theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
+      discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
       theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال", theftValue: "تخمین ارزش (ریال)",
       theftLocation: "محل سرقت", theftDiscoverTime: "زمان کشف", theftProbableTime: "زمان وقوع احتمالی",
       theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته", theftDoorStatus: "وضعیت قفل/درب",
       theftEvidence: "شواهد", theftActions: "اقدامات", theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
+      discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
       discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد",
       discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", 
       discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
@@ -131,7 +133,10 @@ function initRecentActions() {
       theftItemType: { equipment: "تجهیزات", money: "پول", personal: "وسایل شخصی", other: "سایر" },
       theftDoorStatus: { intact: "سالم", broken: "شکسته", open: "باز" },
       theftActions: { police: "تماس با پلیس", security: "تماس با حراست", cctv: "بررسی دوربین", other: "سایر" },
-      theftFollowUp: { yes: "بله", no: "خیر" }
+      theftFollowUp: { yes: "بله", no: "خیر" },
+      discType: { student: "تخلفات دانشجویی", employee: "تخلفات اداری" },
+      discRef: { committee: "کمیته انضباطی", security: "حراست", education: "آموزش", other: "سایر" },
+      discFollowUp: { yes: "بله", no: "خیر" }
     };
 
     const wb = XLSX.utils.book_new();
@@ -146,6 +151,8 @@ function initRecentActions() {
       let cols = [];
       if (type === 'patrol') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'locationLabel', 'postLabel', 'status', 'personnelNames', 'notes'];
+      } else if (type === 'disciplinary') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'discDate', 'discTime', 'discType', 'discName', 'discId', 'discUnit', 'discLocation', 'discDesc', 'discWitness', 'discActions', 'discRef', 'discCaseNo', 'discFollowUp', 'notes'];
       } else if (type === 'theft') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'theftItemType', 'theftItemDesc', 'theftAssetNo', 'theftValue', 'theftLocation', 'theftDiscoverTime', 'theftProbableTime', 'theftVictimName', 'theftVictimPhone', 'theftDoorStatus', 'theftEvidence', 'theftActions', 'theftPoliceCase', 'theftFollowUp', 'notes'];
       } else if (type === 'incident') {
@@ -325,6 +332,25 @@ function initFormSubmit() {
       if (!report.theftItemDesc) return showToast("لطفاً شرح مال را وارد کنید", "error");
       if (!report.theftLocation) return showToast("لطفاً محل دقیق سرقت را وارد کنید", "error");
       if (!report.theftVictimName) return showToast("لطفاً نام مالباخته را وارد کنید", "error");
+    } else if (reportType === "disciplinary") {
+      report.discDate = $("#discDate").value.trim();
+      report.discTime = $("#discTime").value;
+      report.discType = $("#discType").value;
+      report.discName = $("#discName").value.trim();
+      report.discId = $("#discId").value.trim();
+      report.discUnit = $("#discUnit").value.trim();
+      report.discLocation = $("#discLocation").value.trim();
+      report.discDesc = $("#discDesc").value.trim();
+      report.discWitness = $("#discWitness").value.trim();
+      report.discActions = $("#discActions").value.trim();
+      report.discRef = $("#discRef").value;
+      report.discCaseNo = $("#discCaseNo").value.trim();
+      report.discFollowUp = $("#discFollowUp").value;
+
+      if (!report.discDate) return showToast("لطفاً تاریخ وقوع را وارد کنید", "error");
+      if (!report.discType) return showToast("لطفاً نوع تخلف را انتخاب کنید", "error");
+      if (!report.discName) return showToast("لطفاً نام متخلف را وارد کنید", "error");
+      if (!report.discDesc) return showToast("لطفاً شرح تخلف را وارد کنید", "error");
     }
 
     if (photoFile) {
@@ -386,6 +412,20 @@ function saveReport(report) {
   $("#theftActions").value = "";
   $("#theftPoliceCase").value = "";
   $("#theftFollowUp").value = "";
+  $("#discSection").classList.add("hidden");
+  $("#discDate").value = "";
+  $("#discTime").value = "";
+  $("#discType").value = "";
+  $("#discName").value = "";
+  $("#discId").value = "";
+  $("#discUnit").value = "";
+  $("#discLocation").value = "";
+  $("#discDesc").value = "";
+  $("#discWitness").value = "";
+  $("#discActions").value = "";
+  $("#discRef").value = "";
+  $("#discCaseNo").value = "";
+  $("#discFollowUp").value = "";
   $("#locationSection").classList.remove("hidden");
   $("#personnelSection").classList.remove("hidden");
   if (typeof renumberSections === "function") renumberSections();
@@ -668,6 +708,7 @@ function initReportTypeToggle() {
   const illnessSection = $("#illnessSection");
   const incidentSection = $("#incidentSection");
   const theftSection = $("#theftSection");
+  const discSection = $("#discSection");
   const statusSelect = $("#status");
   const radios = document.querySelectorAll(`input[name="reportType"]`);
 
@@ -679,6 +720,7 @@ function initReportTypeToggle() {
     illnessSection.classList.add("hidden");
     incidentSection.classList.add("hidden");
     theftSection.classList.add("hidden");
+    discSection.classList.add("hidden");
     if (type === "patrol") {
       locationSection.classList.remove("hidden");
       personnelSection.classList.remove("hidden");
@@ -695,6 +737,9 @@ function initReportTypeToggle() {
       detailsSection.classList.remove("hidden");
     } else if (type === "theft") {
       theftSection.classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "disciplinary") {
+      discSection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else {
       detailsSection.classList.remove("hidden");

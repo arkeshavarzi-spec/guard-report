@@ -7,6 +7,9 @@ const $ = (sel) => document.querySelector(sel);
 
 document.addEventListener("DOMContentLoaded", () => {
   initLocationSelect();
+  initReporterSelect();
+  initJalaliDatePicker();
+  initReportTypeToggle();
   initPersonnelSearch();
   initStatusToggle();
   initPhotoUploader();
@@ -393,5 +396,106 @@ function showCsvModal(csvText, fileName) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast("📥 دانلود شروع شد", "success");
   };
+}
+
+
+
+function initJalaliDatePicker() {
+  if (typeof jalaliDatepicker !== "undefined") {
+    jalaliDatepicker.startWatch();
+  }
+}
+
+function initReportTypeToggle() {
+  const locationSection = $("#locationSection");
+  const personnelSection = $("#personnelSection");
+  const detailsSection = $("#detailsSection");
+  const statusSelect = $("#status");
+  const radios = document.querySelectorAll(`input[name="reportType"]`);
+
+  function sync() {
+    const selected = document.querySelector(`input[name="reportType"]:checked`);
+    const type = selected ? selected.value : "patrol";
+    if (type === "patrol") {
+      locationSection.classList.remove("hidden");
+      personnelSection.classList.remove("hidden");
+      if (statusSelect.value === "normal") {
+        detailsSection.classList.add("hidden");
+      } else {
+        detailsSection.classList.remove("hidden");
+      }
+    } else {
+      locationSection.classList.add("hidden");
+      personnelSection.classList.add("hidden");
+      detailsSection.classList.remove("hidden");
+    }
+  }
+
+  radios.forEach(r => r.addEventListener("change", sync));
+  sync();
+}
+
+
+function initReporterSelect() {
+  const searchInput = $("#reporterSearch");
+  const listBox = $("#reporterList");
+  const chipBox = $("#selectedReporter");
+  const hiddenId = $("#reporterId");
+
+  const reporters = PERSONNEL.filter(p => REPORTERS.includes(p.id));
+  let selected = null;
+
+  function renderList(items) {
+    listBox.innerHTML = "";
+    if (!items.length) {
+      listBox.innerHTML = `<div class="personnel-empty">نتیجه‌ای یافت نشد</div>`;
+      return;
+    }
+    items.forEach(p => {
+      const isSelected = selected && selected.id === p.id;
+      const item = document.createElement("div");
+      item.className = "personnel-item" + (isSelected ? " selected" : "");
+      item.dataset.id = p.id;
+      item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
+      item.addEventListener("click", () => {
+        if (selected && selected.id === p.id) {
+          selected = null;
+        } else {
+          selected = p;
+        }
+        renderChip();
+        renderList(filterList(searchInput.value.trim().toLowerCase()));
+      });
+      listBox.appendChild(item);
+    });
+  }
+
+  function renderChip() {
+    chipBox.innerHTML = "";
+    if (!selected) {
+      hiddenId.value = "";
+      return;
+    }
+    hiddenId.value = selected.id;
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.innerHTML = `<span>${selected.fullName}</span><button type="button" class="chip-remove" title="حذف">×</button>`;
+    chip.querySelector(".chip-remove").addEventListener("click", () => {
+      selected = null;
+      renderChip();
+      renderList(filterList(searchInput.value.trim().toLowerCase()));
+    });
+    chipBox.appendChild(chip);
+  }
+
+  function filterList(q) {
+    return q ? reporters.filter(p => p.fullName.toLowerCase().includes(q)) : reporters;
+  }
+
+  renderList(reporters);
+
+  searchInput.addEventListener("input", () => {
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
 }
 

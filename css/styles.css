@@ -793,3 +793,48 @@ textarea {
   margin-top: 16px;
 }
 
+
+/* ---------- Grid 6 Cards + Date Picker ---------- */
+.type-selector {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.type-card-content {
+  padding: 16px 10px;
+}
+
+.type-icon {
+  font-size: 1.6rem;
+}
+
+.type-title {
+  font-size: 0.85rem;
+}
+
+/* استایل پاپ‌آپ تقویم شمسی */
+.jdp-container {
+  font-family: var(--font) !important;
+  z-index: 9999 !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* ریسپانسیو: ۶ کارت در موبایل ۲×۳ */
+@media (max-width: 640px) {
+  .type-selector {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .type-card-content {
+    flex-direction: column !important;
+    padding: 14px 8px !important;
+    gap: 6px !important;
+  }
+  .type-icon {
+    font-size: 1.4rem !important;
+  }
+  .type-title {
+    font-size: 0.78rem !important;
+    text-align: center;
+  }
+}
+

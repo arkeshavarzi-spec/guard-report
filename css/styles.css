@@ -630,3 +630,80 @@ textarea {
   margin-inline-end: 4px;
 }
 
+
+/* ---------- Custom Personnel List ---------- */
+.personnel-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.personnel-item {
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: background 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.personnel-item:hover {
+  background: #e0f2fe;
+  color: var(--primary-dark);
+}
+
+.personnel-item.selected {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  font-weight: 600;
+}
+
+.personnel-item.selected:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+.personnel-item .check {
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.personnel-item.selected .check {
+  opacity: 1;
+}
+
+.personnel-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* اسکرول‌بار نازک مدرن */
+.personnel-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.personnel-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.personnel-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.personnel-list::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-light);
+}
+

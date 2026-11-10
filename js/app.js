@@ -140,77 +140,6 @@ function initStatusToggle() {
 }
 
 
-function initPersonnelSearch() {
-  const searchInput = $("#personnelSearch");
-  const listBox = $("#personnel");
-  const chipsBox = $("#selectedChips");
-  const hiddenIds = $("#personnelIds");
-
-  let selected = [];
-
-  function updateHidden() {
-    hiddenIds.value = JSON.stringify(selected.map(s => s.id));
-  }
-
-  function renderChips() {
-    chipsBox.innerHTML = "";
-    selected.forEach(person => {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.innerHTML = `<span>${person.fullName}</span><button type="button" class="chip-remove" data-id="${person.id}" title="حذف">×</button>`;
-      chip.querySelector(".chip-remove").addEventListener("click", () => {
-        selected = selected.filter(s => s.id !== person.id);
-        updateHidden();
-        renderChips();
-        renderPersonnelList(filterPersonnel(searchInput.value.trim().toLowerCase()));
-      });
-      chipsBox.appendChild(chip);
-    });
-  }
-
-  function filterPersonnel(q) {
-    return q
-      ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q))
-      : PERSONNEL;
-  }
-
-  function renderPersonnelList(items) {
-    listBox.innerHTML = "";
-    items.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = p.fullName;
-      if (selected.some(s => s.id === p.id)) {
-        opt.textContent = "✓ " + p.fullName;
-      }
-      listBox.appendChild(opt);
-    });
-  }
-
-  renderPersonnelList(PERSONNEL);
-
-  searchInput.addEventListener("input", () => {
-    renderPersonnelList(filterPersonnel(searchInput.value.trim().toLowerCase()));
-  });
-
-  listBox.addEventListener("change", () => {
-    const selectedOpt = listBox.selectedOptions[0];
-    if (!selectedOpt) return;
-    const person = PERSONNEL.find(p => p.id === selectedOpt.value);
-    if (!person) return;
-    if (selected.some(s => s.id === person.id)) {
-      showToast("این پرسنل قبلاً اضافه شده است", "error");
-      listBox.selectedIndex = -1;
-      return;
-    }
-    selected.push(person);
-    updateHidden();
-    renderChips();
-    searchInput.value = "";
-    renderPersonnelList(PERSONNEL);
-    listBox.selectedIndex = -1;
-  });
-}
 
 
 function initFormSubmit() {
@@ -322,5 +251,73 @@ function renderRecentReports() {
       </div>
     `;
   }).join("");
+}
+
+
+function initPersonnelSearch() {
+  const searchInput = $("#personnelSearch");
+  const listBox = $("#personnelList");
+  const chipsBox = $("#selectedChips");
+  const hiddenIds = $("#personnelIds");
+
+  let selected = [];
+
+  function updateHidden() {
+    hiddenIds.value = JSON.stringify(selected.map(s => s.id));
+  }
+
+  function renderChips() {
+    chipsBox.innerHTML = "";
+    selected.forEach(person => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.innerHTML = `<span>${person.fullName}</span><button type="button" class="chip-remove" data-id="${person.id}" title="حذف">×</button>`;
+      chip.querySelector(".chip-remove").addEventListener("click", () => {
+        toggleSelect(person.id);
+      });
+      chipsBox.appendChild(chip);
+    });
+  }
+
+  function toggleSelect(id) {
+    if (selected.some(s => s.id === id)) {
+      selected = selected.filter(s => s.id !== id);
+    } else {
+      const p = PERSONNEL.find(x => x.id === id);
+      if (p) selected.push(p);
+    }
+    updateHidden();
+    renderChips();
+    renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
+  }
+
+  function filterPersonnel(q) {
+    return q
+      ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q))
+      : PERSONNEL;
+  }
+
+  function renderList(items) {
+    listBox.innerHTML = "";
+    if (!items.length) {
+      listBox.innerHTML = `<div class="personnel-empty">نتیجه‌ای یافت نشد</div>`;
+      return;
+    }
+    items.forEach(p => {
+      const isSelected = selected.some(s => s.id === p.id);
+      const item = document.createElement("div");
+      item.className = "personnel-item" + (isSelected ? " selected" : "");
+      item.dataset.id = p.id;
+      item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
+      item.addEventListener("click", () => toggleSelect(p.id));
+      listBox.appendChild(item);
+    });
+  }
+
+  renderList(PERSONNEL);
+
+  searchInput.addEventListener("input", () => {
+    renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
+  });
 }
 

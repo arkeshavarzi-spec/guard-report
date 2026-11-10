@@ -4,7 +4,7 @@ venv/
 __pycache__/
 
 # Backups
-*.bak
+*.bak*
 
 # System files
 .DS_Store

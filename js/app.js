@@ -320,29 +320,43 @@ function initPersonnelSearch() {
 }
 
 
+
 function smartDownload(url, fileName, blob) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   if (isMobile) {
-    const file = new File([blob], fileName, { type: "text/csv;charset=utf-8;" });
+    const file = new File([blob], fileName, { type: "text/csv" });
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], title: "گزارش‌های حفاظت فیزیکی" })
         .then(() => showToast("📥 فایل آماده ذخیره/اشتراک شد", "success"))
         .catch((err) => {
-          if (err && err.name === "AbortError") return;
-          window.open(url, "_blank");
-          showToast("📥 فایل در تب جدید باز شد", "success");
+          if (err.name !== "AbortError") {
+            fallbackDownload(url, fileName);
+          }
         });
       return;
     }
-    window.open(url, "_blank");
-    showToast("📥 فایل در تب جدید باز شد. از منوی مرورگر ذخیره کنید.", "success");
+    fallbackDownload(url, fileName);
     return;
   }
+
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
   showToast("📥 خروجی CSV دانلود شد", "success");
+}
+
+function fallbackDownload(url, fileName) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("📥 فایل دانلود شد. در پوشه Downloads ببینید.", "success");
 }
 

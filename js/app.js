@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initPersonnelSearch();
   initStatusToggle();
   initFormReset();
+  initCeremonyStaff();
   initPhotoUploader();
   initFormSubmit();
   initRecentActions();
@@ -107,14 +108,17 @@ function initRecentActions() {
       theftDoorStatus: "وضعیت قفل/درب", theftEvidence: "شواهد", theftActions: "اقدامات",
       theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
       discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
+      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها",
       theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال", theftValue: "تخمین ارزش (ریال)",
       theftLocation: "محل سرقت", theftDiscoverTime: "زمان کشف", theftProbableTime: "زمان وقوع احتمالی",
       theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته", theftDoorStatus: "وضعیت قفل/درب",
       theftEvidence: "شواهد", theftActions: "اقدامات", theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
       discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
+      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها",
       discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد",
       discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", 
       discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
+      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها",
       cerName: "نام برنامه", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع",
       cerEndTime: "ساعت پایان", cerOrganizer: "برگزارکننده", cerStaff: "نیروها"
     };
@@ -151,6 +155,26 @@ function initRecentActions() {
       let cols = [];
       if (type === 'patrol') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'locationLabel', 'postLabel', 'status', 'personnelNames', 'notes'];
+      } else if (type === 'ceremony') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'cerName', 'cerOrganizer', 'cerDate', 'cerLocation', 'cerStartTime', 'cerEndTime', 'cerStaff', 'notes'];
+        
+        // ساخت شیت جداگانه برای نیروهای هر مراسم
+        typeReports.forEach((cer, index) => {
+          if (cer.cerStaff && cer.cerStaff.length > 0) {
+            const staffData = cer.cerStaff.map(s => ({
+              'نام نیرو': s.name,
+              'سمت': s.role || '',
+              'ساعت حضور': s.hours || '',
+              'کد ملی': s.nationalId || '',
+              'شماره شبا': s.shaba || ''
+            }));
+            const staffWs = XLSX.utils.json_to_sheet(staffData);
+            let baseName = cer.cerName ? cer.cerName : 'مراسم';
+            let sheetName = `نیروهای ${baseName}`.substring(0, 25);
+            if (index > 0) sheetName += ` (${index})`; // جلوگیری از تکراری بودن نام شیت
+            XLSX.utils.book_append_sheet(wb, staffWs, sheetName);
+          }
+        });
       } else if (type === 'disciplinary') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'discDate', 'discTime', 'discType', 'discName', 'discId', 'discUnit', 'discLocation', 'discDesc', 'discWitness', 'discActions', 'discRef', 'discCaseNo', 'discFollowUp', 'notes'];
       } else if (type === 'theft') {
@@ -169,7 +193,13 @@ function initRecentActions() {
         const row = {};
         cols.forEach(c => {
           let val = r[c];
-          if (Array.isArray(val)) val = val.join(" | ");
+          if (Array.isArray(val)) {
+            if (c === 'cerStaff') {
+              val = val.map(s => `${s.name} (${s.role || 'بدون سمت'}) - ${s.hours || 0} ساعت`).join(" | ");
+            } else {
+              val = val.join(" | ");
+            }
+          }
           else if (valueTranslations[c] && valueTranslations[c][val]) val = valueTranslations[c][val];
           if (val === undefined || val === null) val = "";
           row[labels[c] || c] = val;
@@ -351,6 +381,30 @@ function initFormSubmit() {
       if (!report.discType) return showToast("لطفاً نوع تخلف را انتخاب کنید", "error");
       if (!report.discName) return showToast("لطفاً نام متخلف را وارد کنید", "error");
       if (!report.discDesc) return showToast("لطفاً شرح تخلف را وارد کنید", "error");
+    } else if (reportType === "ceremony") {
+      report.cerName = $("#cerName").value.trim();
+      report.cerOrganizer = $("#cerOrganizer").value.trim();
+      report.cerDate = $("#cerDate").value.trim();
+      report.cerLocation = $("#cerLocation").value.trim();
+      report.cerStartTime = $("#cerStartTime").value;
+      report.cerEndTime = $("#cerEndTime").value;
+
+      if (!report.cerName) return showToast("لطفاً نام برنامه را وارد کنید", "error");
+      if (!report.cerDate) return showToast("لطفاً تاریخ برگزاری را وارد کنید", "error");
+
+      report.cerStaff = [];
+      document.querySelectorAll(".staff-row").forEach(row => {
+        const name = row.querySelector(".staff-search").value.trim();
+        if (name) {
+          report.cerStaff.push({
+            name: name,
+            role: row.querySelector(".staff-role").value.trim(),
+            hours: row.querySelector(".staff-hours").value,
+            nationalId: row.querySelector(".staff-national-id").value,
+            shaba: row.querySelector(".staff-shaba").value
+          });
+        }
+      });
     }
 
     if (photoFile) {
@@ -426,6 +480,14 @@ function saveReport(report) {
   $("#discRef").value = "";
   $("#discCaseNo").value = "";
   $("#discFollowUp").value = "";
+  $("#ceremonySection").classList.add("hidden");
+  $("#cerName").value = "";
+  $("#cerOrganizer").value = "";
+  $("#cerDate").value = "";
+  $("#cerLocation").value = "";
+  $("#cerStartTime").value = "";
+  $("#cerEndTime").value = "";
+  $("#staffContainer").innerHTML = "";
   $("#locationSection").classList.remove("hidden");
   $("#personnelSection").classList.remove("hidden");
   if (typeof renumberSections === "function") renumberSections();
@@ -457,6 +519,15 @@ function renderRecentReports() {
       metaText = `${names}`;
     } else if (r.reportType === "illness") {
       title += ` — ${r.patientName || "بدون نام"}`;
+    } else if (r.reportType === "incident") {
+      const incTypes = { fire: "کشف حریق", fight: "درگیری", vandalism: "تخریب", gathering: "تجمع", other: "سایر" };
+      title += ` — ${incTypes[r.incidentType] || r.incidentType || "بدون نوع"}`;
+    } else if (r.reportType === "theft") {
+      title += ` — ${r.theftItemDesc || "بدون شرح"}`;
+    } else if (r.reportType === "disciplinary") {
+      title += ` — ${r.discName || "بدون نام"}`;
+    } else if (r.reportType === "ceremony") {
+      title += ` — ${r.cerName || "بدون نام"}`;
     } else {
       title += ` — ${r.notes ? r.notes.substring(0, 30) + "..." : "—"}`;
     }
@@ -709,6 +780,7 @@ function initReportTypeToggle() {
   const incidentSection = $("#incidentSection");
   const theftSection = $("#theftSection");
   const discSection = $("#discSection");
+  const ceremonySection = $("#ceremonySection");
   const statusSelect = $("#status");
   const radios = document.querySelectorAll(`input[name="reportType"]`);
 
@@ -721,6 +793,7 @@ function initReportTypeToggle() {
     incidentSection.classList.add("hidden");
     theftSection.classList.add("hidden");
     discSection.classList.add("hidden");
+    ceremonySection.classList.add("hidden");
     if (type === "patrol") {
       locationSection.classList.remove("hidden");
       personnelSection.classList.remove("hidden");
@@ -740,6 +813,9 @@ function initReportTypeToggle() {
       detailsSection.classList.remove("hidden");
     } else if (type === "disciplinary") {
       discSection.classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "ceremony") {
+      ceremonySection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else {
       detailsSection.classList.remove("hidden");
@@ -804,6 +880,53 @@ function renumberSections() {
   });
 }
 
+
+function initCeremonyStaff() {
+  const addBtn = $("#addStaffBtn");
+  const container = $("#staffContainer");
+  const template = $("#staffRowTemplate");
+
+  if (!addBtn) return;
+
+  // پر کردن datalist
+  const datalist = $("#personnelDatalist");
+  if (datalist) {
+    PERSONNEL.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.fullName;
+      opt.dataset.nationalId = p.nationalId || "";
+      opt.dataset.shaba = p.shaba || "";
+      datalist.appendChild(opt);
+    });
+  }
+
+  addBtn.addEventListener("click", () => {
+    const clone = template.content.cloneNode(true);
+    
+    const searchInput = clone.querySelector(".staff-search");
+    const natIdInput = clone.querySelector(".staff-national-id");
+    const shabaInput = clone.querySelector(".staff-shaba");
+    
+    // وقتی کاربر نامی را از لیست انتخاب می‌کند یا کامل تایپ می‌کند
+    searchInput.addEventListener("change", (e) => {
+      const val = e.target.value;
+      const person = PERSONNEL.find(p => p.fullName === val);
+      if (person) {
+        natIdInput.value = person.nationalId || "";
+        shabaInput.value = person.shaba || "";
+      } else {
+        natIdInput.value = "";
+        shabaInput.value = "";
+      }
+    });
+
+    const removeBtn = clone.querySelector(".btn-remove-staff");
+    removeBtn.addEventListener("click", (e) => {
+      e.target.closest(".staff-row").remove();
+    });
+    container.appendChild(clone);
+  });
+}
 
 function initFormReset() {
   const resetBtn = $("#resetBtn");

@@ -490,6 +490,91 @@
         </div>
       </section>
 
+      <section class="form-section hidden" id="ceremonySection">
+        <div class="section-title">
+          <span class="step-badge">۳</span>
+          <h2>اطلاعات مراسمات و برنامه‌ها</h2>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="cerName">نام برنامه/مراسم</label>
+            <input type="text" id="cerName" name="cerName" />
+          </div>
+          <div class="field">
+            <label for="cerOrganizer">برگزارکننده</label>
+            <input type="text" id="cerOrganizer" name="cerOrganizer" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="cerDate">تاریخ برگزاری (شمسی)</label>
+            <input type="text" id="cerDate" name="cerDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" />
+          </div>
+          <div class="field">
+            <label for="cerLocation">مکان برگزاری</label>
+            <input type="text" id="cerLocation" name="cerLocation" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="cerStartTime">ساعت شروع</label>
+            <input type="time" id="cerStartTime" name="cerStartTime" />
+          </div>
+          <div class="field">
+            <label for="cerEndTime">ساعت پایان</label>
+            <input type="time" id="cerEndTime" name="cerEndTime" />
+          </div>
+        </div>
+
+        <div class="staff-section">
+          <div class="staff-header">
+            <h3>لیست نیروهای حاضر در برنامه</h3>
+            <button type="button" class="btn btn-ghost" id="addStaffBtn">➕ افزودن نیرو</button>
+          </div>
+          <div id="staffContainer">
+            <!-- ردیف‌ها توسط JS اضافه می‌شوند -->
+          </div>
+        </div>
+      </section>
+
+      <template id="staffRowTemplate">
+        <div class="staff-row">
+          <div class="field">
+            <label>جستجوی نام نیرو</label>
+            <input type="text" class="staff-search" placeholder="تایپ کنید..." list="personnelDatalist" />
+          </div>
+          <div class="field">
+            <label>سمت</label>
+            <select class="staff-role">
+              <option value="">— انتخاب کنید —</option>
+              <option value="مسئول حفاظت فیزیکی">مسئول حفاظت فیزیکی</option>
+              <option value="نیروی حفاظت فیزیکی">نیروی حفاظت فیزیکی</option>
+              <option value="بازرسی بدنی">بازرسی بدنی</option>
+              <option value="راننده">راننده</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>ساعت حضور</label>
+            <input type="text" class="staff-hours" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" placeholder="۸" />
+          </div>
+          <div class="field">
+            <label>کد ملی</label>
+            <input type="text" class="staff-national-id" readonly style="background: #e2e8f0;" placeholder="خودکار" />
+          </div>
+          <div class="field">
+            <label>شماره شبا</label>
+            <input type="text" class="staff-shaba" placeholder="IR..." style="text-align: left; direction: ltr;" />
+          </div>
+          <button type="button" class="btn-remove-staff" title="حذف">×</button>
+        </div>
+      </template>
+      
+      <datalist id="personnelDatalist">
+      </datalist>
+
       <section class="form-section" id="locationSection">
         <div class="section-title">
           <span class="step-badge">۴</span>

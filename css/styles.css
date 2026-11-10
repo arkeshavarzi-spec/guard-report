@@ -838,3 +838,65 @@ textarea {
   }
 }
 
+
+/* ---------- Ceremony Staff List ---------- */
+.staff-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 15px;
+}
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.staff-header h3 {
+  font-size: 1rem;
+  color: var(--text);
+}
+.staff-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 2fr auto;
+  gap: 10px;
+  align-items: end;
+  background: #f8fafc;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  position: relative;
+  animation: chipIn 0.25s ease;
+}
+.staff-row .field {
+  margin-bottom: 0;
+}
+.btn-remove-staff {
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+.btn-remove-staff:hover {
+  background: #b91c1c;
+}
+@media (max-width: 640px) {
+  .staff-row {
+    grid-template-columns: 1fr 1fr;
+    padding: 15px;
+  }
+  .btn-remove-staff {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-bottom: 0;
+  }
+}
+

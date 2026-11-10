@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initIllnessConditionals();
   initPersonnelSearch();
   initStatusToggle();
+  initFormReset();
   initPhotoUploader();
   initFormSubmit();
   initRecentActions();
@@ -99,7 +100,13 @@ function initRecentActions() {
       emergencyCalledTime: "ساعت تماس با اورژانس", emergencyArrivedTime: "ساعت رسیدن اورژانس", 
       illnessDestination: "مقصد", transportMethod: "نحوه انتقال", reportSource: "منبع اعلام",
       returnTime: "ساعت بازگشت", returnDestination: "مقصد بازگشت",
-      theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال", theftValue: "تخمین ارزش",
+      incidentType: "نوع مورد", incidentDesc: "شرح واقعه", incidentActions: "اقدامات انجام‌شده", incidentAnalysis: "تحلیل", incidentFollowUp: "نیاز به پیگیری",
+      theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال",
+      theftValue: "تخمین ارزش (ریال)", theftLocation: "محل دقیق", theftDiscoverTime: "زمان کشف",
+      theftProbableTime: "زمان وقوع احتمالی", theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته",
+      theftDoorStatus: "وضعیت قفل/درب", theftEvidence: "شواهد", theftActions: "اقدامات",
+      theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
+      theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال", theftValue: "تخمین ارزش (ریال)",
       theftLocation: "محل سرقت", theftDiscoverTime: "زمان کشف", theftProbableTime: "زمان وقوع احتمالی",
       theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته", theftDoorStatus: "وضعیت قفل/درب",
       theftEvidence: "شواهد", theftActions: "اقدامات", theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
@@ -118,7 +125,13 @@ function initRecentActions() {
       illnessDestination: { mosleminClinic: "درمانگاه مسلمین", namaziHospital: "بیمارستان نمازی", uniClinic: "درمانگاه دانشگاه", other: "سایر" },
       transportMethod: { emergency: "اورژانس", personalCar: "خودروی شخصی", other: "سایر" },
       reportSource: { external: "از بیرون", internal: "داخلی", self: "خود بیمار" },
-      returnDestination: { university: "دانشگاه", dorm: "خوابگاه", home: "منزل", other: "سایر" }
+      returnDestination: { university: "دانشگاه", dorm: "خوابگاه", home: "منزل", other: "سایر" },
+      incidentType: { fire: "کشف حریق", fight: "درگیری", vandalism: "تخریب", gathering: "تجمع", other: "سایر" },
+      incidentFollowUp: { yes: "بله", no: "خیر" },
+      theftItemType: { equipment: "تجهیزات", money: "پول", personal: "وسایل شخصی", other: "سایر" },
+      theftDoorStatus: { intact: "سالم", broken: "شکسته", open: "باز" },
+      theftActions: { police: "تماس با پلیس", security: "تماس با حراست", cctv: "بررسی دوربین", other: "سایر" },
+      theftFollowUp: { yes: "بله", no: "خیر" }
     };
 
     const wb = XLSX.utils.book_new();
@@ -133,6 +146,10 @@ function initRecentActions() {
       let cols = [];
       if (type === 'patrol') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'locationLabel', 'postLabel', 'status', 'personnelNames', 'notes'];
+      } else if (type === 'theft') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'theftItemType', 'theftItemDesc', 'theftAssetNo', 'theftValue', 'theftLocation', 'theftDiscoverTime', 'theftProbableTime', 'theftVictimName', 'theftVictimPhone', 'theftDoorStatus', 'theftEvidence', 'theftActions', 'theftPoliceCase', 'theftFollowUp', 'notes'];
+      } else if (type === 'incident') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'incidentType', 'incidentDesc', 'incidentActions', 'incidentAnalysis', 'incidentFollowUp', 'notes'];
       } else if (type === 'illness') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'patientType', 'patientName', 'patientId', 'patientUnit', 'patientOtherReason', 'illnessLocation', 'visitReason', 'companionName', 'companionId', 'companionPhone', 'actionType', 'emergencyCalledTime', 'emergencyArrivedTime', 'illnessDestination', 'transportMethod', 'reportSource', 'returnTime', 'returnDestination', 'notes'];
       } else {
@@ -279,6 +296,35 @@ function initFormSubmit() {
       report.returnDestination = $("#returnDestination").value;
 
       if (!report.patientName) return showToast("لطفاً نام بیمار را وارد کنید", "error");
+    } else if (reportType === "incident") {
+      report.incidentType = $("#incidentType").value;
+      report.incidentDesc = $("#incidentDesc").value.trim();
+      report.incidentActions = $("#incidentActions").value.trim();
+      report.incidentAnalysis = $("#incidentAnalysis").value.trim();
+      report.incidentFollowUp = $("#incidentFollowUp").value;
+
+      if (!report.incidentType) return showToast("لطفاً نوع مورد را انتخاب کنید", "error");
+      if (!report.incidentDesc) return showToast("لطفاً شرح واقعه را وارد کنید", "error");
+    } else if (reportType === "theft") {
+      report.theftItemType = $("#theftItemType").value;
+      report.theftItemDesc = $("#theftItemDesc").value.trim();
+      report.theftAssetNo = $("#theftAssetNo").value.trim();
+      report.theftValue = $("#theftValue").value.trim();
+      report.theftLocation = $("#theftLocation").value.trim();
+      report.theftDiscoverTime = $("#theftDiscoverTime").value;
+      report.theftProbableTime = $("#theftProbableTime").value;
+      report.theftVictimName = $("#theftVictimName").value.trim();
+      report.theftVictimPhone = $("#theftVictimPhone").value.trim();
+      report.theftDoorStatus = $("#theftDoorStatus").value;
+      report.theftEvidence = $("#theftEvidence").value.trim();
+      report.theftActions = $("#theftActions").value;
+      report.theftPoliceCase = $("#theftPoliceCase").value.trim();
+      report.theftFollowUp = $("#theftFollowUp").value;
+
+      if (!report.theftItemType) return showToast("لطفاً نوع مال را انتخاب کنید", "error");
+      if (!report.theftItemDesc) return showToast("لطفاً شرح مال را وارد کنید", "error");
+      if (!report.theftLocation) return showToast("لطفاً محل دقیق سرقت را وارد کنید", "error");
+      if (!report.theftVictimName) return showToast("لطفاً نام مالباخته را وارد کنید", "error");
     }
 
     if (photoFile) {
@@ -319,6 +365,27 @@ function saveReport(report) {
   $("#photoPlaceholder").hidden = false;
   $("#detailsSection").classList.remove("hidden");
   $("#illnessSection").classList.add("hidden");
+  $("#incidentSection").classList.add("hidden");
+  $("#incidentType").value = "";
+  $("#incidentDesc").value = "";
+  $("#incidentActions").value = "";
+  $("#incidentAnalysis").value = "";
+  $("#incidentFollowUp").value = "";
+  $("#theftSection").classList.add("hidden");
+  $("#theftItemType").value = "";
+  $("#theftItemDesc").value = "";
+  $("#theftAssetNo").value = "";
+  $("#theftValue").value = "";
+  $("#theftLocation").value = "";
+  $("#theftDiscoverTime").value = "";
+  $("#theftProbableTime").value = "";
+  $("#theftVictimName").value = "";
+  $("#theftVictimPhone").value = "";
+  $("#theftDoorStatus").value = "";
+  $("#theftEvidence").value = "";
+  $("#theftActions").value = "";
+  $("#theftPoliceCase").value = "";
+  $("#theftFollowUp").value = "";
   $("#locationSection").classList.remove("hidden");
   $("#personnelSection").classList.remove("hidden");
   if (typeof renumberSections === "function") renumberSections();
@@ -599,6 +666,8 @@ function initReportTypeToggle() {
   const personnelSection = $("#personnelSection");
   const detailsSection = $("#detailsSection");
   const illnessSection = $("#illnessSection");
+  const incidentSection = $("#incidentSection");
+  const theftSection = $("#theftSection");
   const statusSelect = $("#status");
   const radios = document.querySelectorAll(`input[name="reportType"]`);
 
@@ -608,6 +677,8 @@ function initReportTypeToggle() {
     locationSection.classList.add("hidden");
     personnelSection.classList.add("hidden");
     illnessSection.classList.add("hidden");
+    incidentSection.classList.add("hidden");
+    theftSection.classList.add("hidden");
     if (type === "patrol") {
       locationSection.classList.remove("hidden");
       personnelSection.classList.remove("hidden");
@@ -618,6 +689,12 @@ function initReportTypeToggle() {
       }
     } else if (type === "illness") {
       illnessSection.classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "incident") {
+      incidentSection.classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "theft") {
+      theftSection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else {
       detailsSection.classList.remove("hidden");
@@ -679,6 +756,38 @@ function renumberSections() {
     counter++;
     const badge = sec.querySelector(".step-badge");
     if (badge) badge.textContent = toPersianDigit(counter);
+  });
+}
+
+
+function initFormReset() {
+  const resetBtn = $("#resetBtn");
+  if (!resetBtn) return;
+
+  resetBtn.addEventListener("click", () => {
+    const confirmed = confirm("آیا از پاک‌سازی تمام اطلاعات فرم مطمئن هستید؟");
+    if (!confirmed) return;
+
+    $("#guardForm").reset();
+    $("#personnelIds").value = "[]";
+    $("#selectedChips").innerHTML = "";
+    $("#reporterId").value = "";
+    $("#reporterList").innerHTML = "";
+    $("#selectedReporter").innerHTML = "";
+    initReporterSelect();
+    $("#photoPreview").hidden = true;
+    $("#photoPlaceholder").hidden = false;
+    $("#post").disabled = true;
+    $("#post").innerHTML = `<option value="">ابتدا محل را انتخاب کنید</option>`;
+
+    const patrolRadio = document.querySelector(`input[name="reportType"][value="patrol"]`);
+    if (patrolRadio) {
+      patrolRadio.checked = true;
+      patrolRadio.dispatchEvent(new Event("change"));
+    }
+
+    if (typeof renumberSections === "function") renumberSections();
+    showToast("فرم پاک‌سازی شد", "success");
   });
 }
 

@@ -251,6 +251,154 @@
         </div>
       </section>
 
+
+      <section class="form-section hidden" id="incidentSection">
+        <div class="section-title">
+          <span class="step-badge">۳</span>
+          <h2>اطلاعات گزارش موردی</h2>
+        </div>
+
+        <div class="field">
+          <label for="incidentType">نوع مورد</label>
+          <select id="incidentType" name="incidentType">
+            <option value="">— انتخاب کنید —</option>
+            <option value="fire">کشف حریق</option>
+            <option value="fight">درگیری</option>
+            <option value="vandalism">تخریب</option>
+            <option value="gathering">تجمع</option>
+            <option value="other">سایر</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="incidentDesc">شرح واقعه</label>
+          <textarea id="incidentDesc" name="incidentDesc" rows="3"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="incidentActions">اقدامات انجام‌شده</label>
+          <textarea id="incidentActions" name="incidentActions" rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="incidentAnalysis">تحلیل واقعه (اختیاری)</label>
+          <textarea id="incidentAnalysis" name="incidentAnalysis" rows="2" placeholder="در صورت نیاز به تحلیل بیشتر..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="incidentFollowUp">نیاز به پیگیری دارد؟</label>
+          <select id="incidentFollowUp" name="incidentFollowUp">
+            <option value="">— انتخاب کنید —</option>
+            <option value="yes">بله</option>
+            <option value="no">خیر</option>
+          </select>
+        </div>
+      </section>
+
+
+      <section class="form-section hidden" id="theftSection">
+        <div class="section-title">
+          <span class="step-badge">۳</span>
+          <h2>اطلاعات گزارش سرقت</h2>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="theftItemType">نوع مال</label>
+            <select id="theftItemType" name="theftItemType">
+              <option value="">— انتخاب کنید —</option>
+              <option value="equipment">تجهیزات</option>
+              <option value="money">پول</option>
+              <option value="personal">وسایل شخصی</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="theftAssetNo">شماره اموال دانشگاه (اختیاری)</label>
+            <input type="text" id="theftAssetNo" name="theftAssetNo" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="theftItemDesc">شرح مال</label>
+          <input type="text" id="theftItemDesc" name="theftItemDesc" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="theftValue">تخمین ارزش اموال مسروقه</label>
+            <input type="text" id="theftValue" name="theftValue" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="مثلاً ۵۰۰۰۰۰۰ (ریال)" />
+          </div>
+          <div class="field">
+            <label for="theftLocation">محل دقیق سرقت</label>
+            <input type="text" id="theftLocation" name="theftLocation" placeholder="مثلاً ساختمان شماره ۲، طبقه ۳" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="theftDiscoverTime">زمان کشف</label>
+            <input type="time" id="theftDiscoverTime" name="theftDiscoverTime" />
+          </div>
+          <div class="field">
+            <label for="theftProbableTime">زمان وقوع احتمالی</label>
+            <input type="time" id="theftProbableTime" name="theftProbableTime" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="theftVictimName">نام مالباخته</label>
+            <input type="text" id="theftVictimName" name="theftVictimName" />
+          </div>
+          <div class="field">
+            <label for="theftVictimPhone">شماره تماس مالباخته</label>
+            <input type="text" id="theftVictimPhone" name="theftVictimPhone" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="theftDoorStatus">وضعیت قفل/درب</label>
+          <select id="theftDoorStatus" name="theftDoorStatus">
+            <option value="">— انتخاب کنید —</option>
+            <option value="intact">سالم</option>
+            <option value="broken">شکسته</option>
+            <option value="open">باز</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="theftEvidence">شواهد اولیه</label>
+          <textarea id="theftEvidence" name="theftEvidence" rows="2"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="theftActions">اقدامات انجام‌شده</label>
+            <select id="theftActions" name="theftActions">
+              <option value="">— انتخاب کنید —</option>
+              <option value="police">تماس با پلیس</option>
+              <option value="security">تماس با حراست</option>
+              <option value="cctv">بررسی دوربین</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="theftPoliceCase">شماره پرونده پلیس (اختیاری)</label>
+            <input type="text" id="theftPoliceCase" name="theftPoliceCase" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="theftFollowUp">نیاز به پیگیری دارد؟</label>
+          <select id="theftFollowUp" name="theftFollowUp">
+            <option value="">— انتخاب کنید —</option>
+            <option value="yes">بله</option>
+            <option value="no">خیر</option>
+          </select>
+        </div>
+      </section>
+
       <section class="form-section" id="locationSection">
         <div class="section-title">
           <span class="step-badge">۴</span>
@@ -328,7 +476,7 @@
         <button type="submit" class="btn btn-primary">
           <span>ثبت گزارش</span>
         </button>
-        <button type="reset" class="btn btn-secondary">پاک‌سازی فرم</button>
+        <button type="button" class="btn btn-secondary" id="resetBtn">پاک‌سازی فرم</button>
       </div>
     </form>
 

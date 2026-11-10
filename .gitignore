@@ -1,0 +1,16 @@
+# Python venv (اگر استفاده می‌کنید)
+.venv/
+venv/
+__pycache__/
+
+# Backups
+*.bak
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+

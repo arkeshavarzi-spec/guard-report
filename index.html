@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سامانه گزارش‌دهی حفاظت فیزیکی</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="bg-decoration"></div>
+
+  <main class="app-container">
+    <header class="app-header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>سامانه گزارش‌دهی حفاظت فیزیکی</h1>
+        <p>ثبت گزارش گشت شبانه و موارد نیازمند پیگیری</p>
+      </div>
+    </header>
+
+    <form id="guardForm" class="report-form" novalidate>
+
+      <section class="form-section">
+        <div class="section-title">
+          <span class="step-badge">۱</span>
+          <h2>نوع گزارش</h2>
+        </div>
+        <div class="type-selector">
+          <label class="type-card">
+            <input type="radio" name="reportType" value="patrol" checked />
+            <span class="type-card-content">
+              <span class="type-icon">🛡</span>
+              <span class="type-title">گشت شبانه</span>
+            </span>
+          </label>
+          <label class="type-card">
+            <input type="radio" name="reportType" value="incident" />
+            <span class="type-card-content">
+              <span class="type-icon">🚩</span>
+              <span class="type-title">گزارش موردی</span>
+            </span>
+          </label>
+          <label class="type-card">
+            <input type="radio" name="reportType" value="illness" />
+            <span class="type-card-content">
+              <span class="type-icon">🏥</span>
+              <span class="type-title">گزارش بیماری</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="section-title">
+          <span class="step-badge">۲</span>
+          <h2>محل بازدید و پست حفاظتی</h2>
+        </div>
+
+        <div class="field">
+          <label for="location">دانشکده / واحد</label>
+          <select id="location" name="location" required>
+            <option value="">— انتخاب کنید —</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="post">نوع پست حفاظتی</label>
+          <select id="post" name="post" required disabled>
+            <option value="">ابتدا محل را انتخاب کنید</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-title">
+          <span class="step-badge">۳</span>
+          <h2>پرسنل و زمان</h2>
+        </div>
+
+        <div class="field">
+          <label for="personnelSearch">پرسنل حاضر در پست (چند نفر)</label>
+          <div class="search-select">
+            <input type="text" id="personnelSearch" class="search-input" placeholder="جستجوی نام پرسنل..." autocomplete="off" />
+            <select id="personnel" name="personnel" size="5" class="search-results"></select>
+            <input type="hidden" name="personnelIds" id="personnelIds" />
+          </div>
+          <div id="selectedChips" class="selected-chips"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="visitTime">ساعت دقیق بازدید</label>
+            <input type="time" id="visitTime" name="visitTime" required />
+          </div>
+          <div class="field">
+            <label for="status">وضعیت کلی پست</label>
+            <select id="status" name="status" required>
+              <option value="">— انتخاب کنید —</option>
+              <option value="normal">عادی</option>
+              <option value="needs_attention">نیازمند توجه</option>
+              <option value="issue">مشکل‌دار</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section" id="detailsSection">
+        <div class="section-title">
+          <span class="step-badge">۴</span>
+          <h2>توضیحات و پیوست</h2>
+        </div>
+
+        <div class="field">
+          <label for="notes">شرح مشاهدات / اقدامات</label>
+          <textarea id="notes" name="notes" rows="4" placeholder="در صورت نیاز توضیحات خود را وارد کنید..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="photo">پیوست عکس (اختیاری)</label>
+          <div class="photo-uploader" id="photoUploader">
+            <input type="file" id="photo" name="photo" accept="image/*" hidden />
+            <div class="photo-placeholder" id="photoPlaceholder">
+              <span>📷</span>
+              <p>برای افزودن عکس کلیک کنید</p>
+            </div>
+            <img id="photoPreview" class="photo-preview" alt="" hidden />
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          <span>ثبت گزارش</span>
+        </button>
+        <button type="reset" class="btn btn-secondary">پاک‌سازی فرم</button>
+      </div>
+    </form>
+
+
+    <section class="recent-section">
+      <div class="recent-header">
+        <h2>گزارش‌های اخیر (ذخیره‌شده محلی)</h2>
+        <div class="recent-actions">
+          <button id="exportBtn" class="btn btn-ghost">📥 خروجی CSV</button>
+          <button id="clearBtn" class="btn btn-ghost btn-danger">🗑 پاک‌سازی</button>
+        </div>
+      </div>
+      <div id="recentList" class="recent-list">
+        <p class="empty-state">هنوز گزارشی ثبت نشده است.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

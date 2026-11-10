@@ -904,40 +904,73 @@ function initCeremonyStaff() {
 
   if (!addBtn) return;
 
-  // پر کردن datalist
-  const datalist = $("#personnelDatalist");
-  if (datalist) {
-    PERSONNEL.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.fullName;
-      opt.dataset.nationalId = p.nationalId || "";
-      opt.dataset.shaba = p.shaba || "";
-      datalist.appendChild(opt);
-    });
-  }
-
   addBtn.addEventListener("click", () => {
     const clone = template.content.cloneNode(true);
     
     const searchInput = clone.querySelector(".staff-search");
     const natIdInput = clone.querySelector(".staff-national-id");
     const shabaInput = clone.querySelector(".staff-shaba");
-    
-    // وقتی کاربر نامی را از لیست انتخاب می‌کند یا کامل تایپ می‌کند
-    const handleStaffSearch = (e) => {
-      const val = e.target.value.trim();
-      const person = PERSONNEL.find(p => p.fullName === val);
-      if (person) {
-        natIdInput.value = person.nationalId || "";
-        shabaInput.value = person.shaba || "";
-      } else if (e.type === 'blur') {
+
+    // ساخت لیست کشویی سفارشی
+    const listBox = document.createElement("div");
+    listBox.className = "personnel-list hidden";
+    listBox.style.marginTop = "4px";
+    listBox.style.maxHeight = "150px";
+    listBox.style.position = "absolute";
+    listBox.style.width = "calc(100% - 24px)"; // با احتساب پدینگ
+    listBox.style.zIndex = "100";
+    searchInput.parentNode.style.position = "relative";
+    searchInput.parentNode.appendChild(listBox);
+
+    function renderList(items) {
+      listBox.innerHTML = "";
+      if (!items.length) {
+        listBox.innerHTML = `<div class="personnel-empty" style="padding:10px;font-size:0.85rem">نتیجه‌ای یافت نشد</div>`;
+        return;
+      }
+      items.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "personnel-item";
+        item.style.padding = "8px 12px";
+        item.style.fontSize = "0.85rem";
+        item.innerHTML = `<span>${p.fullName}</span>`;
+        
+        // استفاده از mousedown برای جلوگیری از بسته شدن لیست قبل از کلیک
+        item.addEventListener("mousedown", (e) => { 
+          e.preventDefault();
+          searchInput.value = p.fullName;
+          natIdInput.value = p.nationalId || "";
+          shabaInput.value = p.shaba || "";
+          listBox.classList.add("hidden");
+        });
+        listBox.appendChild(item);
+      });
+    }
+
+    searchInput.addEventListener("focus", () => {
+      listBox.classList.remove("hidden");
+      const q = searchInput.value.trim().toLowerCase();
+      renderList(PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)));
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      listBox.classList.remove("hidden");
+      const q = e.target.value.trim().toLowerCase();
+      renderList(PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)));
+    });
+
+    searchInput.addEventListener("blur", () => {
+      setTimeout(() => { listBox.classList.add("hidden"); }, 200);
+      // پر کردن خودکار در صورت تایپ دقیق
+      const exactMatch = PERSONNEL.find(p => p.fullName === searchInput.value.trim());
+      if (exactMatch) {
+        natIdInput.value = exactMatch.nationalId || "";
+        shabaInput.value = exactMatch.shaba || "";
+      } else {
         natIdInput.value = "";
         shabaInput.value = "";
       }
-    };
-    searchInput.addEventListener("input", handleStaffSearch);
-    searchInput.addEventListener("change", handleStaffSearch);
-    searchInput.addEventListener("blur", handleStaffSearch);
+    });
 
     const removeBtn = clone.querySelector(".btn-remove-staff");
     removeBtn.addEventListener("click", (e) => {

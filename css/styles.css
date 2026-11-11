@@ -924,3 +924,11 @@ textarea {
   border-radius: 8px;
   border: 2px solid #f1f5f9;
 }
+
+
+/* ---------- Mobile Spacing Fix ---------- */
+@media (max-width: 640px) {
+  .field-row { grid-template-columns: 1fr !important; gap: 0 !important; margin-bottom: 0 !important; }
+  .field-row .field { margin-bottom: 18px !important; }
+  .field { margin-bottom: 18px !important; }
+}

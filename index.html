@@ -33,7 +33,7 @@
         </div>
         <div class="type-selector">
           <label class="type-card">
-            <input type="radio" name="reportType" value="patrol" checked />
+            <input type="radio" name="reportType" value="patrol" />
             <span class="type-card-content"><span class="type-icon">🛡</span><span class="type-title">گشت شبانه</span></span>
           </label>
           <label class="type-card">
@@ -71,7 +71,7 @@
 </div>
       </section>
 
-      <section class="form-section">
+      <section class="form-section hidden" id="commonInfoSection">
         <div class="section-title">
           <span class="step-badge">۲</span>
           <h2>اطلاعات مشترک گزارش</h2>
@@ -917,7 +917,7 @@
       </section>
 
 
-      <section class="form-section" id="detailsSection">
+      <section class="form-section hidden" id="detailsSection">
         <div class="section-title">
           <span class="step-badge">۶</span>
           <h2>توضیحات و پیوست</h2>
@@ -941,7 +941,7 @@
         </div>
       </section>
 
-      <div class="form-actions">
+      <div class="form-actions hidden" id="formActions">
         <button type="submit" class="btn btn-primary">
           <span>ثبت گزارش</span>
         </button>

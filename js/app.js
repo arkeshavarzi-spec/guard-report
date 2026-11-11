@@ -336,16 +336,26 @@ function initStatusToggle() {
   const details = $("#detailsSection");
 
   function syncDetailsVisibility() {
-    if (statusSelect.value === "normal") {
-      details.classList.add("hidden");
-    } else {
-      details.classList.remove("hidden");
+    const selected = document.querySelector(`input[name="reportType"]:checked`);
+    
+    // اگر هیچ کارتی انتخاب نشده، اصلا کاری به بخش توضیحات نداشته باش
+    if (!selected) return;
+
+    // فقط اگر کارت "گشت شبانه" انتخاب شده بود، این منطق را اجرا کن
+    if (selected.value === "patrol") {
+      if (statusSelect.value === "normal") {
+        details.classList.add("hidden");
+      } else {
+        details.classList.remove("hidden");
+      }
     }
-    renumberSections();
+    
+    if (typeof renumberSections === "function") renumberSections();
   }
 
   statusSelect.addEventListener("change", syncDetailsVisibility);
-  syncDetailsVisibility();
+  
+  // نکته کلیدی: فراخوانی اولیه حذف شد تا در زمان لود شدن صفحه، با تابع اصلی تداخل نداشته باشد.
 }
 
 
@@ -359,6 +369,7 @@ function initFormSubmit() {
     e.preventDefault();
 
     const reportType = form.querySelector(`input[name="reportType"]:checked`)?.value;
+    if (!reportType) return showToast("لطفاً ابتدا نوع گزارش را انتخاب کنید", "error");
     const reportDate = $("#reportDate").value.trim();
     const reportTime = $("#reportTime").value;
     const reporterId = $("#reporterId").value;
@@ -778,11 +789,9 @@ function saveReport(report) {
   
   $("#detailsSection").classList.remove("hidden");
 
-  const patrolRadio = document.querySelector(`input[name="reportType"][value="patrol"]`);
-  if (patrolRadio) {
-    patrolRadio.checked = true;
-    patrolRadio.dispatchEvent(new Event("change"));
-  }
+  // برداشتن تیک تمام کارت‌ها
+  document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
+  document.querySelector(`input[name="reportType"]`).dispatchEvent(new Event("change"));
   
   if (typeof renumberSections === "function") renumberSections();
   renderRecentReports();
@@ -1106,6 +1115,7 @@ function initReporterSelect() {
 
 
 function initReportTypeToggle() {
+  const commonInfoSection = $("#commonInfoSection");
   const locationSection = $("#locationSection");
   const personnelSection = $("#personnelSection");
   const detailsSection = $("#detailsSection");
@@ -1117,14 +1127,39 @@ function initReportTypeToggle() {
   const fireSection = $("#fireSection");
   const missionSection = $("#missionSection");
   const gatheringSection = $("#gatheringSection");
+  const formActions = $("#formActions");
   const statusSelect = $("#status");
   const radios = document.querySelectorAll(`input[name="reportType"]`);
 
   function sync() {
     const selected = document.querySelector(`input[name="reportType"]:checked`);
-    const type = selected ? selected.value : "patrol";
     
-    // پنهان کردن تمام بخش‌ها
+    // اگر هیچ کارتی انتخاب نشده باشد، همه‌چیز (حتی توضیحات و دکمه‌ها) پنهان شود
+    if (!selected) {
+      commonInfoSection.classList.add("hidden");
+      locationSection.classList.add("hidden");
+      personnelSection.classList.add("hidden");
+      detailsSection.classList.add("hidden");
+      illnessSection.classList.add("hidden");
+      incidentSection.classList.add("hidden");
+      theftSection.classList.add("hidden");
+      discSection.classList.add("hidden");
+      ceremonySection.classList.add("hidden");
+      fireSection.classList.add("hidden");
+      missionSection.classList.add("hidden");
+      gatheringSection.classList.add("hidden");
+      formActions.classList.add("hidden");
+      renumberSections();
+      return;
+    }
+
+    const type = selected.value;
+    
+    // نمایش اطلاعات مشترک و دکمه‌های فرم
+    commonInfoSection.classList.remove("hidden");
+    formActions.classList.remove("hidden");
+    
+    // پنهان کردن تمام بخش‌های اختصاصی
     locationSection.classList.add("hidden");
     personnelSection.classList.add("hidden");
     illnessSection.classList.add("hidden");
@@ -1675,7 +1710,6 @@ function initMissionGroupStaff() {
   });
 }
 
-async 
 function initGatheringStaff() {
   const addBtn = $("#addGatherStaffBtn");
   const container = $("#gatherStaffContainer");
@@ -1749,7 +1783,7 @@ function initMissionWordExport() {
   const btn = $("#exportMissionWordBtn");
   if (!btn) return;
 
-  btn.addEventListener("click", async () => {
+  btn.addEventListener("click", () => {
     const category = $("#missionCategory").value;
     if (!category) return showToast("لطفاً ابتدا نوع مأموریت را انتخاب کنید", "error");
 
@@ -1786,245 +1820,247 @@ function initMissionWordExport() {
 
     showToast("در حال ساخت فایل Word...", "success");
 
-    let logoBase64 = "";
-    try {
-      const baseUrl = window.location.protocol + '//' + window.location.host + window.location.pathname.replace('index.html', '');
-      const response = await fetch(baseUrl + 'img/logo.png');
-      if (response.ok) {
-        const blob = await response.blob();
-        logoBase64 = await new Promise((resolve) => {
+    // گرفتن لوگو با Promise (بدون async/await)
+    const baseUrl = window.location.protocol + '//' + window.location.host + window.location.pathname.replace('index.html', '');
+    
+    fetch(baseUrl + 'img/logo.png')
+      .then(res => res.ok ? res.blob() : null)
+      .then(blob => {
+        if (!blob) return "";
+        return new Promise((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
           reader.readAsDataURL(blob);
         });
-      }
-    } catch (e) { console.warn("لوگو پیدا نشد."); }
+      })
+      .catch(() => "")
+      .then(logoBase64 => {
+        // این بخش پس از لود شدن لوگو اجرا می‌شود
+        const headerStyle = `
+          <style>
+            @page { size: A4; margin: 1cm; }
+            body { font-family: 'B Nazanin', 'Nazanin', Tahoma, sans-serif; direction: rtl; font-size: 15px; color: #000; }
+            table { border-collapse: collapse; width: 100%; table-layout: fixed; margin-bottom: 0; }
+            td, th { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; word-wrap: break-word; }
+            .header-table { border: none; margin-bottom: 15px; }
+            .header-table td { border: none; padding: 0; }
+            .logo { width: 80px; height: auto; }
+            .title { font-family: 'B Titr', 'Titr', Tahoma; font-size: 20px; font-weight: bold; margin: 5px 0; }
+            .page-break { page-break-after: always; }
+            .center { text-align: center; }
+          </style>
+        `;
 
-    const headerStyle = `
-      <style>
-        @page { size: A4; margin: 1cm; }
-        body { font-family: 'B Nazanin', 'Nazanin', Tahoma, sans-serif; direction: rtl; font-size: 15px; color: #000; }
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; margin-bottom: 0; }
-        td, th { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; word-wrap: break-word; }
-        .header-table { border: none; margin-bottom: 15px; }
-        .header-table td { border: none; padding: 0; }
-        .logo { width: 80px; height: auto; }
-        .title { font-family: 'B Titr', 'Titr', Tahoma; font-size: 20px; font-weight: bold; margin: 5px 0; }
-        .page-break { page-break-after: always; }
-        .center { text-align: center; }
-      </style>
-    `;
+        let htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">${headerStyle}</head><body>`;
+        const imgTag = logoBase64 ? `<img src="${logoBase64}" class="logo" alt="لوگو">` : ``;
 
-    let htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">${headerStyle}</head><body>`;
-    const imgTag = logoBase64 ? `<img src="${logoBase64}" class="logo" alt="لوگو">` : ``;
+        personnelList.forEach((personName, index) => {
+          if (category === "official") {
+            const typeOfficial = $("#missionTypeOfficial").value === "group" ? "☑ گروهی &nbsp;&nbsp; ☐ انفرادی" : "☐ گروهی &nbsp;&nbsp; ☑ انفرادی";
+            const acc = $("#missionAccommodation").value === "provided" ? "☑ تامین شده است &nbsp; ☐ تامین نشده است" : "☐ تامین شده است &nbsp; ☑ تامین نشده است";
+            const vehicle = $("#missionVehicle").value;
+            let vGov = "☐", vPersonal = "☐", vPlane = "☐", vTrain = "☐";
+            if(vehicle.includes("gov")) vGov = "☑";
+            else if(vehicle === "personal_car") vPersonal = "☑";
+            else if(vehicle === "plane") vPlane = "☑";
+            else if(vehicle === "train") vTrain = "☑";
+            const equipment = $("#missionEquipment").value.trim();
 
-    personnelList.forEach((personName, index) => {
-      if (category === "official") {
-        const typeOfficial = $("#missionTypeOfficial").value === "group" ? "☑ گروهی &nbsp;&nbsp; ☐ انفرادی" : "☐ گروهی &nbsp;&nbsp; ☑ انفرادی";
-        const acc = $("#missionAccommodation").value === "provided" ? "☑ تامین شده است &nbsp; ☐ تامین نشده است" : "☐ تامین شده است &nbsp; ☑ تامین نشده است";
-        const vehicle = $("#missionVehicle").value;
-        let vGov = "☐", vPersonal = "☐", vPlane = "☐", vTrain = "☐";
-        if(vehicle.includes("gov")) vGov = "☑";
-        else if(vehicle === "personal_car") vPersonal = "☑";
-        else if(vehicle === "plane") vPlane = "☑";
-        else if(vehicle === "train") vTrain = "☑";
+            htmlContent += `
+              <div class="${index < personnelList.length - 1 ? 'page-break' : ''}">
+                <table class="header-table">
+                  <tr>
+                    <td style="width: 25%; text-align: left;">${imgTag}</td>
+                    <td style="width: 50%; text-align: center;">
+                      <div style="font-size: 16px;">بسمه تعالی</div>
+                      <div style="font-size: 15px; margin: 5px 0;">جمهوری اسلامی ایران</div>
+                      <div class="title">برگ ماموریت اداری</div>
+                      <div style="font-size: 14px;">« موضوع بند الف ماده 11 قانون استخدام »</div>
+                      <div style="font-size: 14px;">فرم ع - 119</div>
+                      <div style="font-size: 12px; color: #555;">(70-11) سازمان امور اداری استخدامی کشور</div>
+                    </td>
+                    <td style="width: 25%;"></td>
+                  </tr>
+                </table>
+
+                <table>
+                  <tr>
+                    <td colspan="2">1- وزارت / موسسه: دانشگاه شیراز</td>
+                    <td colspan="2">2- واحد اعزام کننده: حفاظت فیزیکی دانشگاه شیراز</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">3- نام و نام خانوادگی: <b>${personName}</b></td>
+                    <td colspan="2">4- عنوان پست سازمانی: ${post}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">5- نوع درخواست: ☑ صدور حکم ماموریت &nbsp; ☐ تمدید</td>
+                    <td colspan="2">6- نوع ماموریت: ${typeOfficial}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">7- محل ماموریت: ${location}</td>
+                    <td colspan="2">8- موضوع ماموریت: ${subject}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">9- مدت: ${duration}</td>
+                    <td colspan="2">10- تاریخ ماموریت: از تاریخ ${start} تا تاریخ ${end}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">11- مدت تمدید ماموریت: ......................</td>
+                    <td colspan="2">12- مجوز تمدید ماموریت: ......................</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">13- محل اقامت: ${acc}</td>
+                    <td colspan="2">14- نوع وسیله رفت و برگشت:<br>${vGov} وسیله نقلیه دولتی &nbsp; ${vPersonal} وسیله شخصی &nbsp; ${vPlane} هواپیما &nbsp; ${vTrain} قطار</td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">15- وسائل و تجهیزات مورد نیاز در ماموریت: ${equipment}</td>
+                  </tr>
+                  
+                  <tr>
+                    <td colspan="2" class="center" style="height: 120px;">
+                      16- نام و نام خانوادگی مسئول اعزام کننده:<br><br>
+                      <b>علیرضا کشاورزی</b><br>
+                      عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
+                      امضاء
+                    </td>
+                    <td colspan="2" class="center" style="height: 120px;">
+                      18- نام و نام خانوادگی مقام موافقت کننده:<br><br>
+                      <b>مهدی همتی</b><br>
+                      عنوان پست سازمانی: مدیر حراست دانشگاه شیراز<br><br>
+                      امضاء
+                    </td>
+                  </tr>
+                  
+                  <tr>
+                    <td colspan="2">17- شماره درخواست: ${number}</td>
+                    <td colspan="1">19- شماره: ${number}</td>
+                    <td colspan="1">تاریخ: ${issueDate}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="4" style="padding: 12px;">20- فوق العاده روزانه و سایر هزینه ها از محل: ...................... تامین گردیده و پس از ...................... قابل پرداخت است.</td>
+                  </tr>
+                </table>
+
+                <div style="margin-top: 25px;"></div>
+                
+                <table>
+                  <tr>
+                    <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                      21- نام و نام خانوادگی مسئول امور مالی:<br><br>
+                      عنوان پست سازمانی:<br><br>
+                      امضاء
+                    </td>
+                    <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                      22- شماره:<br><br>
+                      تاریخ:<br><br>
+                      امضاء
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                      23- نام و نام خانوادگی مسئول امور اداری:<br><br>
+                      عنوان پست سازمانی:<br><br>
+                      امضاء
+                    </td>
+                    <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                      24- شماره:<br>
+                      تاریخ صدور حکم:<br><br>
+                      امضاء
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="4" style="height: 300px; vertical-align: top; padding: 15px;">25- گزارش مختصر ماموریت:<br><br><br><br><br><br><br><br>تاریخ:<br>امضاء</td>
+                  </tr>
+                  <tr>
+                    <td colspan="4" style="padding: 15px; line-height: 1.8;">
+                      26- تائید ماموریت: انجام ماموریت فوق الذکر از تاریخ ${start} به مدت ${duration} مورد تائید می باشد.<br><br>
+                      نام و نام خانوادگی مسئول واحد اعزام کننده: علیرضا کشاورزی<br>
+                      عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
+                      امضاء
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            `;
+          } 
+          else if (category === "corporate") {
+            const company = $("#missionCompanyName").value.trim();
+            const requestType = $("#missionRequestType").value === "issue" ? "صدور حکم ماموریت" : "تمدید";
+
+            htmlContent += `
+              <div class="${index < personnelList.length - 1 ? 'page-break' : ''}">
+                <table class="header-table">
+                  <tr>
+                    <td style="width: 25%; text-align: left;">${imgTag}</td>
+                    <td style="width: 50%; text-align: center;">
+                      <div style="font-size: 16px;">بسمه تعالی</div>
+                      <div class="title" style="margin-top: 10px;">کارکنان شرکتی طرف قرارداد دانشگاه شیراز</div>
+                      <div style="font-size: 15px;">(${company})</div>
+                    </td>
+                    <td style="width: 25%;"></td>
+                  </tr>
+                </table>
+
+                <table>
+                  <tr>
+                    <td colspan="2">1- وزارت / موسسه درخواست کننده: دانشگاه شیراز</td>
+                    <td colspan="2">2- واحد اعزام کننده: حفاظت فیزیکی دانشگاه شیراز</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">3- نام و نام خانوادگی: <b>${personName}</b></td>
+                    <td colspan="2">4- عنوان پست سازمانی: ${post}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">5- نوع درخواست: ${requestType}</td>
+                    <td colspan="2">6- (خالی)</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">7- محل ماموریت: ${location}</td>
+                    <td colspan="2">8- موضوع ماموریت: ${subject}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">9- مدت ماموریت: ${duration}</td>
+                    <td colspan="2">10- تاریخ ماموریت: از تاریخ ${start} تا تاریخ ${end}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="height: 100px;">11- نام و نام خانوادگی مدیرعامل شرکت:<br><br>امضاء</td>
+                    <td colspan="1">12- شماره: ${number}</td>
+                    <td colspan="1">تاریخ: ${issueDate}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" class="center" style="padding: 25px; height: 150px;">
+                      13- نام و نام خانوادگی مسئول واحد اعزام کننده:<br><br>
+                      <b>علیرضا کشاورزی</b><br>
+                      عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
+                      امضاء
+                    </td>
+                    <td colspan="2" class="center" style="padding: 25px; height: 150px;">
+                      14- نام و نام خانوادگی مقام موافقت کننده:<br><br>
+                      <b>مهدی همتی</b><br>
+                      عنوان پست سازمانی: مدیر حراست دانشگاه شیراز<br><br>
+                      امضاء
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            `;
+          }
+        });
+
+        htmlContent += "</body></html>";
+
+        const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Mission-${number.replace(/\//g, '-') || 'Draft'}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         
-        const equipment = $("#missionEquipment").value.trim();
-
-        htmlContent += `
-          <div class="${index < personnelList.length - 1 ? 'page-break' : ''}">
-            <table class="header-table">
-              <tr>
-                <td style="width: 25%; text-align: left;">${imgTag}</td>
-                <td style="width: 50%; text-align: center;">
-                  <div style="font-size: 16px;">بسمه تعالی</div>
-                  <div style="font-size: 15px; margin: 5px 0;">جمهوری اسلامی ایران</div>
-                  <div class="title">برگ ماموریت اداری</div>
-                  <div style="font-size: 14px;">« موضوع بند الف ماده 11 قانون استخدام »</div>
-                  <div style="font-size: 14px;">فرم ع - 119</div>
-                  <div style="font-size: 12px; color: #555;">(70-11) سازمان امور اداری استخدامی کشور</div>
-                </td>
-                <td style="width: 25%;"></td>
-              </tr>
-            </table>
-
-            <table>
-              <tr>
-                <td colspan="2">1- وزارت / موسسه: دانشگاه شیراز</td>
-                <td colspan="2">2- واحد اعزام کننده: حفاظت فیزیکی دانشگاه شیراز</td>
-              </tr>
-              <tr>
-                <td colspan="2">3- نام و نام خانوادگی: <b>${personName}</b></td>
-                <td colspan="2">4- عنوان پست سازمانی: ${post}</td>
-              </tr>
-              <tr>
-                <td colspan="2">5- نوع درخواست: ☑ صدور حکم ماموریت &nbsp; ☐ تمدید</td>
-                <td colspan="2">6- نوع ماموریت: ${typeOfficial}</td>
-              </tr>
-              <tr>
-                <td colspan="2">7- محل ماموریت: ${location}</td>
-                <td colspan="2">8- موضوع ماموریت: ${subject}</td>
-              </tr>
-              <tr>
-                <td colspan="2">9- مدت: ${duration}</td>
-                <td colspan="2">10- تاریخ ماموریت: از تاریخ ${start} تا تاریخ ${end}</td>
-              </tr>
-              <tr>
-                <td colspan="2">11- مدت تمدید ماموریت: ......................</td>
-                <td colspan="2">12- مجوز تمدید ماموریت: ......................</td>
-              </tr>
-              <tr>
-                <td colspan="2">13- محل اقامت: ${acc}</td>
-                <td colspan="2">14- نوع وسیله رفت و برگشت:<br>${vGov} وسیله نقلیه دولتی &nbsp; ${vPersonal} وسیله شخصی &nbsp; ${vPlane} هواپیما &nbsp; ${vTrain} قطار</td>
-              </tr>
-              <tr>
-                <td colspan="4">15- وسائل و تجهیزات مورد نیاز در ماموریت: ${equipment}</td>
-              </tr>
-              
-              <tr>
-                <td colspan="2" class="center" style="height: 120px;">
-                  16- نام و نام خانوادگی مسئول اعزام کننده:<br><br>
-                  <b>علیرضا کشاورزی</b><br>
-                  عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
-                  امضاء
-                </td>
-                <td colspan="2" class="center" style="height: 120px;">
-                  18- نام و نام خانوادگی مقام موافقت کننده:<br><br>
-                  <b>مهدی همتی</b><br>
-                  عنوان پست سازمانی: مدیر حراست دانشگاه شیراز<br><br>
-                  امضاء
-                </td>
-              </tr>
-              
-              <tr>
-                <td colspan="2">17- شماره درخواست: ${number}</td>
-                <td colspan="1">19- شماره: ${number}</td>
-                <td colspan="1">تاریخ: ${issueDate}</td>
-              </tr>
-              <tr>
-                <td colspan="4" style="padding: 12px;">20- فوق العاده روزانه و سایر هزینه ها از محل: ...................... تامین گردیده و پس از ...................... قابل پرداخت است.</td>
-              </tr>
-            </table>
-
-            <div style="margin-top: 25px;"></div>
-            
-            <table>
-              <tr>
-                <td colspan="2" class="center" style="height: 100px; width: 50%;">
-                  21- نام و نام خانوادگی مسئول امور مالی:<br><br>
-                  عنوان پست سازمانی:<br><br>
-                  امضاء
-                </td>
-                <td colspan="2" class="center" style="height: 100px; width: 50%;">
-                  22- شماره:<br><br>
-                  تاریخ:<br><br>
-                  امضاء
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2" class="center" style="height: 100px; width: 50%;">
-                  23- نام و نام خانوادگی مسئول امور اداری:<br><br>
-                  عنوان پست سازمانی:<br><br>
-                  امضاء
-                </td>
-                <td colspan="2" class="center" style="height: 100px; width: 50%;">
-                  24- شماره:<br>
-                  تاریخ صدور حکم:<br><br>
-                  امضاء
-                </td>
-              </tr>
-              <tr>
-                <td colspan="4" style="height: 300px; vertical-align: top; padding: 15px;">25- گزارش مختصر ماموریت:<br><br><br><br><br><br><br><br>تاریخ:<br>امضاء</td>
-              </tr>
-              <tr>
-                <td colspan="4" style="padding: 15px; line-height: 1.8;">
-                  26- تائید ماموریت: انجام ماموریت فوق الذکر از تاریخ ${start} به مدت ${duration} مورد تائید می باشد.<br><br>
-                  نام و نام خانوادگی مسئول واحد اعزام کننده: علیرضا کشاورزی<br>
-                  عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
-                  امضاء
-                </td>
-              </tr>
-            </table>
-          </div>
-        `;
-      } 
-      else if (category === "corporate") {
-        const company = $("#missionCompanyName").value.trim();
-        const requestType = $("#missionRequestType").value === "issue" ? "صدور حکم ماموریت" : "تمدید";
-
-        htmlContent += `
-          <div class="${index < personnelList.length - 1 ? 'page-break' : ''}">
-            <table class="header-table">
-              <tr>
-                <td style="width: 25%; text-align: left;">${imgTag}</td>
-                <td style="width: 50%; text-align: center;">
-                  <div style="font-size: 16px;">بسمه تعالی</div>
-                  <div class="title" style="margin-top: 10px;">کارکنان شرکتی طرف قرارداد دانشگاه شیراز</div>
-                  <div style="font-size: 15px;">(${company})</div>
-                </td>
-                <td style="width: 25%;"></td>
-              </tr>
-            </table>
-
-            <table>
-              <tr>
-                <td colspan="2">1- وزارت / موسسه درخواست کننده: دانشگاه شیراز</td>
-                <td colspan="2">2- واحد اعزام کننده: حفاظت فیزیکی دانشگاه شیراز</td>
-              </tr>
-              <tr>
-                <td colspan="2">3- نام و نام خانوادگی: <b>${personName}</b></td>
-                <td colspan="2">4- عنوان پست سازمانی: ${post}</td>
-              </tr>
-              <tr>
-                <td colspan="2">5- نوع درخواست: ${requestType}</td>
-                <td colspan="2">6- (خالی)</td>
-              </tr>
-              <tr>
-                <td colspan="2">7- محل ماموریت: ${location}</td>
-                <td colspan="2">8- موضوع ماموریت: ${subject}</td>
-              </tr>
-              <tr>
-                <td colspan="2">9- مدت ماموریت: ${duration}</td>
-                <td colspan="2">10- تاریخ ماموریت: از تاریخ ${start} تا تاریخ ${end}</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="height: 100px;">11- نام و نام خانوادگی مدیرعامل شرکت:<br><br>امضاء</td>
-                <td colspan="1">12- شماره: ${number}</td>
-                <td colspan="1">تاریخ: ${issueDate}</td>
-              </tr>
-              <tr>
-                <td colspan="2" class="center" style="padding: 25px; height: 150px;">
-                  13- نام و نام خانوادگی مسئول واحد اعزام کننده:<br><br>
-                  <b>علیرضا کشاورزی</b><br>
-                  عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
-                  امضاء
-                </td>
-                <td colspan="2" class="center" style="padding: 25px; height: 150px;">
-                  14- نام و نام خانوادگی مقام موافقت کننده:<br><br>
-                  <b>مهدی همتی</b><br>
-                  عنوان پست سازمانی: مدیر حراست دانشگاه شیراز<br><br>
-                  امضاء
-                </td>
-              </tr>
-            </table>
-          </div>
-        `;
-      }
-    });
-
-    htmlContent += "</body></html>";
-
-    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Mission-${number.replace(/\//g, '-') || 'Draft'}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    
-    showToast("📄 فایل Word دانلود شد", "success");
+        showToast("📄 فایل Word دانلود شد", "success");
+      });
   });
 }
 
@@ -2227,11 +2263,9 @@ function initFormReset() {
     $("#post").disabled = true;
     $("#post").innerHTML = `<option value="">ابتدا محل را انتخاب کنید</option>`;
 
-    const patrolRadio = document.querySelector(`input[name="reportType"][value="patrol"]`);
-    if (patrolRadio) {
-      patrolRadio.checked = true;
-      patrolRadio.dispatchEvent(new Event("change"));
-    }
+    // برداشتن تیک تمام کارت‌ها
+    document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
+    document.querySelector(`input[name="reportType"]`).dispatchEvent(new Event("change"));
 
     if (typeof renumberSections === "function") renumberSections();
     showToast("فرم پاک‌سازی شد", "success");

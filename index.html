@@ -648,7 +648,144 @@
 
       <section class="form-section hidden" id="missionSection">
         <div class="section-title"><span class="step-badge">۳</span><h2>اطلاعات مأموریت</h2></div>
-        <p style="padding: 20px; text-align: center; color: #64748b;">(محتوای این بخش در گام‌های بعدی ساخته می‌شود)</p>
+        
+        <div class="field" style="background: #eff6ff; padding: 12px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+          <label for="missionCategory" style="color: #1e40af; font-weight: bold;">نوع مأموریت (کارمند)</label>
+          <select id="missionCategory" style="border-color: #93c5fd; background: #fff;">
+            <option value="">— انتخاب کنید —</option>
+            <option value="official">رسمی، پیمانی و قراردادی (فرم ع-۱۱۹)</option>
+            <option value="corporate">شرکتی (طرف قرارداد)</option>
+          </select>
+        </div>
+
+        <!-- فیلدهای مشترک -->
+        <div id="missionSharedFields" class="hidden">
+          <div class="field-row">
+            <div class="field">
+              <label for="missionPersonnel">نام و نام خانوادگی</label>
+              <div class="search-select">
+                <input type="text" id="missionPersonnel" class="search-input" placeholder="جستجوی نام..." autocomplete="off" />
+                <div id="missionPersonnelList" class="personnel-list hidden"></div>
+                <input type="hidden" id="missionPersonnelId" />
+              </div>
+              <div id="selectedMissionPersonnel" class="selected-chips"></div>
+            </div>
+            <div class="field">
+              <label for="missionPost">عنوان پست سازمانی</label>
+              <input type="text" id="missionPost" value="حفاظت فیزیکی" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="missionLocation">محل مأموریت</label>
+              <input type="text" id="missionLocation" placeholder="مثلاً استان کرمانشاه" />
+            </div>
+            <div class="field">
+              <label for="missionSubject">موضوع مأموریت</label>
+              <input type="text" id="missionSubject" placeholder="مثلاً همراهی با دانشجویان" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="missionStartDate">تاریخ شروع (شمسی)</label>
+              <input type="text" id="missionStartDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" />
+            </div>
+            <div class="field">
+              <label for="missionEndDate">تاریخ پایان (شمسی)</label>
+              <input type="text" id="missionEndDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="missionDuration">مدت مأموریت (خودکار)</label>
+              <input type="text" id="missionDuration" readonly style="background: #e2e8f0;" placeholder="محاسبه خودکار..." />
+            </div>
+            <div class="field">
+              <label for="missionNumber">شماره مأموریت</label>
+              <input type="text" id="missionNumber" />
+            </div>
+          </div>
+          
+          <div class="field">
+            <label for="missionIssueDate">تاریخ صدور</label>
+            <input type="text" id="missionIssueDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" />
+          </div>
+        </div>
+
+        <!-- فیلدهای اختصاصی رسمی -->
+        <div id="missionOfficialFields" class="hidden" style="border-top: 2px dashed #cbd5e1; padding-top: 20px; margin-top: 20px;">
+          <h3 style="margin-bottom: 15px; color: #1e40af; font-size: 1rem;">اطلاعات تکمیلی (فرم رسمی)</h3>
+          
+          <div class="field-row">
+            <div class="field">
+              <label for="missionTypeOfficial">نوع مأموریت</label>
+              <select id="missionTypeOfficial">
+                <option value="individual">انفرادی</option>
+                <option value="group">گروهی</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="missionAccommodation">محل اقامت</label>
+              <select id="missionAccommodation">
+                <option value="provided">تامین شده است</option>
+                <option value="not_provided">تامین نشده است</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field hidden" id="missionGroupStaffField">
+            <label for="missionGroupStaffSearch">نیروهای اعزامی (گروهی)</label>
+            <div class="search-select">
+              <input type="text" id="missionGroupStaffSearch" class="search-input" placeholder="جستجوی نام پرسنل..." autocomplete="off" />
+              <div id="missionGroupStaffList" class="personnel-list hidden"></div>
+              <input type="hidden" id="missionGroupStaffIds" />
+            </div>
+            <div id="selectedMissionGroupStaff" class="selected-chips"></div>
+          </div>
+
+          <div class="field">
+            <label for="missionVehicle">نوع وسیله رفت و برگشت</label>
+            <select id="missionVehicle">
+              <option value="gov_car_driver">وسیله نقلیه دولتی (با راننده)</option>
+              <option value="gov_car_no_driver">وسیله نقلیه دولتی (بدون راننده)</option>
+              <option value="personal_car">وسیله نقلیه شخصی</option>
+              <option value="plane">هواپیما</option>
+              <option value="train">قطار</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="missionEquipment">وسائل و تجهیزات مورد نیاز</label>
+            <input type="text" id="missionEquipment" placeholder="مثلاً بی‌سیم، جلیقه..." />
+          </div>
+        </div>
+
+        <!-- فیلدهای اختصاصی شرکتی -->
+        <div id="missionCorporateFields" class="hidden" style="border-top: 2px dashed #cbd5e1; padding-top: 20px; margin-top: 20px;">
+          <h3 style="margin-bottom: 15px; color: #1e40af; font-size: 1rem;">اطلاعات تکمیلی (فرم شرکتی)</h3>
+          
+          <div class="field-row">
+            <div class="field">
+              <label for="missionCompanyName">نام شرکت طرف قرارداد</label>
+              <input type="text" id="missionCompanyName" value="شرکت نیل آب فسا" />
+            </div>
+            <div class="field">
+              <label for="missionRequestType">نوع درخواست</label>
+              <select id="missionRequestType">
+                <option value="issue">صدور حکم مأموریت</option>
+                <option value="extend">تمدید مأموریت</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 20px;">
+          <button type="button" class="btn btn-primary" id="exportMissionWordBtn" style="background: #0f172a;">📄 دانلود فایل Word مأموریت</button>
+        </div>
       </section>
 
       <section class="form-section hidden" id="gatheringSection">

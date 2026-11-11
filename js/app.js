@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initReporterSelect();
   initJalaliDatePicker();
   initReportTypeToggle();
+  initBackToCards();
   initIllnessConditionals();
   initPersonnelSearch();
   initStatusToggle();
@@ -1130,12 +1131,13 @@ function initReportTypeToggle() {
   const gatheringSection = $("#gatheringSection");
   const formActions = $("#formActions");
   const statusSelect = $("#status");
-  const radios = document.querySelectorAll(`input[name="reportType"]`);
+  
+  // تغییر ۱: انتخاب مستقیم کارت‌ها برای رویداد کلیک (بسیار پایدارتر در موبایل)
+  const typeCards = document.querySelectorAll('.type-card');
 
   function sync() {
     const selected = document.querySelector(`input[name="reportType"]:checked`);
     
-    // حالت اولیه: نمایش کارت‌ها و مخفی کردن بقیه
     if (!selected) {
       typeSelectorSection.classList.remove("hidden");
       commonInfoSection.classList.add("hidden");
@@ -1157,72 +1159,95 @@ function initReportTypeToggle() {
 
     const type = selected.value;
     
-    // حالت تمرکز: مخفی کردن کارت‌ها و نمایش فرم
-    typeSelectorSection.classList.add("hidden");
-    commonInfoSection.classList.remove("hidden");
-    formActions.classList.remove("hidden");
-    
-    locationSection.classList.add("hidden");
-    personnelSection.classList.add("hidden");
-    illnessSection.classList.add("hidden");
-    incidentSection.classList.add("hidden");
-    theftSection.classList.add("hidden");
-    discSection.classList.add("hidden");
-    ceremonySection.classList.add("hidden");
-    fireSection.classList.add("hidden");
-    missionSection.classList.add("hidden");
-    gatheringSection.classList.add("hidden");
+    // تغییر ۲: استفاده از setTimeout برای جلوگیری از باگ لمس در موبایل
+    setTimeout(() => {
+      typeSelectorSection.classList.add("hidden");
+      commonInfoSection.classList.remove("hidden");
+      formActions.classList.remove("hidden");
+      
+      locationSection.classList.add("hidden");
+      personnelSection.classList.add("hidden");
+      illnessSection.classList.add("hidden");
+      incidentSection.classList.add("hidden");
+      theftSection.classList.add("hidden");
+      discSection.classList.add("hidden");
+      ceremonySection.classList.add("hidden");
+      fireSection.classList.add("hidden");
+      missionSection.classList.add("hidden");
+      gatheringSection.classList.add("hidden");
 
-    if (type === "patrol") {
-      locationSection.classList.remove("hidden");
-      personnelSection.classList.remove("hidden");
-      if (statusSelect.value === "normal") {
-        detailsSection.classList.add("hidden");
-      } else {
+      if (type === "patrol") {
+        locationSection.classList.remove("hidden");
+        personnelSection.classList.remove("hidden");
+        if (statusSelect.value === "normal") {
+          detailsSection.classList.add("hidden");
+        } else {
+          detailsSection.classList.remove("hidden");
+        }
+      } else if (type === "illness") {
+        illnessSection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "incident") {
+        incidentSection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "theft") {
+        theftSection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "disciplinary") {
+        discSection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "ceremony") {
+        ceremonySection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "fire") {
+        fireSection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "mission") {
+        missionSection.classList.remove("hidden");
+        detailsSection.classList.remove("hidden");
+      } else if (type === "gathering") {
+        gatheringSection.classList.remove("hidden");
         detailsSection.classList.remove("hidden");
       }
-    } else if (type === "illness") {
-      illnessSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "incident") {
-      incidentSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "theft") {
-      theftSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "disciplinary") {
-      discSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "ceremony") {
-      ceremonySection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "fire") {
-      fireSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "mission") {
-      missionSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else if (type === "gathering") {
-      gatheringSection.classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    }
-    
-    // اسکرول به بالای فرم هنگام باز شدن
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    renumberSections();
+      
+      // تغییر ۳: اسکرول دقیق‌تر به بخش اطلاعات مشترک (بسیار نرم‌تر در موبایل)
+      if (commonInfoSection) {
+        commonInfoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      renumberSections();
+    }, 50); // ۵۰ میلی‌ثانیه تاخیر برای تکمیل لمس
   }
 
-  radios.forEach(r => r.addEventListener("change", sync));
-  sync();
+  // اتصال رویداد کلیک به خود کارت‌ها (در موبایل عالی کار می‌کند)
+  typeCards.forEach(card => {
+    card.addEventListener('click', () => {
+      sync();
+    });
+  });
 
+  // اتصال رویداد change به رادیوها (برای پشتیبانی از کیبورد در دسکتاپ)
+  document.querySelectorAll(`input[name="reportType"]`).forEach(r => {
+    r.addEventListener("change", sync);
+  });
+
+  sync();
+}
+
+function initBackToCards() {
   const backBtn = $("#backToCardsBtn");
   if (backBtn) {
     backBtn.addEventListener("click", () => {
       if (confirm("آیا از بازگشت به کارت‌ها مطمئن هستید؟ اطلاعات وارد شده پاک خواهند شد.")) {
         document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
-        document.querySelector(`input[name="reportType"]`).dispatchEvent(new Event("change"));
-        // پاک کردن مقادیر فرم
         $("#guardForm").reset();
+        
+        // رفع باگ دکمه بازگشت در موبایل با تاخیر
+        setTimeout(() => {
+          const typeSelectorSection = $("#typeSelectorSection");
+          if (typeSelectorSection) typeSelectorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const syncEvent = new Event("change");
+          document.querySelector(`input[name="reportType"]`).dispatchEvent(syncEvent);
+        }, 50);
       }
     });
   }

@@ -625,20 +625,20 @@ function smartDownload(url, fileName, blob) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   if (isMobile) {
-    // استفاده از Web Share برای همه فایل‌ها در موبایل (مخصوصا کروم)
+    // ۱. تلاش برای استفاده از Web Share API (بهترین روش در موبایل)
     const file = new File([blob], fileName, { type: blob.type || "application/octet-stream" });
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "گزارش‌های حفاظت فیزیکی" })
+      navigator.share({ files: [file], title: "گزارش حفاظت فیزیکی" })
         .catch(err => {
           if (err.name !== "AbortError") {
-            // اگر Share خطا داد، فایل را در تب جدید باز کن
+            // ۲. اگر Share خطا داد (مثلا کاربر لغو کرد یا پشتیبانی نشد)، فایل را در تب جدید باز کن
             window.open(url, "_blank");
-            showToast("📥 فایل در تب جدید باز شد", "success");
           }
         });
       return;
     }
-    // فال‌بک برای موبایل‌های قدیمی
+    
+    // ۳. اگر مرورگر قدیمی بود و Web Share نداشت، لینک دانلود را با target="_blank" باز کن
     const a = document.createElement("a");
     a.href = url;
     a.download = fileName;
@@ -646,10 +646,12 @@ function smartDownload(url, fileName, blob) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    
+    setTimeout(() => URL.revokeObjectURL(url), 10000); // زمان بیشتر برای دانلود
     return;
   }
 
-  // دسکتاپ
+  // دسکتاپ (دانلود مستقیم)
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;

@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initPhotoUploader();
   initFormSubmit();
   initRecentActions();
+  initMissionWordExport();
   renderRecentReports();
 });
 
@@ -118,6 +119,7 @@ function initRecentActions() {
       theftDoorStatus: "وضعیت قفل/درب", theftEvidence: "شواهد", theftActions: "اقدامات",
       theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
       missionCategory: "نوع مأموریت", missionPersonnelName: "پرسنل", missionPost: "پست", missionLocation: "محل مأموریت", missionSubject: "موضوع", missionStartDate: "تاریخ شروع", missionEndDate: "تاریخ پایان", missionDuration: "مدت", missionNumber: "شماره", missionIssueDate: "تاریخ صدور", missionTypeOfficial: "نوع (رسمی)", missionAccommodation: "محل اقامت", missionVehicle: "وسیله", missionEquipment: "تجهیزات", missionGroupStaffNames: "نیروهای گروهی", missionCompanyName: "شرکت", missionRequestType: "نوع درخواست",
+      missionCategory: "نوع مأموریت", missionPersonnelName: "پرسنل", missionPost: "پست", missionLocation: "محل مأموریت", missionSubject: "موضوع", missionStartDate: "تاریخ شروع", missionEndDate: "تاریخ پایان", missionDuration: "مدت", missionNumber: "شماره", missionIssueDate: "تاریخ صدور", missionTypeOfficial: "نوع (رسمی)", missionAccommodation: "محل اقامت", missionVehicle: "وسیله", missionEquipment: "تجهیزات", missionGroupStaffNames: "نیروهای گروهی", missionCompanyName: "شرکت", missionRequestType: "نوع درخواست",
       gatheringDate: "تاریخ تجمع", gatheringStartTime: "ساعت شروع", gatheringEndTime: "ساعت پایان", gatheringPeopleCount: "تعداد افراد", gatheringReason: "علت تجمع", gatheringSubject: "موضوع تجمع", gatheringSpeaker: "سخنران", gatheringOrganizers: "برگزارکنندگان", gatheringLocation: "محل تجمع", gatheringTension: "تنش/درگیری", gatheringTensionDetails: "جزئیات تنش", gatheringActions: "اقدامات حفاظتی",
       discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
       cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها"
@@ -140,6 +142,11 @@ function initRecentActions() {
       theftDoorStatus: { intact: "سالم", broken: "شکسته", open: "باز" },
       theftActions: { police: "تماس با پلیس", security: "تماس با حراست", cctv: "بررسی دوربین", other: "سایر" },
       theftFollowUp: { yes: "بله", no: "خیر" },
+      missionCategory: { official: "رسمی/پیمانی", corporate: "شرکتی" },
+      missionTypeOfficial: { individual: "انفرادی", group: "گروهی" },
+      missionAccommodation: { provided: "تامین شده", not_provided: "تامین نشده" },
+      missionVehicle: { gov_car_driver: "دولتی (با راننده)", gov_car_no_driver: "دولتی (بدون راننده)", personal_car: "شخصی", plane: "هواپیما", train: "قطار", other: "سایر" },
+      missionRequestType: { issue: "صدور حکم", extend: "تمدید" },
       missionCategory: { official: "رسمی/پیمانی", corporate: "شرکتی" },
       missionTypeOfficial: { individual: "انفرادی", group: "گروهی" },
       missionAccommodation: { provided: "تامین شده", not_provided: "تامین نشده" },
@@ -168,6 +175,8 @@ function initRecentActions() {
         cols = ['reportDate', 'reportTime', 'reporterName', 'fireDate', 'fireTime', 'fireLocation', 'fireCause', 'fireCauseOther', 'fireDamageLevel', 'fireDeptCalled', 'fireDeptCallTime', 'fireDeptArriveTime', 'fireCasualties', 'fireCasualtyDetails', 'fireFinancialDamage', 'fireDamageDetails', 'fireInitialActions', 'fireStaffNames', 'notes'];
       } else if (type === 'incident') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'incidentSubject', 'incidentDesc', 'incidentActions', 'incidentAnalysis', 'incidentFollowUp', 'notes'];
+      } else if (type === 'mission') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'missionCategory', 'missionPersonnelName', 'missionPost', 'missionLocation', 'missionSubject', 'missionStartDate', 'missionEndDate', 'missionDuration', 'missionNumber', 'missionIssueDate', 'missionTypeOfficial', 'missionGroupStaffNames', 'missionAccommodation', 'missionVehicle', 'missionEquipment', 'missionCompanyName', 'missionRequestType', 'notes'];
       } else if (type === 'mission') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'missionCategory', 'missionPersonnelName', 'missionPost', 'missionLocation', 'missionSubject', 'missionStartDate', 'missionEndDate', 'missionDuration', 'missionNumber', 'missionIssueDate', 'missionTypeOfficial', 'missionGroupStaffNames', 'missionAccommodation', 'missionVehicle', 'missionEquipment', 'missionCompanyName', 'missionRequestType', 'notes'];
       } else if (type === 'gathering') {
@@ -276,6 +285,7 @@ function initRecentActions() {
         // نام ستون‌ها را با دیکشنری معادل‌سازی می‌کنیم (همان دیکشنری که در initRecentActions تعریف کردید)
         // برای جلوگیری از تکرار کد، یک نگاشت کوچک اینجا می‌سازیم
         const labelMap = { reportDate: "تاریخ گزارش", reportTime: "ساعت گزارش", reporterName: "ثبت‌کننده", notes: "توضیحات", locationLabel: "محل", postLabel: "پست", status: "وضعیت", personnelNames: "پرسنل حاضر", fireDate: "تاریخ حریق", fireTime: "ساعت حریق", fireLocation: "محل حریق", fireCause: "علت", fireDeptCalled: "تماس با آتش‌نشانی", fireDeptCallTime: "ساعت تماس", fireDeptArriveTime: "ساعت رسیدن", fireDamageLevel: "میزان خسارت", fireCasualties: "خسارت جانی", fireCasualtyDetails: "جزئیات صدمات", fireFinancialDamage: "خسارت مالی", fireDamageDetails: "جزئیات خسارت", fireInitialActions: "اقدامات اولیه", fireStaffNames: "نیروهای اطفاء", missionCategory: "نوع مأموریت", missionPersonnelName: "پرسنل", missionPost: "پست", missionLocation: "محل مأموریت", missionSubject: "موضوع", missionStartDate: "تاریخ شروع", missionEndDate: "تاریخ پایان", missionDuration: "مدت", missionNumber: "شماره", missionIssueDate: "تاریخ صدور", missionTypeOfficial: "نوع (رسمی)", missionAccommodation: "محل اقامت", missionVehicle: "وسیله", missionEquipment: "تجهیزات", missionGroupStaffNames: "نیروهای گروهی", missionCompanyName: "شرکت", missionRequestType: "نوع درخواست",
+      missionCategory: "نوع مأموریت", missionPersonnelName: "پرسنل", missionPost: "پست", missionLocation: "محل مأموریت", missionSubject: "موضوع", missionStartDate: "تاریخ شروع", missionEndDate: "تاریخ پایان", missionDuration: "مدت", missionNumber: "شماره", missionIssueDate: "تاریخ صدور", missionTypeOfficial: "نوع (رسمی)", missionAccommodation: "محل اقامت", missionVehicle: "وسیله", missionEquipment: "تجهیزات", missionGroupStaffNames: "نیروهای گروهی", missionCompanyName: "شرکت", missionRequestType: "نوع درخواست",
       gatheringDate: "تاریخ تجمع", gatheringStartTime: "ساعت شروع", gatheringEndTime: "ساعت پایان", gatheringPeopleCount: "تعداد افراد", gatheringReason: "علت تجمع", gatheringSubject: "موضوع", gatheringSpeaker: "سخنران", gatheringOrganizers: "برگزارکنندگان", gatheringLocation: "محل", gatheringTension: "تنش", gatheringTensionDetails: "جزئیات تنش", gatheringActions: "اقدامات" };
         
         row[labelMap[key] || key] = finalVal !== null && finalVal !== undefined ? finalVal : "";
@@ -476,6 +486,41 @@ function initFormSubmit() {
         report.missionCompanyName = $("#missionCompanyName").value.trim();
         report.missionRequestType = $("#missionRequestType").value;
       }
+    } else if (reportType === "mission") {
+      report.missionCategory = $("#missionCategory").value;
+      report.missionPersonnelId = $("#missionPersonnelId").value;
+      const p = PERSONNEL.find(x => x.id === report.missionPersonnelId);
+      report.missionPersonnelName = p ? p.fullName : "";
+      report.missionPost = $("#missionPost").value.trim();
+      report.missionLocation = $("#missionLocation").value.trim();
+      report.missionSubject = $("#missionSubject").value.trim();
+      report.missionStartDate = $("#missionStartDate").value.trim();
+      report.missionEndDate = $("#missionEndDate").value.trim();
+      report.missionDuration = $("#missionDuration").value;
+      report.missionNumber = $("#missionNumber").value.trim();
+      report.missionIssueDate = $("#missionIssueDate").value.trim();
+
+      if (!report.missionCategory) return showToast("لطفاً نوع مأموریت را انتخاب کنید", "error");
+      if (!report.missionPersonnelId) return showToast("لطفاً نام پرسنل را انتخاب کنید", "error");
+      if (!report.missionLocation) return showToast("لطفاً محل مأموریت را وارد کنید", "error");
+      if (!report.missionStartDate || !report.missionEndDate) return showToast("لطفاً تاریخ شروع و پایان را وارد کنید", "error");
+      
+      if (report.missionCategory === "official") {
+        report.missionTypeOfficial = $("#missionTypeOfficial").value;
+        report.missionAccommodation = $("#missionAccommodation").value;
+        report.missionVehicle = $("#missionVehicle").value;
+        report.missionEquipment = $("#missionEquipment").value.trim();
+        
+        if (report.missionTypeOfficial === "group") {
+          let groupIds = [];
+          try { groupIds = JSON.parse($("#missionGroupStaffIds").value || "[]"); } catch(e) {}
+          report.missionGroupStaffIds = groupIds;
+          report.missionGroupStaffNames = groupIds.map(id => PERSONNEL.find(x => x.id === id)?.fullName || id);
+        }
+      } else if (report.missionCategory === "corporate") {
+        report.missionCompanyName = $("#missionCompanyName").value.trim();
+        report.missionRequestType = $("#missionRequestType").value;
+      }
     } else if (reportType === "theft") {
       report.theftItemType = $("#theftItemType").value;
       report.theftItemDesc = $("#theftItemDesc").value.trim();
@@ -606,6 +651,31 @@ function saveReport(report) {
   $("#missionGroupStaffSearch").value = "";
   $("#missionCompanyName").value = "شرکت نیل آب فسا";
   $("#missionRequestType").value = "issue";
+  $("#missionSection").classList.add("hidden");
+  $("#missionCategory").value = "";
+  $("#missionSharedFields").classList.add("hidden");
+  $("#missionOfficialFields").classList.add("hidden");
+  $("#missionCorporateFields").classList.add("hidden");
+  $("#missionPersonnelId").value = "";
+  $("#missionPersonnel").value = "";
+  $("#selectedMissionPersonnel").innerHTML = "";
+  $("#missionPost").value = "حفاظت فیزیکی";
+  $("#missionLocation").value = "";
+  $("#missionSubject").value = "";
+  $("#missionStartDate").value = "";
+  $("#missionEndDate").value = "";
+  $("#missionDuration").value = "";
+  $("#missionNumber").value = "";
+  $("#missionIssueDate").value = "";
+  $("#missionTypeOfficial").value = "individual";
+  $("#missionAccommodation").value = "provided";
+  $("#missionVehicle").value = "gov_car_driver";
+  $("#missionEquipment").value = "";
+  $("#missionGroupStaffIds").value = "[]";
+  $("#selectedMissionGroupStaff").innerHTML = "";
+  $("#missionGroupStaffSearch").value = "";
+  $("#missionCompanyName").value = "شرکت نیل آب فسا";
+  $("#missionRequestType").value = "issue";
   $("#gatheringDate").value = "";
   $("#gatheringStartTime").value = "";
   $("#gatheringEndTime").value = "";
@@ -626,6 +696,31 @@ function saveReport(report) {
   $("#fireSection").classList.add("hidden");
   $("#missionSection").classList.add("hidden");
   $("#gatheringSection").classList.add("hidden");
+  $("#missionSection").classList.add("hidden");
+  $("#missionCategory").value = "";
+  $("#missionSharedFields").classList.add("hidden");
+  $("#missionOfficialFields").classList.add("hidden");
+  $("#missionCorporateFields").classList.add("hidden");
+  $("#missionPersonnelId").value = "";
+  $("#missionPersonnel").value = "";
+  $("#selectedMissionPersonnel").innerHTML = "";
+  $("#missionPost").value = "حفاظت فیزیکی";
+  $("#missionLocation").value = "";
+  $("#missionSubject").value = "";
+  $("#missionStartDate").value = "";
+  $("#missionEndDate").value = "";
+  $("#missionDuration").value = "";
+  $("#missionNumber").value = "";
+  $("#missionIssueDate").value = "";
+  $("#missionTypeOfficial").value = "individual";
+  $("#missionAccommodation").value = "provided";
+  $("#missionVehicle").value = "gov_car_driver";
+  $("#missionEquipment").value = "";
+  $("#missionGroupStaffIds").value = "[]";
+  $("#selectedMissionGroupStaff").innerHTML = "";
+  $("#missionGroupStaffSearch").value = "";
+  $("#missionCompanyName").value = "شرکت نیل آب فسا";
+  $("#missionRequestType").value = "issue";
   $("#missionSection").classList.add("hidden");
   $("#missionCategory").value = "";
   $("#missionSharedFields").classList.add("hidden");
@@ -692,6 +787,8 @@ function renderRecentReports() {
       title += ` — ${r.patientName || "بدون نام"}`;
     } else if (r.reportType === "fire") {
       title += ` — ${r.fireLocation || "بدون محل"}`;
+    } else if (r.reportType === "mission") {
+      title += ` — ${r.missionPersonnelName || "بدون نام"}`;
     } else if (r.reportType === "mission") {
       title += ` — ${r.missionPersonnelName || "بدون نام"}`;
     } else if (r.reportType === "gathering") {
@@ -988,12 +1085,17 @@ function initReportTypeToggle() {
   const theftSection = $("#theftSection");
   const discSection = $("#discSection");
   const ceremonySection = $("#ceremonySection");
+  const fireSection = $("#fireSection");
+  const missionSection = $("#missionSection");
+  const gatheringSection = $("#gatheringSection");
   const statusSelect = $("#status");
   const radios = document.querySelectorAll(`input[name="reportType"]`);
 
   function sync() {
     const selected = document.querySelector(`input[name="reportType"]:checked`);
     const type = selected ? selected.value : "patrol";
+    
+    // پنهان کردن تمام بخش‌ها
     locationSection.classList.add("hidden");
     personnelSection.classList.add("hidden");
     illnessSection.classList.add("hidden");
@@ -1001,6 +1103,11 @@ function initReportTypeToggle() {
     theftSection.classList.add("hidden");
     discSection.classList.add("hidden");
     ceremonySection.classList.add("hidden");
+    fireSection.classList.add("hidden");
+    missionSection.classList.add("hidden");
+    gatheringSection.classList.add("hidden");
+
+    // نمایش بخش مربوطه
     if (type === "patrol") {
       locationSection.classList.remove("hidden");
       personnelSection.classList.remove("hidden");
@@ -1025,17 +1132,16 @@ function initReportTypeToggle() {
       ceremonySection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else if (type === "fire") {
-      $("#fireSection").classList.remove("hidden");
+      fireSection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else if (type === "mission") {
-      $("#missionSection").classList.remove("hidden");
+      missionSection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else if (type === "gathering") {
-      $("#gatheringSection").classList.remove("hidden");
-      detailsSection.classList.remove("hidden");
-    } else {
+      gatheringSection.classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     }
+    
     renumberSections();
   }
 
@@ -1325,6 +1431,501 @@ function initMissionGroupStaff() {
 
   searchInput.addEventListener("blur", () => {
     setTimeout(() => listBox.classList.add("hidden"), 200);
+  });
+}
+
+
+function initMissionLogic() {
+  const category = $("#missionCategory");
+  const sharedFields = $("#missionSharedFields");
+  const officialFields = $("#missionOfficialFields");
+  const corporateFields = $("#missionCorporateFields");
+  const typeOfficial = $("#missionTypeOfficial");
+  const groupField = $("#missionGroupStaffField");
+  const startDate = $("#missionStartDate");
+  const endDate = $("#missionEndDate");
+  const duration = $("#missionDuration");
+  const missionNum = $("#missionNumber");
+  
+  if (!category) return;
+
+  function syncCategory() {
+    const val = category.value;
+    if (val) sharedFields.classList.remove("hidden");
+    else sharedFields.classList.add("hidden");
+
+    officialFields.classList.toggle("hidden", val !== "official");
+    corporateFields.classList.toggle("hidden", val !== "corporate");
+    
+    if (val === "official" && !missionNum.value) {
+      missionNum.value = Math.floor(Math.random() * 900 + 100) + "/1404";
+    }
+  }
+
+  function syncGroup() {
+    if (typeOfficial.value === "group") {
+      groupField.classList.remove("hidden");
+    } else {
+      groupField.classList.add("hidden");
+    }
+  }
+
+  function calcDuration() {
+    const s = startDate.value.trim();
+    const e = endDate.value.trim();
+    if (!s || !e || s.length < 10 || e.length < 10) {
+      duration.value = "";
+      return;
+    }
+    const sParts = s.split("/");
+    const eParts = e.split("/");
+    if (sParts.length !== 3 || eParts.length !== 3) return;
+    
+    function jdn(jy, jm, jd) {
+      jy = parseInt(jy); jm = parseInt(jm); jd = parseInt(jd);
+      let gy = (jy <= 979) ? 621 : 1600;
+      jy -= (jy <= 979) ? 0 : 979;
+      let days = (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + 78 + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+      return days + 365 * gy + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400) - 1;
+    }
+    
+    try {
+      const sJdn = jdn(sParts[0], sParts[1], sParts[2]);
+      const eJdn = jdn(eParts[0], eParts[1], eParts[2]);
+      const diff = eJdn - sJdn + 1;
+      if (diff > 0) {
+        duration.value = diff + " روز";
+      } else {
+        duration.value = "تاریخ نامعتبر";
+      }
+    } catch(err) {
+      duration.value = "";
+    }
+  }
+
+  category.addEventListener("change", syncCategory);
+  if (typeOfficial) typeOfficial.addEventListener("change", syncGroup);
+  if (startDate) startDate.addEventListener("change", calcDuration);
+  if (endDate) endDate.addEventListener("change", calcDuration);
+  if (startDate) startDate.addEventListener("blur", calcDuration);
+  if (endDate) endDate.addEventListener("blur", calcDuration);
+  
+  syncCategory();
+  syncGroup();
+}
+
+function initMissionPersonnel() {
+  const searchInput = $("#missionPersonnel");
+  const listBox = $("#missionPersonnelList");
+  const chipBox = $("#selectedMissionPersonnel");
+  const hiddenId = $("#missionPersonnelId");
+  if (!searchInput) return;
+
+  let selected = null;
+
+  function renderList(items) {
+    listBox.innerHTML = "";
+    if (!items.length) {
+      listBox.innerHTML = `<div class="personnel-empty">نتیجه‌ای یافت نشد</div>`;
+      return;
+    }
+    items.forEach(p => {
+      const isSelected = selected && selected.id === p.id;
+      const item = document.createElement("div");
+      item.className = "personnel-item" + (isSelected ? " selected" : "");
+      item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        if (selected && selected.id === p.id) selected = null;
+        else selected = p;
+        renderChip();
+        listBox.classList.add("hidden");
+        searchInput.value = selected ? selected.fullName : "";
+      });
+      listBox.appendChild(item);
+    });
+  }
+
+  function renderChip() {
+    chipBox.innerHTML = "";
+    if (!selected) { hiddenId.value = ""; return; }
+    hiddenId.value = selected.id;
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.innerHTML = `<span>${selected.fullName}</span><button type="button" class="chip-remove" title="حذف">×</button>`;
+    chip.querySelector(".chip-remove").addEventListener("click", () => {
+      selected = null;
+      searchInput.value = "";
+      renderChip();
+      renderList(filterList(""));
+    });
+    chipBox.appendChild(chip);
+  }
+
+  function filterList(q) { return q ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)) : PERSONNEL; }
+
+  searchInput.addEventListener("focus", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("input", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => listBox.classList.add("hidden"), 200);
+  });
+}
+
+function initMissionGroupStaff() {
+  const searchInput = $("#missionGroupStaffSearch");
+  const listBox = $("#missionGroupStaffList");
+  const chipsBox = $("#selectedMissionGroupStaff");
+  const hiddenIds = $("#missionGroupStaffIds");
+  if (!searchInput) return;
+
+  let selected = [];
+
+  function updateHidden() { hiddenIds.value = JSON.stringify(selected.map(s => s.id)); }
+
+  function renderChips() {
+    chipsBox.innerHTML = "";
+    selected.forEach(person => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.innerHTML = `<span>${person.fullName}</span><button type="button" class="chip-remove" title="حذف">×</button>`;
+      chip.querySelector(".chip-remove").addEventListener("click", () => {
+        selected = selected.filter(s => s.id !== person.id);
+        updateHidden();
+        renderChips();
+        renderList(filterList(searchInput.value.trim().toLowerCase()));
+      });
+      chipsBox.appendChild(chip);
+    });
+  }
+
+  function filterList(q) { return q ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)) : PERSONNEL; }
+
+  function renderList(items) {
+    listBox.innerHTML = "";
+    if (!items.length) {
+      listBox.innerHTML = `<div class="personnel-empty">نتیجه‌ای یافت نشد</div>`;
+      return;
+    }
+    items.forEach(p => {
+      const isSelected = selected.some(s => s.id === p.id);
+      const item = document.createElement("div");
+      item.className = "personnel-item" + (isSelected ? " selected" : "");
+      item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        if (selected.some(s => s.id === p.id)) selected = selected.filter(s => s.id !== p.id);
+        else selected.push(p);
+        updateHidden();
+        renderChips();
+        listBox.classList.add("hidden");
+      });
+      listBox.appendChild(item);
+    });
+  }
+
+  searchInput.addEventListener("focus", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("input", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => listBox.classList.add("hidden"), 200);
+  });
+}
+
+async function initMissionWordExport() {
+  const btn = $("#exportMissionWordBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const category = $("#missionCategory").value;
+    if (!category) return showToast("لطفاً ابتدا نوع مأموریت را انتخاب کنید", "error");
+
+    const location = $("#missionLocation").value.trim();
+    const subject = $("#missionSubject").value.trim();
+    const start = $("#missionStartDate").value.trim();
+    const end = $("#missionEndDate").value.trim();
+    const duration = $("#missionDuration").value;
+    const number = $("#missionNumber").value.trim();
+    const issueDate = $("#missionIssueDate").value.trim();
+    const post = $("#missionPost").value.trim();
+
+    if (!location || !start || !end) return showToast("لطفاً محل و تاریخ‌های مأموریت را کامل کنید", "error");
+
+    let personnelList = [];
+    if (category === "official" && $("#missionTypeOfficial").value === "group") {
+      const mainId = $("#missionPersonnelId").value;
+      const mainPerson = PERSONNEL.find(x => x.id === mainId);
+      if (mainPerson) personnelList.push(mainPerson.fullName);
+      
+      let groupIds = [];
+      try { groupIds = JSON.parse($("#missionGroupStaffIds").value || "[]"); } catch(e) {}
+      groupIds.forEach(id => {
+        const p = PERSONNEL.find(x => x.id === id);
+        if (p) personnelList.push(p.fullName);
+      });
+    } else {
+      const mainId = $("#missionPersonnelId").value;
+      const mainPerson = PERSONNEL.find(x => x.id === mainId);
+      if (mainPerson) personnelList.push(mainPerson.fullName);
+    }
+
+    if (personnelList.length === 0) return showToast("لطفاً نام پرسنل را انتخاب کنید", "error");
+
+    showToast("در حال ساخت فایل Word...", "success");
+
+    let logoBase64 = "";
+    try {
+      const baseUrl = window.location.protocol + '//' + window.location.host + window.location.pathname.replace('index.html', '');
+      const response = await fetch(baseUrl + 'img/logo.png');
+      if (response.ok) {
+        const blob = await response.blob();
+        logoBase64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+      }
+    } catch (e) { console.warn("لوگو پیدا نشد."); }
+
+    const headerStyle = `
+      <style>
+        @page { size: A4; margin: 1cm; }
+        body { font-family: 'B Nazanin', 'Nazanin', Tahoma, sans-serif; direction: rtl; font-size: 15px; color: #000; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; margin-bottom: 0; }
+        td, th { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; word-wrap: break-word; }
+        .header-table { border: none; margin-bottom: 15px; }
+        .header-table td { border: none; padding: 0; }
+        .logo { width: 80px; height: auto; }
+        .title { font-family: 'B Titr', 'Titr', Tahoma; font-size: 20px; font-weight: bold; margin: 5px 0; }
+        .page-break { page-break-after: always; }
+        .center { text-align: center; }
+      </style>
+    `;
+
+    let htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">${headerStyle}</head><body>`;
+    const imgTag = logoBase64 ? `<img src="${logoBase64}" class="logo" alt="لوگو">` : ``;
+
+    personnelList.forEach((personName, index) => {
+      if (category === "official") {
+        const typeOfficial = $("#missionTypeOfficial").value === "group" ? "☑ گروهی &nbsp;&nbsp; ☐ انفرادی" : "☐ گروهی &nbsp;&nbsp; ☑ انفرادی";
+        const acc = $("#missionAccommodation").value === "provided" ? "☑ تامین شده است &nbsp; ☐ تامین نشده است" : "☐ تامین شده است &nbsp; ☑ تامین نشده است";
+        const vehicle = $("#missionVehicle").value;
+        let vGov = "☐", vPersonal = "☐", vPlane = "☐", vTrain = "☐";
+        if(vehicle.includes("gov")) vGov = "☑";
+        else if(vehicle === "personal_car") vPersonal = "☑";
+        else if(vehicle === "plane") vPlane = "☑";
+        else if(vehicle === "train") vTrain = "☑";
+        
+        const equipment = $("#missionEquipment").value.trim();
+
+        htmlContent += `
+          <div class="${index < personnelList.length - 1 ? 'page-break' : ''}">
+            <table class="header-table">
+              <tr>
+                <td style="width: 25%; text-align: left;">${imgTag}</td>
+                <td style="width: 50%; text-align: center;">
+                  <div style="font-size: 16px;">بسمه تعالی</div>
+                  <div style="font-size: 15px; margin: 5px 0;">جمهوری اسلامی ایران</div>
+                  <div class="title">برگ ماموریت اداری</div>
+                  <div style="font-size: 14px;">« موضوع بند الف ماده 11 قانون استخدام »</div>
+                  <div style="font-size: 14px;">فرم ع - 119</div>
+                  <div style="font-size: 12px; color: #555;">(70-11) سازمان امور اداری استخدامی کشور</div>
+                </td>
+                <td style="width: 25%;"></td>
+              </tr>
+            </table>
+
+            <table>
+              <tr>
+                <td colspan="2">1- وزارت / موسسه: دانشگاه شیراز</td>
+                <td colspan="2">2- واحد اعزام کننده: حفاظت فیزیکی دانشگاه شیراز</td>
+              </tr>
+              <tr>
+                <td colspan="2">3- نام و نام خانوادگی: <b>${personName}</b></td>
+                <td colspan="2">4- عنوان پست سازمانی: ${post}</td>
+              </tr>
+              <tr>
+                <td colspan="2">5- نوع درخواست: ☑ صدور حکم ماموریت &nbsp; ☐ تمدید</td>
+                <td colspan="2">6- نوع ماموریت: ${typeOfficial}</td>
+              </tr>
+              <tr>
+                <td colspan="2">7- محل ماموریت: ${location}</td>
+                <td colspan="2">8- موضوع ماموریت: ${subject}</td>
+              </tr>
+              <tr>
+                <td colspan="2">9- مدت: ${duration}</td>
+                <td colspan="2">10- تاریخ ماموریت: از تاریخ ${start} تا تاریخ ${end}</td>
+              </tr>
+              <tr>
+                <td colspan="2">11- مدت تمدید ماموریت: ......................</td>
+                <td colspan="2">12- مجوز تمدید ماموریت: ......................</td>
+              </tr>
+              <tr>
+                <td colspan="2">13- محل اقامت: ${acc}</td>
+                <td colspan="2">14- نوع وسیله رفت و برگشت:<br>${vGov} وسیله نقلیه دولتی &nbsp; ${vPersonal} وسیله شخصی &nbsp; ${vPlane} هواپیما &nbsp; ${vTrain} قطار</td>
+              </tr>
+              <tr>
+                <td colspan="4">15- وسائل و تجهیزات مورد نیاز در ماموریت: ${equipment}</td>
+              </tr>
+              
+              <tr>
+                <td colspan="2" class="center" style="height: 120px;">
+                  16- نام و نام خانوادگی مسئول اعزام کننده:<br><br>
+                  <b>علیرضا کشاورزی</b><br>
+                  عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
+                  امضاء
+                </td>
+                <td colspan="2" class="center" style="height: 120px;">
+                  18- نام و نام خانوادگی مقام موافقت کننده:<br><br>
+                  <b>مهدی همتی</b><br>
+                  عنوان پست سازمانی: مدیر حراست دانشگاه شیراز<br><br>
+                  امضاء
+                </td>
+              </tr>
+              
+              <tr>
+                <td colspan="2">17- شماره درخواست: ${number}</td>
+                <td colspan="1">19- شماره: ${number}</td>
+                <td colspan="1">تاریخ: ${issueDate}</td>
+              </tr>
+              <tr>
+                <td colspan="4" style="padding: 12px;">20- فوق العاده روزانه و سایر هزینه ها از محل: ...................... تامین گردیده و پس از ...................... قابل پرداخت است.</td>
+              </tr>
+            </table>
+
+            <div style="margin-top: 25px;"></div>
+            
+            <table>
+              <tr>
+                <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                  21- نام و نام خانوادگی مسئول امور مالی:<br><br>
+                  عنوان پست سازمانی:<br><br>
+                  امضاء
+                </td>
+                <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                  22- شماره:<br><br>
+                  تاریخ:<br><br>
+                  امضاء
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                  23- نام و نام خانوادگی مسئول امور اداری:<br><br>
+                  عنوان پست سازمانی:<br><br>
+                  امضاء
+                </td>
+                <td colspan="2" class="center" style="height: 100px; width: 50%;">
+                  24- شماره:<br>
+                  تاریخ صدور حکم:<br><br>
+                  امضاء
+                </td>
+              </tr>
+              <tr>
+                <td colspan="4" style="height: 300px; vertical-align: top; padding: 15px;">25- گزارش مختصر ماموریت:<br><br><br><br><br><br><br><br>تاریخ:<br>امضاء</td>
+              </tr>
+              <tr>
+                <td colspan="4" style="padding: 15px; line-height: 1.8;">
+                  26- تائید ماموریت: انجام ماموریت فوق الذکر از تاریخ ${start} به مدت ${duration} مورد تائید می باشد.<br><br>
+                  نام و نام خانوادگی مسئول واحد اعزام کننده: علیرضا کشاورزی<br>
+                  عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
+                  امضاء
+                </td>
+              </tr>
+            </table>
+          </div>
+        `;
+      } 
+      else if (category === "corporate") {
+        const company = $("#missionCompanyName").value.trim();
+        const requestType = $("#missionRequestType").value === "issue" ? "صدور حکم ماموریت" : "تمدید";
+
+        htmlContent += `
+          <div class="${index < personnelList.length - 1 ? 'page-break' : ''}">
+            <table class="header-table">
+              <tr>
+                <td style="width: 25%; text-align: left;">${imgTag}</td>
+                <td style="width: 50%; text-align: center;">
+                  <div style="font-size: 16px;">بسمه تعالی</div>
+                  <div class="title" style="margin-top: 10px;">کارکنان شرکتی طرف قرارداد دانشگاه شیراز</div>
+                  <div style="font-size: 15px;">(${company})</div>
+                </td>
+                <td style="width: 25%;"></td>
+              </tr>
+            </table>
+
+            <table>
+              <tr>
+                <td colspan="2">1- وزارت / موسسه درخواست کننده: دانشگاه شیراز</td>
+                <td colspan="2">2- واحد اعزام کننده: حفاظت فیزیکی دانشگاه شیراز</td>
+              </tr>
+              <tr>
+                <td colspan="2">3- نام و نام خانوادگی: <b>${personName}</b></td>
+                <td colspan="2">4- عنوان پست سازمانی: ${post}</td>
+              </tr>
+              <tr>
+                <td colspan="2">5- نوع درخواست: ${requestType}</td>
+                <td colspan="2">6- (خالی)</td>
+              </tr>
+              <tr>
+                <td colspan="2">7- محل ماموریت: ${location}</td>
+                <td colspan="2">8- موضوع ماموریت: ${subject}</td>
+              </tr>
+              <tr>
+                <td colspan="2">9- مدت ماموریت: ${duration}</td>
+                <td colspan="2">10- تاریخ ماموریت: از تاریخ ${start} تا تاریخ ${end}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="height: 100px;">11- نام و نام خانوادگی مدیرعامل شرکت:<br><br>امضاء</td>
+                <td colspan="1">12- شماره: ${number}</td>
+                <td colspan="1">تاریخ: ${issueDate}</td>
+              </tr>
+              <tr>
+                <td colspan="2" class="center" style="padding: 25px; height: 150px;">
+                  13- نام و نام خانوادگی مسئول واحد اعزام کننده:<br><br>
+                  <b>علیرضا کشاورزی</b><br>
+                  عنوان پست سازمانی: رئیس اداره حفاظت فیزیکی مدیریت حراست<br><br>
+                  امضاء
+                </td>
+                <td colspan="2" class="center" style="padding: 25px; height: 150px;">
+                  14- نام و نام خانوادگی مقام موافقت کننده:<br><br>
+                  <b>مهدی همتی</b><br>
+                  عنوان پست سازمانی: مدیر حراست دانشگاه شیراز<br><br>
+                  امضاء
+                </td>
+              </tr>
+            </table>
+          </div>
+        `;
+      }
+    });
+
+    htmlContent += "</body></html>";
+
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Mission-${number.replace(/\//g, '-') || 'Draft'}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    
+    showToast("📄 فایل Word دانلود شد", "success");
   });
 }
 

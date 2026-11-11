@@ -1115,6 +1115,7 @@ function initReporterSelect() {
 
 
 function initReportTypeToggle() {
+  const typeSelectorSection = $("#typeSelectorSection");
   const commonInfoSection = $("#commonInfoSection");
   const locationSection = $("#locationSection");
   const personnelSection = $("#personnelSection");
@@ -1134,8 +1135,9 @@ function initReportTypeToggle() {
   function sync() {
     const selected = document.querySelector(`input[name="reportType"]:checked`);
     
-    // اگر هیچ کارتی انتخاب نشده باشد، همه‌چیز (حتی توضیحات و دکمه‌ها) پنهان شود
+    // حالت اولیه: نمایش کارت‌ها و مخفی کردن بقیه
     if (!selected) {
+      typeSelectorSection.classList.remove("hidden");
       commonInfoSection.classList.add("hidden");
       locationSection.classList.add("hidden");
       personnelSection.classList.add("hidden");
@@ -1155,11 +1157,11 @@ function initReportTypeToggle() {
 
     const type = selected.value;
     
-    // نمایش اطلاعات مشترک و دکمه‌های فرم
+    // حالت تمرکز: مخفی کردن کارت‌ها و نمایش فرم
+    typeSelectorSection.classList.add("hidden");
     commonInfoSection.classList.remove("hidden");
     formActions.classList.remove("hidden");
     
-    // پنهان کردن تمام بخش‌های اختصاصی
     locationSection.classList.add("hidden");
     personnelSection.classList.add("hidden");
     illnessSection.classList.add("hidden");
@@ -1171,7 +1173,6 @@ function initReportTypeToggle() {
     missionSection.classList.add("hidden");
     gatheringSection.classList.add("hidden");
 
-    // نمایش بخش مربوطه
     if (type === "patrol") {
       locationSection.classList.remove("hidden");
       personnelSection.classList.remove("hidden");
@@ -1206,11 +1207,25 @@ function initReportTypeToggle() {
       detailsSection.classList.remove("hidden");
     }
     
+    // اسکرول به بالای فرم هنگام باز شدن
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     renumberSections();
   }
 
   radios.forEach(r => r.addEventListener("change", sync));
   sync();
+
+  const backBtn = $("#backToCardsBtn");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      if (confirm("آیا از بازگشت به کارت‌ها مطمئن هستید؟ اطلاعات وارد شده پاک خواهند شد.")) {
+        document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
+        document.querySelector(`input[name="reportType"]`).dispatchEvent(new Event("change"));
+        // پاک کردن مقادیر فرم
+        $("#guardForm").reset();
+      }
+    });
+  }
 }
 
 function initIllnessConditionals() {

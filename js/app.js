@@ -224,6 +224,22 @@ function initRecentActions() {
     renderRecentReports();
     showToast("🗑️ گزارش‌ها پاک شدند", "success");
   });
+
+  // منطق حذف تک‌گزارش
+  $("#recentList").addEventListener("click", (e) => {
+    const deleteBtn = e.target.closest(".recent-item-delete");
+    if (!deleteBtn) return;
+    
+    const reportId = deleteBtn.getAttribute("data-id");
+    if (!confirm("آیا از حذف این گزارش مطمئن هستید؟")) return;
+    
+    const all = loadReports();
+    const filtered = all.filter(r => r.id !== reportId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    
+    renderRecentReports();
+    showToast("🗑️ گزارش با موفقیت حذف شد", "success");
+  });
 }
 
 let toastTimer;
@@ -564,6 +580,7 @@ function renderRecentReports() {
             ${metaText} • ساعت ${r.reportTime || "—"} • تاریخ ${r.reportDate || "—"} ${statusHtml}
           </div>
         </div>
+        <button class="recent-item-delete" data-id="${r.id}" title="حذف گزارش">🗑</button>
       </div>
     `;
   }).join("");

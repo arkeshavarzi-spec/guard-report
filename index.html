@@ -653,7 +653,80 @@
 
       <section class="form-section hidden" id="gatheringSection">
         <div class="section-title"><span class="step-badge">۳</span><h2>اطلاعات گزارش تجمع</h2></div>
-        <p style="padding: 20px; text-align: center; color: #64748b;">(محتوای این بخش در گام‌های بعدی ساخته می‌شود)</p>
+        
+        <div class="field-row">
+          <div class="field">
+            <label for="gatheringDate">تاریخ تجمع (شمسی)</label>
+            <input type="text" id="gatheringDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" />
+          </div>
+          <div class="field">
+            <label for="gatheringStartTime">ساعت شروع تجمع</label>
+            <input type="time" id="gatheringStartTime" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="gatheringEndTime">ساعت پایان تجمع</label>
+            <input type="time" id="gatheringEndTime" />
+          </div>
+          <div class="field">
+            <label for="gatheringPeopleCount">تعداد تقریبی افراد</label>
+            <input type="text" id="gatheringPeopleCount" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="مثلاً 50" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="gatheringReason">علت تجمع</label>
+            <select id="gatheringReason">
+              <option value="">— انتخاب کنید —</option>
+              <option value="guild">صنفی</option>
+              <option value="political">سیاسی</option>
+              <option value="cultural">فرهنگی و اجتماعی</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="gatheringSubject">موضوع تجمع</label>
+            <input type="text" id="gatheringSubject" placeholder="موضوع اصلی تجمع..." />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="gatheringSpeaker">سخنران / رهبر تجمع (اختیاری)</label>
+            <input type="text" id="gatheringSpeaker" placeholder="نام سخنران..." />
+          </div>
+          <div class="field">
+            <label for="gatheringOrganizers">برگزارکنندگان تجمع</label>
+            <input type="text" id="gatheringOrganizers" placeholder="نام برگزارکنندگان..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="gatheringLocation">محل دقیق تجمع</label>
+          <input type="text" id="gatheringLocation" placeholder="مثلاً: محوطه دانشکده مهندسی" />
+        </div>
+
+        <div class="field">
+          <label for="gatheringTension">آیا تنش یا درگیری رخ داده است؟</label>
+          <select id="gatheringTension">
+            <option value="">— انتخاب کنید —</option>
+            <option value="yes">بله</option>
+            <option value="no">خیر</option>
+          </select>
+        </div>
+
+        <div class="field hidden" id="gatheringTensionDetailsField">
+          <label for="gatheringTensionDetails">توضیحات تنش / درگیری</label>
+          <textarea id="gatheringTensionDetails" rows="2" placeholder="شرح مختصر درگیری..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="gatheringActions">اقدامات حفاظتی انجام‌شده</label>
+          <textarea id="gatheringActions" rows="2" placeholder="اقدامات پرسنل حفاظت فیزیکی..."></textarea>
+        </div>
       </section>
       <section class="form-section" id="locationSection">
         <div class="section-title">

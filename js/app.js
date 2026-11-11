@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initFormReset();
   initCeremonyStaff();
   initFireConditionals();
+  initGatheringConditionals();
   initFireStaffSearch();
   initPhotoUploader();
   initFormSubmit();
@@ -113,6 +114,7 @@ function initRecentActions() {
       theftProbableTime: "زمان وقوع احتمالی", theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته",
       theftDoorStatus: "وضعیت قفل/درب", theftEvidence: "شواهد", theftActions: "اقدامات",
       theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
+      gatheringDate: "تاریخ تجمع", gatheringStartTime: "ساعت شروع", gatheringEndTime: "ساعت پایان", gatheringPeopleCount: "تعداد افراد", gatheringReason: "علت تجمع", gatheringSubject: "موضوع تجمع", gatheringSpeaker: "سخنران", gatheringOrganizers: "برگزارکنندگان", gatheringLocation: "محل تجمع", gatheringTension: "تنش/درگیری", gatheringTensionDetails: "جزئیات تنش", gatheringActions: "اقدامات حفاظتی",
       discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
       cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها"
     };
@@ -134,6 +136,8 @@ function initRecentActions() {
       theftDoorStatus: { intact: "سالم", broken: "شکسته", open: "باز" },
       theftActions: { police: "تماس با پلیس", security: "تماس با حراست", cctv: "بررسی دوربین", other: "سایر" },
       theftFollowUp: { yes: "بله", no: "خیر" },
+      gatheringReason: { guild: "صنفی", political: "سیاسی", cultural: "فرهنگی و اجتماعی", other: "سایر" },
+      gatheringTension: { yes: "بله", no: "خیر" },
       discType: { student: "تخلفات دانشجویی", employee: "تخلفات اداری" },
       discRef: { committee: "کمیته انضباطی", security: "حراست", education: "آموزش", other: "سایر" },
       discFollowUp: { yes: "بله", no: "خیر" }
@@ -155,6 +159,8 @@ function initRecentActions() {
         cols = ['reportDate', 'reportTime', 'reporterName', 'fireDate', 'fireTime', 'fireLocation', 'fireCause', 'fireCauseOther', 'fireDamageLevel', 'fireDeptCalled', 'fireDeptCallTime', 'fireDeptArriveTime', 'fireCasualties', 'fireCasualtyDetails', 'fireFinancialDamage', 'fireDamageDetails', 'fireInitialActions', 'fireStaffNames', 'notes'];
       } else if (type === 'incident') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'incidentSubject', 'incidentDesc', 'incidentActions', 'incidentAnalysis', 'incidentFollowUp', 'notes'];
+      } else if (type === 'gathering') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'gatheringDate', 'gatheringStartTime', 'gatheringEndTime', 'gatheringPeopleCount', 'gatheringReason', 'gatheringSubject', 'gatheringSpeaker', 'gatheringOrganizers', 'gatheringLocation', 'gatheringTension', 'gatheringTensionDetails', 'gatheringActions', 'notes'];
       } else if (type === 'theft') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'theftItemType', 'theftItemDesc', 'theftAssetNo', 'theftValue', 'theftLocation', 'theftDiscoverTime', 'theftProbableTime', 'theftVictimName', 'theftVictimPhone', 'theftDoorStatus', 'theftEvidence', 'theftActions', 'theftPoliceCase', 'theftFollowUp', 'notes'];
       } else if (type === 'disciplinary') {
@@ -348,6 +354,24 @@ function initFormSubmit() {
       report.incidentFollowUp = $("#incidentFollowUp").value;
       if (!report.incidentSubject) return showToast("لطفاً موضوع گزارش را وارد کنید", "error");
       if (!report.incidentDesc) return showToast("لطفاً شرح واقعه را وارد کنید", "error");
+    } else if (reportType === "gathering") {
+      report.gatheringDate = $("#gatheringDate").value.trim();
+      report.gatheringStartTime = $("#gatheringStartTime").value;
+      report.gatheringEndTime = $("#gatheringEndTime").value;
+      report.gatheringPeopleCount = $("#gatheringPeopleCount").value.trim();
+      report.gatheringReason = $("#gatheringReason").value;
+      report.gatheringSubject = $("#gatheringSubject").value.trim();
+      report.gatheringSpeaker = $("#gatheringSpeaker").value.trim();
+      report.gatheringOrganizers = $("#gatheringOrganizers").value.trim();
+      report.gatheringLocation = $("#gatheringLocation").value.trim();
+      report.gatheringTension = $("#gatheringTension").value;
+      report.gatheringTensionDetails = $("#gatheringTensionDetails").value.trim();
+      report.gatheringActions = $("#gatheringActions").value.trim();
+
+      if (!report.gatheringDate) return showToast("لطفاً تاریخ تجمع را وارد کنید", "error");
+      if (!report.gatheringReason) return showToast("لطفاً علت تجمع را انتخاب کنید", "error");
+      if (!report.gatheringSubject) return showToast("لطفاً موضوع تجمع را وارد کنید", "error");
+      if (!report.gatheringLocation) return showToast("لطفاً محل تجمع را وارد کنید", "error");
     } else if (reportType === "theft") {
       report.theftItemType = $("#theftItemType").value;
       report.theftItemDesc = $("#theftItemDesc").value.trim();
@@ -452,6 +476,21 @@ function saveReport(report) {
   
   $("#illnessSection").classList.add("hidden");
   $("#incidentSection").classList.add("hidden");
+  $("#gatheringSection").classList.add("hidden");
+  $("#gatheringDate").value = "";
+  $("#gatheringStartTime").value = "";
+  $("#gatheringEndTime").value = "";
+  $("#gatheringPeopleCount").value = "";
+  $("#gatheringReason").value = "";
+  $("#gatheringSubject").value = "";
+  $("#gatheringSpeaker").value = "";
+  $("#gatheringOrganizers").value = "";
+  $("#gatheringLocation").value = "";
+  $("#gatheringTension").value = "";
+  $("#gatheringTensionDetails").value = "";
+  $("#gatheringActions").value = "";
+  $("#gatheringTensionDetailsField").classList.add("hidden");
+  
   $("#theftSection").classList.add("hidden");
   $("#discSection").classList.add("hidden");
   $("#ceremonySection").classList.add("hidden");
@@ -499,6 +538,8 @@ function renderRecentReports() {
       title += ` — ${r.patientName || "بدون نام"}`;
     } else if (r.reportType === "fire") {
       title += ` — ${r.fireLocation || "بدون محل"}`;
+    } else if (r.reportType === "gathering") {
+      title += ` — ${r.gatheringSubject || "بدون موضوع"}`;
     } else if (r.reportType === "incident") {
       title += ` — ${r.incidentSubject || "بدون موضوع"}`;
     } else if (r.reportType === "theft") {
@@ -896,6 +937,24 @@ function renumberSections() {
 }
 
 
+
+
+function initGatheringConditionals() {
+  const tensionSelect = $("#gatheringTension");
+  const tensionDetails = $("#gatheringTensionDetailsField");
+  if (!tensionSelect) return;
+
+  function sync() {
+    if (tensionSelect.value === "yes") {
+      tensionDetails.classList.remove("hidden");
+    } else {
+      tensionDetails.classList.add("hidden");
+    }
+  }
+
+  tensionSelect.addEventListener("change", sync);
+  sync();
+}
 
 function initFireConditionals() {
   const deptCalled = $("#fireDeptCalled");

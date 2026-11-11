@@ -530,13 +530,11 @@
       <template id="staffRowTemplate">
         <div class="staff-row">
           <div class="field">
-            <label>جستجوی نام نیرو</label>
-            <input type="text" class="staff-search" placeholder="تایپ کنید..."  />
+            <input type="text" class="staff-search" placeholder="جستجوی نام..." autocomplete="off" />
           </div>
           <div class="field">
-            <label>سمت</label>
             <select class="staff-role">
-              <option value="">— انتخاب کنید —</option>
+              <option value="">انتخاب سمت...</option>
               <option value="مسئول حفاظت فیزیکی">مسئول حفاظت فیزیکی</option>
               <option value="نیروی حفاظت فیزیکی">نیروی حفاظت فیزیکی</option>
               <option value="بازرسی بدنی">بازرسی بدنی</option>
@@ -544,16 +542,11 @@
             </select>
           </div>
           <div class="field">
-            <label>ساعت حضور</label>
-            <input type="text" class="staff-hours" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" placeholder="۸" />
+            <input type="text" class="staff-hours" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" placeholder="ساعت حضور" />
           </div>
+          <input type="hidden" class="staff-national-id" />
           <div class="field">
-            <label>کد ملی</label>
-            <input type="text" class="staff-national-id" readonly style="background: #e2e8f0;" placeholder="خودکار" />
-          </div>
-          <div class="field">
-            <label>شماره شبا</label>
-            <input type="text" class="staff-shaba" placeholder="IR..." style="text-align: left; direction: ltr;" />
+            <input type="text" class="staff-shaba" placeholder="شماره شبا" style="text-align: left; direction: ltr;" />
           </div>
           <button type="button" class="btn-remove-staff" title="حذف">×</button>
         </div>
@@ -958,16 +951,13 @@
       <template id="gatheringStaffRowTemplate">
         <div class="gather-staff-row">
           <div class="field">
-            <label>نام و نام خانوادگی</label>
-            <input type="text" class="gather-staff-search" placeholder="جستجو..." autocomplete="off" />
+            <input type="text" class="gather-staff-search" placeholder="جستجوی نام..." autocomplete="off" />
           </div>
           <div class="field">
-            <label>کد ملی</label>
-            <input type="text" class="gather-staff-national-id" readonly style="background: #e2e8f0;" placeholder="خودکار" />
+            <input type="text" class="gather-staff-national-id" readonly style="background: #e2e8f0;" placeholder="کد ملی" />
           </div>
           <div class="field">
-            <label>ساعت حضور</label>
-            <input type="text" class="gather-staff-hours" inputmode="numeric" placeholder="مثلاً ۴" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" />
+            <input type="text" class="gather-staff-hours" inputmode="numeric" placeholder="ساعت حضور" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" />
           </div>
           <button type="button" class="btn-remove-gather-staff" title="حذف">×</button>
         </div>

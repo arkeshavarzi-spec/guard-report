@@ -823,11 +823,14 @@ textarea {
 @media (max-width: 640px) {
   .type-selector {
     grid-template-columns: repeat(2, 1fr) !important;
+    align-items: start !important; /* جلوگیری از کشیده شدن کارت‌ها */
   }
   .type-card-content {
     flex-direction: column !important;
-    padding: 14px 8px !important;
-    gap: 6px !important;
+    padding: 16px 8px !important;
+    gap: 8px !important;
+    min-height: 90px; /* ارتفاع حداقلی ثابت برای زیبایی */
+    justify-content: center !important;
   }
   .type-icon {
     font-size: 1.4rem !important;

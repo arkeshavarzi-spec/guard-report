@@ -1118,114 +1118,76 @@ function initReporterSelect() {
 function initReportTypeToggle() {
   const typeSelectorSection = $("#typeSelectorSection");
   const commonInfoSection = $("#commonInfoSection");
-  const locationSection = $("#locationSection");
-  const personnelSection = $("#personnelSection");
-  const detailsSection = $("#detailsSection");
-  const illnessSection = $("#illnessSection");
-  const incidentSection = $("#incidentSection");
-  const theftSection = $("#theftSection");
-  const discSection = $("#discSection");
-  const ceremonySection = $("#ceremonySection");
-  const fireSection = $("#fireSection");
-  const missionSection = $("#missionSection");
-  const gatheringSection = $("#gatheringSection");
   const formActions = $("#formActions");
   const statusSelect = $("#status");
   
-  // تغییر ۱: انتخاب مستقیم کارت‌ها برای رویداد کلیک (بسیار پایدارتر در موبایل)
-  const typeCards = document.querySelectorAll('.type-card');
+  const allSections = [
+    "locationSection", "personnelSection", "detailsSection", 
+    "illnessSection", "incidentSection", "theftSection", 
+    "discSection", "ceremonySection", "fireSection", 
+    "missionSection", "gatheringSection"
+  ];
 
   function sync() {
     const selected = document.querySelector(`input[name="reportType"]:checked`);
     
+    // حالت اولیه: نمایش کارت‌ها، مخفی کردن بقیه
     if (!selected) {
-      typeSelectorSection.classList.remove("hidden");
-      commonInfoSection.classList.add("hidden");
-      locationSection.classList.add("hidden");
-      personnelSection.classList.add("hidden");
-      detailsSection.classList.add("hidden");
-      illnessSection.classList.add("hidden");
-      incidentSection.classList.add("hidden");
-      theftSection.classList.add("hidden");
-      discSection.classList.add("hidden");
-      ceremonySection.classList.add("hidden");
-      fireSection.classList.add("hidden");
-      missionSection.classList.add("hidden");
-      gatheringSection.classList.add("hidden");
-      formActions.classList.add("hidden");
-      renumberSections();
+      if (typeSelectorSection) typeSelectorSection.classList.remove("hidden");
+      if (commonInfoSection) commonInfoSection.classList.add("hidden");
+      if (formActions) formActions.classList.add("hidden");
+      
+      allSections.forEach(id => {
+        const el = $("#" + id);
+        if (el) el.classList.add("hidden");
+      });
+      
+      if (typeof renumberSections === "function") renumberSections();
       return;
     }
 
     const type = selected.value;
     
-    // تغییر ۲: استفاده از setTimeout برای جلوگیری از باگ لمس در موبایل
-    setTimeout(() => {
-      typeSelectorSection.classList.add("hidden");
-      commonInfoSection.classList.remove("hidden");
-      formActions.classList.remove("hidden");
-      
-      locationSection.classList.add("hidden");
-      personnelSection.classList.add("hidden");
-      illnessSection.classList.add("hidden");
-      incidentSection.classList.add("hidden");
-      theftSection.classList.add("hidden");
-      discSection.classList.add("hidden");
-      ceremonySection.classList.add("hidden");
-      fireSection.classList.add("hidden");
-      missionSection.classList.add("hidden");
-      gatheringSection.classList.add("hidden");
+    // حالت تمرکز: مخفی کردن کارت‌ها، نمایش فرم
+    if (typeSelectorSection) typeSelectorSection.classList.add("hidden");
+    if (commonInfoSection) commonInfoSection.classList.remove("hidden");
+    if (formActions) formActions.classList.remove("hidden");
+    
+    allSections.forEach(id => {
+      const el = $("#" + id);
+      if (el) el.classList.add("hidden");
+    });
 
-      if (type === "patrol") {
-        locationSection.classList.remove("hidden");
-        personnelSection.classList.remove("hidden");
-        if (statusSelect.value === "normal") {
-          detailsSection.classList.add("hidden");
-        } else {
-          detailsSection.classList.remove("hidden");
-        }
-      } else if (type === "illness") {
-        illnessSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "incident") {
-        incidentSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "theft") {
-        theftSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "disciplinary") {
-        discSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "ceremony") {
-        ceremonySection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "fire") {
-        fireSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "mission") {
-        missionSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
-      } else if (type === "gathering") {
-        gatheringSection.classList.remove("hidden");
-        detailsSection.classList.remove("hidden");
+    // نمایش بخش مربوطه
+    if (type === "patrol") {
+      $("#locationSection").classList.remove("hidden");
+      $("#personnelSection").classList.remove("hidden");
+      if (statusSelect.value !== "normal") {
+        $("#detailsSection").classList.remove("hidden");
       }
-      
-      // تغییر ۳: اسکرول دقیق‌تر به بخش اطلاعات مشترک (بسیار نرم‌تر در موبایل)
+    } else {
+      // برای بقیه کارت‌ها، بخش اختصاصی و توضیحات باز می‌شوند
+      const sectionMap = {
+        illness: "illnessSection", incident: "incidentSection", theft: "theftSection",
+        disciplinary: "discSection", ceremony: "ceremonySection", fire: "fireSection",
+        mission: "missionSection", gathering: "gatheringSection"
+      };
+      const targetSec = $("#" + sectionMap[type]);
+      if (targetSec) targetSec.classList.remove("hidden");
+      $("#detailsSection").classList.remove("hidden");
+    }
+    
+    if (typeof renumberSections === "function") renumberSections();
+
+    // اسکرول امن در موبایل
+    setTimeout(() => {
       if (commonInfoSection) {
         commonInfoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      renumberSections();
-    }, 50); // ۵۰ میلی‌ثانیه تاخیر برای تکمیل لمس
+    }, 100);
   }
 
-  // اتصال رویداد کلیک به خود کارت‌ها (در موبایل عالی کار می‌کند)
-  typeCards.forEach(card => {
-    card.addEventListener('click', () => {
-      sync();
-    });
-  });
-
-  // اتصال رویداد change به رادیوها (برای پشتیبانی از کیبورد در دسکتاپ)
+  // فقط و فقط به رویداد change گوش می‌دهیم (پایدارترین روش در موبایل)
   document.querySelectorAll(`input[name="reportType"]`).forEach(r => {
     r.addEventListener("change", sync);
   });
@@ -1238,16 +1200,20 @@ function initBackToCards() {
   if (backBtn) {
     backBtn.addEventListener("click", () => {
       if (confirm("آیا از بازگشت به کارت‌ها مطمئن هستید؟ اطلاعات وارد شده پاک خواهند شد.")) {
+        // برداشتن تیک تمام رادیوها
         document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
+        // پاک کردن فرم
         $("#guardForm").reset();
         
-        // رفع باگ دکمه بازگشت در موبایل با تاخیر
+        // فراخوانی دستی رویداد change برای بازگرداندن به حالت اولیه
+        const firstRadio = document.querySelector(`input[name="reportType"]`);
+        if (firstRadio) firstRadio.dispatchEvent(new Event("change"));
+        
+        // اسکرول به بالای کارت‌ها
         setTimeout(() => {
-          const typeSelectorSection = $("#typeSelectorSection");
-          if (typeSelectorSection) typeSelectorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          const syncEvent = new Event("change");
-          document.querySelector(`input[name="reportType"]`).dispatchEvent(syncEvent);
-        }, 50);
+          const typeSelector = $("#typeSelectorSection");
+          if (typeSelector) typeSelector.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
       }
     });
   }

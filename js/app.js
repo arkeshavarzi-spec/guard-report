@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initStatusToggle();
   initFormReset();
   initCeremonyStaff();
+  initFireConditionals();
+  initFireStaffSearch();
   initPhotoUploader();
   initFormSubmit();
   initRecentActions();
@@ -101,26 +103,18 @@ function initRecentActions() {
       emergencyCalledTime: "ساعت تماس با اورژانس", emergencyArrivedTime: "ساعت رسیدن اورژانس", 
       illnessDestination: "مقصد", transportMethod: "نحوه انتقال", reportSource: "منبع اعلام",
       returnTime: "ساعت بازگشت", returnDestination: "مقصد بازگشت",
-      incidentType: "نوع مورد", incidentDesc: "شرح واقعه", incidentActions: "اقدامات انجام‌شده", incidentAnalysis: "تحلیل", incidentFollowUp: "نیاز به پیگیری",
+      incidentSubject: "موضوع گزارش", incidentDesc: "شرح واقعه", incidentActions: "اقدامات", incidentAnalysis: "تحلیل", incidentFollowUp: "پیگیری",
+      fireDate: "تاریخ حریق", fireTime: "ساعت حریق", fireLocation: "محل حریق", fireCause: "علت احتمالی", fireCauseOther: "توضیح علت",
+      fireDeptCalled: "تماس با آتش‌نشانی", fireDeptCallTime: "ساعت تماس", fireDeptArriveTime: "ساعت رسیدن", fireDamageLevel: "میزان خسارت",
+      fireCasualties: "خسارت جانی", fireCasualtyDetails: "جزئیات صدمات", fireFinancialDamage: "خسارت مالی", fireDamageDetails: "جزئیات خسارت مالی",
+      fireInitialActions: "اقدامات اولیه", fireStaffNames: "نیروهای اطفاء",
       theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال",
       theftValue: "تخمین ارزش (ریال)", theftLocation: "محل دقیق", theftDiscoverTime: "زمان کشف",
       theftProbableTime: "زمان وقوع احتمالی", theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته",
       theftDoorStatus: "وضعیت قفل/درب", theftEvidence: "شواهد", theftActions: "اقدامات",
       theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
       discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
-      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها",
-      theftItemType: "نوع مال", theftItemDesc: "شرح مال", theftAssetNo: "شماره اموال", theftValue: "تخمین ارزش (ریال)",
-      theftLocation: "محل سرقت", theftDiscoverTime: "زمان کشف", theftProbableTime: "زمان وقوع احتمالی",
-      theftVictimName: "مالباخته", theftVictimPhone: "تلفن مالباخته", theftDoorStatus: "وضعیت قفل/درب",
-      theftEvidence: "شواهد", theftActions: "اقدامات", theftPoliceCase: "شماره پرونده", theftFollowUp: "نیاز به پیگیری",
-      discDate: "تاریخ وقوع", discTime: "ساعت وقوع", discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد", discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
-      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها",
-      discType: "نوع تخلف", discName: "متخلف", discId: "شماره دانشجویی/پرسنلی", discUnit: "واحد",
-      discLocation: "محل", discDesc: "شرح تخلف", discWitness: "شاهد", discActions: "اقدامات اولیه", 
-      discRef: "ارجاع به", discCaseNo: "شماره پرونده", discFollowUp: "نیاز به پیگیری",
-      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها",
-      cerName: "نام برنامه", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع",
-      cerEndTime: "ساعت پایان", cerOrganizer: "برگزارکننده", cerStaff: "نیروها"
+      cerName: "نام برنامه", cerOrganizer: "برگزارکننده", cerDate: "تاریخ برگزاری", cerLocation: "مکان", cerStartTime: "ساعت شروع", cerEndTime: "ساعت پایان", cerStaff: "نیروها"
     };
 
     const valueTranslations = {
@@ -132,8 +126,10 @@ function initRecentActions() {
       transportMethod: { emergency: "اورژانس", personalCar: "خودروی شخصی", other: "سایر" },
       reportSource: { external: "از بیرون", internal: "داخلی", self: "خود بیمار" },
       returnDestination: { university: "دانشگاه", dorm: "خوابگاه", home: "منزل", other: "سایر" },
-      incidentType: { fire: "کشف حریق", fight: "درگیری", vandalism: "تخریب", gathering: "تجمع", other: "سایر" },
       incidentFollowUp: { yes: "بله", no: "خیر" },
+      fireCause: { electrical: "اتصال برق", negligence: "سهل‌انگاری", arson: "عمدی", other: "سایر" },
+      fireDamageLevel: { none: "بدون آسیب", minor: "جزئی", moderate: "متوسط", severe: "سنگین" },
+      fireDeptCalled: { yes: "بله", no: "خیر" }, fireCasualties: { yes: "بله", no: "خیر" }, fireFinancialDamage: { yes: "بله", no: "خیر" },
       theftItemType: { equipment: "تجهیزات", money: "پول", personal: "وسایل شخصی", other: "سایر" },
       theftDoorStatus: { intact: "سالم", broken: "شکسته", open: "باز" },
       theftActions: { police: "تماس با پلیس", security: "تماس با حراست", cctv: "بررسی دوربین", other: "سایر" },
@@ -144,7 +140,7 @@ function initRecentActions() {
     };
 
     const wb = XLSX.utils.book_new();
-    const typesMap = { patrol: "گشت شبانه", illness: "گزارش بیماری", incident: "گزارش موردی", theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات" };
+    const typesMap = { patrol: "گشت شبانه", illness: "گزارش بیماری", fire: "گزارش حریق", mission: "مأموریت", gathering: "گزارش تجمع", incident: "گزارش موردی", theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات" };
     let hasData = false;
 
     for (const type in typesMap) {
@@ -155,34 +151,31 @@ function initRecentActions() {
       let cols = [];
       if (type === 'patrol') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'locationLabel', 'postLabel', 'status', 'personnelNames', 'notes'];
+      } else if (type === 'fire') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'fireDate', 'fireTime', 'fireLocation', 'fireCause', 'fireCauseOther', 'fireDamageLevel', 'fireDeptCalled', 'fireDeptCallTime', 'fireDeptArriveTime', 'fireCasualties', 'fireCasualtyDetails', 'fireFinancialDamage', 'fireDamageDetails', 'fireInitialActions', 'fireStaffNames', 'notes'];
+      } else if (type === 'incident') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'incidentSubject', 'incidentDesc', 'incidentActions', 'incidentAnalysis', 'incidentFollowUp', 'notes'];
+      } else if (type === 'theft') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'theftItemType', 'theftItemDesc', 'theftAssetNo', 'theftValue', 'theftLocation', 'theftDiscoverTime', 'theftProbableTime', 'theftVictimName', 'theftVictimPhone', 'theftDoorStatus', 'theftEvidence', 'theftActions', 'theftPoliceCase', 'theftFollowUp', 'notes'];
+      } else if (type === 'disciplinary') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'discDate', 'discTime', 'discType', 'discName', 'discId', 'discUnit', 'discLocation', 'discDesc', 'discWitness', 'discActions', 'discRef', 'discCaseNo', 'discFollowUp', 'notes'];
+      } else if (type === 'illness') {
+        cols = ['reportDate', 'reportTime', 'reporterName', 'patientType', 'patientName', 'patientId', 'patientUnit', 'patientOtherReason', 'illnessLocation', 'visitReason', 'companionName', 'companionId', 'companionPhone', 'actionType', 'emergencyCalledTime', 'emergencyArrivedTime', 'illnessDestination', 'transportMethod', 'reportSource', 'returnTime', 'returnDestination', 'notes'];
       } else if (type === 'ceremony') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'cerName', 'cerOrganizer', 'cerDate', 'cerLocation', 'cerStartTime', 'cerEndTime', 'cerStaff', 'notes'];
         
-        // ساخت شیت جداگانه برای نیروهای هر مراسم
         typeReports.forEach((cer, index) => {
           if (cer.cerStaff && cer.cerStaff.length > 0) {
             const staffData = cer.cerStaff.map(s => ({
-              'نام نیرو': s.name,
-              'سمت': s.role || '',
-              'ساعت حضور': s.hours || '',
-              'کد ملی': s.nationalId || '',
-              'شماره شبا': s.shaba || ''
+              'نام نیرو': s.name, 'سمت': s.role || '', 'ساعت حضور': s.hours || '', 'کد ملی': s.nationalId || '', 'شماره شبا': s.shaba || ''
             }));
             const staffWs = XLSX.utils.json_to_sheet(staffData);
             let baseName = cer.cerName ? cer.cerName : 'مراسم';
             let sheetName = `نیروهای ${baseName}`.substring(0, 25);
-            if (index > 0) sheetName += ` (${index})`; // جلوگیری از تکراری بودن نام شیت
+            if (index > 0) sheetName += ` (${index})`;
             XLSX.utils.book_append_sheet(wb, staffWs, sheetName);
           }
         });
-      } else if (type === 'disciplinary') {
-        cols = ['reportDate', 'reportTime', 'reporterName', 'discDate', 'discTime', 'discType', 'discName', 'discId', 'discUnit', 'discLocation', 'discDesc', 'discWitness', 'discActions', 'discRef', 'discCaseNo', 'discFollowUp', 'notes'];
-      } else if (type === 'theft') {
-        cols = ['reportDate', 'reportTime', 'reporterName', 'theftItemType', 'theftItemDesc', 'theftAssetNo', 'theftValue', 'theftLocation', 'theftDiscoverTime', 'theftProbableTime', 'theftVictimName', 'theftVictimPhone', 'theftDoorStatus', 'theftEvidence', 'theftActions', 'theftPoliceCase', 'theftFollowUp', 'notes'];
-      } else if (type === 'incident') {
-        cols = ['reportDate', 'reportTime', 'reporterName', 'incidentType', 'incidentDesc', 'incidentActions', 'incidentAnalysis', 'incidentFollowUp', 'notes'];
-      } else if (type === 'illness') {
-        cols = ['reportDate', 'reportTime', 'reporterName', 'patientType', 'patientName', 'patientId', 'patientUnit', 'patientOtherReason', 'illnessLocation', 'visitReason', 'companionName', 'companionId', 'companionPhone', 'actionType', 'emergencyCalledTime', 'emergencyArrivedTime', 'illnessDestination', 'transportMethod', 'reportSource', 'returnTime', 'returnDestination', 'notes'];
       } else {
         const keys = new Set();
         typeReports.forEach(r => Object.keys(r).forEach(k => { if (!['id','createdAt','photo','reportType'].includes(k)) keys.add(k); }));
@@ -259,6 +252,7 @@ function initStatusToggle() {
 
 function initFormSubmit() {
   const form = $("#guardForm");
+  if (!form) return;
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -288,29 +282,22 @@ function initFormSubmit() {
       createdAt: new Date().toISOString()
     };
 
-    // فیلدهای اختصاصی بر اساس نوع
     if (reportType === "patrol") {
       const location = $("#location").value;
       const post = $("#post").value;
       const status = $("#status").value;
-      const personnelIdsRaw = $("#personnelIds").value;
       let personnelIds = [];
-      try { personnelIds = JSON.parse(personnelIdsRaw || "[]"); } catch (err) { personnelIds = []; }
-
+      try { personnelIds = JSON.parse($("#personnelIds").value || "[]"); } catch (err) {}
       if (!location) return showToast("لطفاً محل بازدید را انتخاب کنید", "error");
       if (!post) return showToast("لطفاً نوع پست را انتخاب کنید", "error");
       if (!status) return showToast("لطفاً وضعیت پست را انتخاب کنید", "error");
-
       report.location = location;
       report.locationLabel = LOCATIONS.find(l => l.name === location)?.label || location;
       report.post = post;
       report.postLabel = POSTS.find(p => p.name === post)?.label || post;
       report.status = status;
       report.personnelIds = personnelIds;
-      report.personnelNames = personnelIds.map(id => {
-        const p = PERSONNEL.find(x => x.id === id);
-        return p ? p.fullName : id;
-      });
+      report.personnelNames = personnelIds.map(id => PERSONNEL.find(x => x.id === id)?.fullName || id);
       if (status === "normal") report.notes = "";
     } else if (reportType === "illness") {
       report.patientType = $("#patientType").value;
@@ -331,16 +318,35 @@ function initFormSubmit() {
       report.reportSource = $("#reportSource").value;
       report.returnTime = $("#returnTime").value;
       report.returnDestination = $("#returnDestination").value;
-
       if (!report.patientName) return showToast("لطفاً نام بیمار را وارد کنید", "error");
+    } else if (reportType === "fire") {
+      report.fireDate = $("#fireDate").value.trim();
+      report.fireTime = $("#fireTime").value;
+      report.fireLocation = $("#fireLocation").value.trim();
+      report.fireCause = $("#fireCause").value;
+      report.fireCauseOther = $("#fireCauseOther").value.trim();
+      report.fireDeptCalled = $("#fireDeptCalled").value;
+      report.fireDeptCallTime = $("#fireDeptCallTime").value;
+      report.fireDeptArriveTime = $("#fireDeptArriveTime").value;
+      report.fireDamageLevel = $("#fireDamageLevel").value;
+      report.fireCasualties = $("#fireCasualties").value;
+      report.fireCasualtyDetails = $("#fireCasualtyDetails").value.trim();
+      report.fireFinancialDamage = $("#fireFinancialDamage").value;
+      report.fireDamageDetails = $("#fireDamageDetails").value.trim();
+      report.fireInitialActions = $("#fireInitialActions").value.trim();
+      let fireStaffIds = [];
+      try { fireStaffIds = JSON.parse($("#fireStaffIds").value || "[]"); } catch (err) {}
+      report.fireStaffIds = fireStaffIds;
+      report.fireStaffNames = fireStaffIds.map(id => PERSONNEL.find(x => x.id === id)?.fullName || id);
+      if (!report.fireDate) return showToast("لطفاً تاریخ وقوع حریق را وارد کنید", "error");
+      if (!report.fireLocation) return showToast("لطفاً محل وقوع حریق را وارد کنید", "error");
     } else if (reportType === "incident") {
-      report.incidentType = $("#incidentType").value;
+      report.incidentSubject = $("#incidentSubject").value.trim();
       report.incidentDesc = $("#incidentDesc").value.trim();
       report.incidentActions = $("#incidentActions").value.trim();
       report.incidentAnalysis = $("#incidentAnalysis").value.trim();
       report.incidentFollowUp = $("#incidentFollowUp").value;
-
-      if (!report.incidentType) return showToast("لطفاً نوع مورد را انتخاب کنید", "error");
+      if (!report.incidentSubject) return showToast("لطفاً موضوع گزارش را وارد کنید", "error");
       if (!report.incidentDesc) return showToast("لطفاً شرح واقعه را وارد کنید", "error");
     } else if (reportType === "theft") {
       report.theftItemType = $("#theftItemType").value;
@@ -357,7 +363,6 @@ function initFormSubmit() {
       report.theftActions = $("#theftActions").value;
       report.theftPoliceCase = $("#theftPoliceCase").value.trim();
       report.theftFollowUp = $("#theftFollowUp").value;
-
       if (!report.theftItemType) return showToast("لطفاً نوع مال را انتخاب کنید", "error");
       if (!report.theftItemDesc) return showToast("لطفاً شرح مال را وارد کنید", "error");
       if (!report.theftLocation) return showToast("لطفاً محل دقیق سرقت را وارد کنید", "error");
@@ -376,7 +381,6 @@ function initFormSubmit() {
       report.discRef = $("#discRef").value;
       report.discCaseNo = $("#discCaseNo").value.trim();
       report.discFollowUp = $("#discFollowUp").value;
-
       if (!report.discDate) return showToast("لطفاً تاریخ وقوع را وارد کنید", "error");
       if (!report.discType) return showToast("لطفاً نوع تخلف را انتخاب کنید", "error");
       if (!report.discName) return showToast("لطفاً نام متخلف را وارد کنید", "error");
@@ -388,10 +392,8 @@ function initFormSubmit() {
       report.cerLocation = $("#cerLocation").value.trim();
       report.cerStartTime = $("#cerStartTime").value;
       report.cerEndTime = $("#cerEndTime").value;
-
       if (!report.cerName) return showToast("لطفاً نام برنامه را وارد کنید", "error");
       if (!report.cerDate) return showToast("لطفاً تاریخ برگزاری را وارد کنید", "error");
-
       report.cerStaff = [];
       document.querySelectorAll(".staff-row").forEach(row => {
         const name = row.querySelector(".staff-search").value.trim();
@@ -409,10 +411,7 @@ function initFormSubmit() {
 
     if (photoFile) {
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        report.photo = ev.target.result;
-        saveReport(report);
-      };
+      reader.onload = (ev) => { report.photo = ev.target.result; saveReport(report); };
       reader.readAsDataURL(photoFile);
     } else {
       saveReport(report);
@@ -425,7 +424,9 @@ function saveReport(report) {
   all.unshift(report);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   showToast("✅ گزارش با موفقیت ثبت شد", "success");
+  
   $("#guardForm").reset();
+  
   $("#location").innerHTML = `<option value="">— انتخاب کنید —</option>`;
   LOCATIONS.forEach(loc => {
     const opt = document.createElement("option");
@@ -437,59 +438,35 @@ function saveReport(report) {
   $("#post").innerHTML = `<option value="">ابتدا محل را انتخاب کنید</option>`;
   $("#personnelIds").value = "[]";
   $("#selectedChips").innerHTML = "";
+  $("#fireStaffIds").value = "[]";
+  $("#selectedFireStaff").innerHTML = "";
+  if ($("#fireStaffList")) $("#fireStaffList").classList.add("hidden");
   $("#reporterId").value = "";
   $("#reporterList").innerHTML = "";
   $("#selectedReporter").innerHTML = "";
   initReporterSelect();
+  $("#staffContainer").innerHTML = "";
+  
   $("#photoPreview").hidden = true;
   $("#photoPlaceholder").hidden = false;
-  $("#detailsSection").classList.remove("hidden");
+  
   $("#illnessSection").classList.add("hidden");
   $("#incidentSection").classList.add("hidden");
-  $("#incidentType").value = "";
-  $("#incidentDesc").value = "";
-  $("#incidentActions").value = "";
-  $("#incidentAnalysis").value = "";
-  $("#incidentFollowUp").value = "";
   $("#theftSection").classList.add("hidden");
-  $("#theftItemType").value = "";
-  $("#theftItemDesc").value = "";
-  $("#theftAssetNo").value = "";
-  $("#theftValue").value = "";
-  $("#theftLocation").value = "";
-  $("#theftDiscoverTime").value = "";
-  $("#theftProbableTime").value = "";
-  $("#theftVictimName").value = "";
-  $("#theftVictimPhone").value = "";
-  $("#theftDoorStatus").value = "";
-  $("#theftEvidence").value = "";
-  $("#theftActions").value = "";
-  $("#theftPoliceCase").value = "";
-  $("#theftFollowUp").value = "";
   $("#discSection").classList.add("hidden");
-  $("#discDate").value = "";
-  $("#discTime").value = "";
-  $("#discType").value = "";
-  $("#discName").value = "";
-  $("#discId").value = "";
-  $("#discUnit").value = "";
-  $("#discLocation").value = "";
-  $("#discDesc").value = "";
-  $("#discWitness").value = "";
-  $("#discActions").value = "";
-  $("#discRef").value = "";
-  $("#discCaseNo").value = "";
-  $("#discFollowUp").value = "";
   $("#ceremonySection").classList.add("hidden");
-  $("#cerName").value = "";
-  $("#cerOrganizer").value = "";
-  $("#cerDate").value = "";
-  $("#cerLocation").value = "";
-  $("#cerStartTime").value = "";
-  $("#cerEndTime").value = "";
-  $("#staffContainer").innerHTML = "";
-  $("#locationSection").classList.remove("hidden");
-  $("#personnelSection").classList.remove("hidden");
+  $("#fireSection").classList.add("hidden");
+  $("#missionSection").classList.add("hidden");
+  $("#gatheringSection").classList.add("hidden");
+  
+  $("#detailsSection").classList.remove("hidden");
+
+  const patrolRadio = document.querySelector(`input[name="reportType"][value="patrol"]`);
+  if (patrolRadio) {
+    patrolRadio.checked = true;
+    patrolRadio.dispatchEvent(new Event("change"));
+  }
+  
   if (typeof renumberSections === "function") renumberSections();
   renderRecentReports();
 }
@@ -519,9 +496,10 @@ function renderRecentReports() {
       metaText = `${names}`;
     } else if (r.reportType === "illness") {
       title += ` — ${r.patientName || "بدون نام"}`;
+    } else if (r.reportType === "fire") {
+      title += ` — ${r.fireLocation || "بدون محل"}`;
     } else if (r.reportType === "incident") {
-      const incTypes = { fire: "کشف حریق", fight: "درگیری", vandalism: "تخریب", gathering: "تجمع", other: "سایر" };
-      title += ` — ${incTypes[r.incidentType] || r.incidentType || "بدون نوع"}`;
+      title += ` — ${r.incidentSubject || "بدون موضوع"}`;
     } else if (r.reportType === "theft") {
       title += ` — ${r.theftItemDesc || "بدون شرح"}`;
     } else if (r.reportType === "disciplinary") {
@@ -555,12 +533,11 @@ function initPersonnelSearch() {
   const listBox = $("#personnelList");
   const chipsBox = $("#selectedChips");
   const hiddenIds = $("#personnelIds");
+  if (!searchInput) return;
 
   let selected = [];
 
-  function updateHidden() {
-    hiddenIds.value = JSON.stringify(selected.map(s => s.id));
-  }
+  function updateHidden() { hiddenIds.value = JSON.stringify(selected.map(s => s.id)); }
 
   function renderChips() {
     chipsBox.innerHTML = "";
@@ -569,29 +546,16 @@ function initPersonnelSearch() {
       chip.className = "chip";
       chip.innerHTML = `<span>${person.fullName}</span><button type="button" class="chip-remove" data-id="${person.id}" title="حذف">×</button>`;
       chip.querySelector(".chip-remove").addEventListener("click", () => {
-        toggleSelect(person.id);
+        selected = selected.filter(s => s.id !== person.id);
+        updateHidden();
+        renderChips();
+        renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
       });
       chipsBox.appendChild(chip);
     });
   }
 
-  function toggleSelect(id) {
-    if (selected.some(s => s.id === id)) {
-      selected = selected.filter(s => s.id !== id);
-    } else {
-      const p = PERSONNEL.find(x => x.id === id);
-      if (p) selected.push(p);
-    }
-    updateHidden();
-    renderChips();
-    renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
-  }
-
-  function filterPersonnel(q) {
-    return q
-      ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q))
-      : PERSONNEL;
-  }
+  function filterPersonnel(q) { return q ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)) : PERSONNEL; }
 
   function renderList(items) {
     listBox.innerHTML = "";
@@ -603,17 +567,36 @@ function initPersonnelSearch() {
       const isSelected = selected.some(s => s.id === p.id);
       const item = document.createElement("div");
       item.className = "personnel-item" + (isSelected ? " selected" : "");
-      item.dataset.id = p.id;
       item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
-      item.addEventListener("click", () => toggleSelect(p.id));
+      
+      // استفاده از mousedown برای انتخاب قبل از بسته شدن لیست
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        if (selected.some(s => s.id === p.id)) {
+          selected = selected.filter(s => s.id !== p.id);
+        } else {
+          selected.push(p);
+        }
+        updateHidden();
+        renderChips();
+        listBox.classList.add("hidden");
+      });
       listBox.appendChild(item);
     });
   }
 
-  renderList(PERSONNEL);
+  searchInput.addEventListener("focus", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
+  });
 
   searchInput.addEventListener("input", () => {
+    listBox.classList.remove("hidden");
     renderList(filterPersonnel(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => listBox.classList.add("hidden"), 200);
   });
 }
 
@@ -731,6 +714,7 @@ function initReporterSelect() {
   const listBox = $("#reporterList");
   const chipBox = $("#selectedReporter");
   const hiddenId = $("#reporterId");
+  if (!searchInput) return;
 
   const reporters = PERSONNEL.filter(p => REPORTERS.includes(p.id));
   let selected = null;
@@ -745,16 +729,16 @@ function initReporterSelect() {
       const isSelected = selected && selected.id === p.id;
       const item = document.createElement("div");
       item.className = "personnel-item" + (isSelected ? " selected" : "");
-      item.dataset.id = p.id;
       item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
-      item.addEventListener("click", () => {
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
         if (selected && selected.id === p.id) {
           selected = null;
         } else {
           selected = p;
         }
         renderChip();
-        renderList(filterList(searchInput.value.trim().toLowerCase()));
+        listBox.classList.add("hidden");
       });
       listBox.appendChild(item);
     });
@@ -762,10 +746,7 @@ function initReporterSelect() {
 
   function renderChip() {
     chipBox.innerHTML = "";
-    if (!selected) {
-      hiddenId.value = "";
-      return;
-    }
+    if (!selected) { hiddenId.value = ""; return; }
     hiddenId.value = selected.id;
     const chip = document.createElement("span");
     chip.className = "chip";
@@ -773,19 +754,25 @@ function initReporterSelect() {
     chip.querySelector(".chip-remove").addEventListener("click", () => {
       selected = null;
       renderChip();
-      renderList(filterList(searchInput.value.trim().toLowerCase()));
+      renderList(reporters.filter(p => p.fullName.toLowerCase().includes(searchInput.value.trim().toLowerCase())));
     });
     chipBox.appendChild(chip);
   }
 
-  function filterList(q) {
-    return q ? reporters.filter(p => p.fullName.toLowerCase().includes(q)) : reporters;
-  }
+  function filterList(q) { return q ? reporters.filter(p => p.fullName.toLowerCase().includes(q)) : reporters; }
 
-  renderList(reporters);
+  searchInput.addEventListener("focus", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
 
   searchInput.addEventListener("input", () => {
+    listBox.classList.remove("hidden");
     renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => listBox.classList.add("hidden"), 200);
   });
 }
 
@@ -834,6 +821,15 @@ function initReportTypeToggle() {
       detailsSection.classList.remove("hidden");
     } else if (type === "ceremony") {
       ceremonySection.classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "fire") {
+      $("#fireSection").classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "mission") {
+      $("#missionSection").classList.remove("hidden");
+      detailsSection.classList.remove("hidden");
+    } else if (type === "gathering") {
+      $("#gatheringSection").classList.remove("hidden");
       detailsSection.classList.remove("hidden");
     } else {
       detailsSection.classList.remove("hidden");
@@ -898,6 +894,103 @@ function renumberSections() {
   });
 }
 
+
+
+function initFireConditionals() {
+  const deptCalled = $("#fireDeptCalled");
+  const deptTime = $("#fireDeptTimeField");
+  const casualties = $("#fireCasualties");
+  const casualtyDetails = $("#fireCasualtyDetailsField");
+  const finDamage = $("#fireFinancialDamage");
+  const damageDetails = $("#fireDamageDetailsField");
+
+  function sync() {
+    if (deptCalled) deptTime.classList.toggle("hidden", deptCalled.value !== "yes");
+    if (casualties) casualtyDetails.classList.toggle("hidden", casualties.value !== "yes");
+    if (finDamage) damageDetails.classList.toggle("hidden", finDamage.value !== "yes");
+  }
+
+  [deptCalled, casualties, finDamage].forEach(el => {
+    if (el) el.addEventListener("change", sync);
+  });
+  sync();
+}
+
+
+function initFireStaffSearch() {
+  const searchInput = $("#fireStaffSearch");
+  const listBox = $("#fireStaffList");
+  const chipsBox = $("#selectedFireStaff");
+  const hiddenIds = $("#fireStaffIds");
+  if (!searchInput) return;
+
+  let selected = [];
+
+  function updateHidden() {
+    hiddenIds.value = JSON.stringify(selected.map(s => s.id));
+  }
+
+  function renderChips() {
+    chipsBox.innerHTML = "";
+    selected.forEach(person => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.innerHTML = `<span>${person.fullName}</span><button type="button" class="chip-remove" data-id="${person.id}" title="حذف">×</button>`;
+      chip.querySelector(".chip-remove").addEventListener("click", () => {
+        selected = selected.filter(s => s.id !== person.id);
+        updateHidden();
+        renderChips();
+        renderList(filterList(searchInput.value.trim().toLowerCase()));
+      });
+      chipsBox.appendChild(chip);
+    });
+  }
+
+  function filterList(q) {
+    return q ? PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)) : PERSONNEL;
+  }
+
+  function renderList(items) {
+    listBox.innerHTML = "";
+    if (!items.length) {
+      listBox.innerHTML = `<div class="personnel-empty">نتیجه‌ای یافت نشد</div>`;
+      return;
+    }
+    items.forEach(p => {
+      const isSelected = selected.some(s => s.id === p.id);
+      const item = document.createElement("div");
+      item.className = "personnel-item" + (isSelected ? " selected" : "");
+      item.dataset.id = p.id;
+      item.innerHTML = `<span>${p.fullName}</span><span class="check">✓</span>`;
+      item.addEventListener("click", () => {
+        if (selected.some(s => s.id === p.id)) {
+          selected = selected.filter(s => s.id !== p.id);
+        } else {
+          selected.push(p);
+        }
+        updateHidden();
+        renderChips();
+        renderList(filterList(searchInput.value.trim().toLowerCase()));
+      });
+      listBox.appendChild(item);
+    });
+  }
+
+  renderList(PERSONNEL);
+
+  searchInput.addEventListener("focus", () => {
+    listBox.classList.remove("hidden");
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("input", () => {
+    renderList(filterList(searchInput.value.trim().toLowerCase()));
+  });
+
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => listBox.classList.add("hidden"), 200);
+  });
+}
 
 function initCeremonyStaff() {
   const addBtn = $("#addStaffBtn");

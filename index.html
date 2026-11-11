@@ -34,47 +34,41 @@
         <div class="type-selector">
           <label class="type-card">
             <input type="radio" name="reportType" value="patrol" checked />
-            <span class="type-card-content">
-              <span class="type-icon">🛡</span>
-              <span class="type-title">گشت شبانه</span>
-            </span>
+            <span class="type-card-content"><span class="type-icon">🛡</span><span class="type-title">گشت شبانه</span></span>
           </label>
           <label class="type-card">
             <input type="radio" name="reportType" value="illness" />
-            <span class="type-card-content">
-              <span class="type-icon">🏥</span>
-              <span class="type-title">گزارش بیماری</span>
-            </span>
+            <span class="type-card-content"><span class="type-icon">🏥</span><span class="type-title">گزارش بیماری</span></span>
+          </label>
+          <label class="type-card">
+            <input type="radio" name="reportType" value="fire" />
+            <span class="type-card-content"><span class="type-icon">🔥</span><span class="type-title">گزارش حریق</span></span>
+          </label>
+          <label class="type-card">
+            <input type="radio" name="reportType" value="mission" />
+            <span class="type-card-content"><span class="type-icon">🚔</span><span class="type-title">مأموریت</span></span>
+          </label>
+          <label class="type-card">
+            <input type="radio" name="reportType" value="gathering" />
+            <span class="type-card-content"><span class="type-icon">👥</span><span class="type-title">گزارش تجمع</span></span>
           </label>
           <label class="type-card">
             <input type="radio" name="reportType" value="incident" />
-            <span class="type-card-content">
-              <span class="type-icon">🚩</span>
-              <span class="type-title">گزارش موردی</span>
-            </span>
+            <span class="type-card-content"><span class="type-icon">🚩</span><span class="type-title">گزارش موردی</span></span>
           </label>
           <label class="type-card">
             <input type="radio" name="reportType" value="theft" />
-            <span class="type-card-content">
-              <span class="type-icon">🚨</span>
-              <span class="type-title">گزارش سرقت</span>
-            </span>
+            <span class="type-card-content"><span class="type-icon">🚨</span><span class="type-title">گزارش سرقت</span></span>
           </label>
           <label class="type-card">
             <input type="radio" name="reportType" value="disciplinary" />
-            <span class="type-card-content">
-              <span class="type-icon">🚫</span>
-              <span class="type-title">تخلف انضباطی</span>
-            </span>
+            <span class="type-card-content"><span class="type-icon">🚫</span><span class="type-title">تخلف انضباطی</span></span>
           </label>
           <label class="type-card">
             <input type="radio" name="reportType" value="ceremony" />
-            <span class="type-card-content">
-              <span class="type-icon">🎉</span>
-              <span class="type-title">مراسمات و برنامه‌ها</span>
-            </span>
+            <span class="type-card-content"><span class="type-icon">🎉</span><span class="type-title">مراسمات و برنامه‌ها</span></span>
           </label>
-        </div>
+</div>
       </section>
 
       <section class="form-section">
@@ -96,7 +90,7 @@
           <label for="reporterSearch">ثبت‌کننده گزارش</label>
           <div class="search-select">
             <input type="text" id="reporterSearch" class="search-input" placeholder="جستجوی نام ثبت‌کننده..." autocomplete="off" />
-            <div id="reporterList" class="personnel-list"></div>
+            <div id="reporterList" class="personnel-list hidden"></div>
             <input type="hidden" name="reporterId" id="reporterId" />
           </div>
           <div id="selectedReporter" class="selected-chips"></div>
@@ -259,15 +253,8 @@
         </div>
 
         <div class="field">
-          <label for="incidentType">نوع مورد</label>
-          <select id="incidentType" name="incidentType">
-            <option value="">— انتخاب کنید —</option>
-            <option value="fire">کشف حریق</option>
-            <option value="fight">درگیری</option>
-            <option value="vandalism">تخریب</option>
-            <option value="gathering">تجمع</option>
-            <option value="other">سایر</option>
-          </select>
+          <label for="incidentSubject">موضوع گزارش</label>
+          <input type="text" id="incidentSubject" name="incidentSubject" placeholder="مثلاً: درگیری لفظی" />
         </div>
 
         <div class="field">
@@ -575,6 +562,99 @@
       <datalist id="personnelDatalist">
       </datalist>
 
+
+      <section class="form-section hidden" id="fireSection">
+        <div class="section-title"><span class="step-badge">۳</span><h2>اطلاعات گزارش حریق</h2></div>
+        <div class="field-row">
+          <div class="field"><label for="fireDate">تاریخ وقوع حریق</label><input type="text" id="fireDate" data-jdp placeholder="۱۴۰۴/۰۸/۱۴" /></div>
+          <div class="field"><label for="fireTime">ساعت وقوع حریق</label><input type="time" id="fireTime" /></div>
+        </div>
+        
+        <div class="field">
+          <label for="fireLocation">محل وقوع حریق</label>
+          <input type="text" id="fireLocation" placeholder="مثلاً: ساختمان شماره ۲، طبقه ۳" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="fireCause">علت احتمالی</label>
+            <select id="fireCause">
+              <option value="">— انتخاب کنید —</option>
+              <option value="electrical">اتصال برق</option>
+              <option value="negligence">سهل‌انگاری</option>
+              <option value="arson">عمدی</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fireCauseOther">توضیحات علت احتمالی</label>
+            <input type="text" id="fireCauseOther" placeholder="در صورت نیاز..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fireDeptCalled">آیا با آتش‌نشانی تماس گرفته شد؟</label>
+          <select id="fireDeptCalled"><option value="">— انتخاب —</option><option value="yes">بله</option><option value="no">خیر</option></select>
+        </div>
+        
+        <div class="field-row hidden" id="fireDeptTimeField">
+          <div class="field">
+            <label for="fireDeptCallTime">ساعت تماس با آتش‌نشانی</label>
+            <input type="time" id="fireDeptCallTime" />
+          </div>
+          <div class="field">
+            <label for="fireDeptArriveTime">ساعت رسیدن آتش‌نشانی</label>
+            <input type="time" id="fireDeptArriveTime" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="fireDamageLevel">میزان خسارت</label>
+          <select id="fireDamageLevel"><option value="">— انتخاب —</option><option value="none">بدون آسیب</option><option value="minor">جزئی</option><option value="moderate">متوسط</option><option value="severe">سنگین</option></select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="fireCasualties">آیا خسارت جانی داشته است؟</label>
+            <select id="fireCasualties"><option value="">— انتخاب —</option><option value="yes">بله</option><option value="no">خیر</option></select>
+          </div>
+          <div class="field">
+            <label for="fireFinancialDamage">آیا خسارت مالی داشته است؟</label>
+            <select id="fireFinancialDamage"><option value="">— انتخاب —</option><option value="yes">بله</option><option value="no">خیر</option></select>
+          </div>
+        </div>
+        
+        <div class="field hidden" id="fireCasualtyDetailsField">
+          <label for="fireCasualtyDetails">نام و نوع صدمه (خسارت جانی)</label>
+          <textarea id="fireCasualtyDetails" rows="2" placeholder="مثلاً: علی رضایی - سوختگی"></textarea>
+        </div>
+        
+        <div class="field hidden" id="fireDamageDetailsField">
+          <label for="fireDamageDetails">جزئیات خسارت مالی</label>
+          <textarea id="fireDamageDetails" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="fireInitialActions">اقدامات اولیه</label>
+          <textarea id="fireInitialActions" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="fireStaffSearch">نیروهای حاضر در اطفاء حریق</label>
+          <div class="search-select">
+            <input type="text" id="fireStaffSearch" class="search-input" placeholder="جستجوی نام پرسنل..." autocomplete="off" />
+            <div id="fireStaffList" class="personnel-list hidden"></div>
+            <input type="hidden" name="fireStaffIds" id="fireStaffIds" />
+          </div>
+          <div id="selectedFireStaff" class="selected-chips"></div>
+        </div>
+      </section>
+
+      <section class="form-section hidden" id="missionSection">
+        <div class="section-title"><span class="step-badge">۳</span><h2>اطلاعات مأموریت</h2></div>
+        <p style="padding: 20px; text-align: center; color: #64748b;">(محتوای این بخش در گام‌های بعدی ساخته می‌شود)</p>
+      </section>
+
+      <section class="form-section hidden" id="gatheringSection">
+        <div class="section-title"><span class="step-badge">۳</span><h2>اطلاعات گزارش تجمع</h2></div>
+        <p style="padding: 20px; text-align: center; color: #64748b;">(محتوای این بخش در گام‌های بعدی ساخته می‌شود)</p>
+      </section>
       <section class="form-section" id="locationSection">
         <div class="section-title">
           <span class="step-badge">۴</span>
@@ -606,7 +686,7 @@
           <label for="personnelSearch">پرسنل حاضر در پست (چند نفر)</label>
           <div class="search-select">
             <input type="text" id="personnelSearch" class="search-input" placeholder="جستجوی نام پرسنل..." autocomplete="off" />
-            <div id="personnelList" class="personnel-list"></div>
+            <div id="personnelList" class="personnel-list hidden"></div>
             <input type="hidden" name="personnelIds" id="personnelIds" />
           </div>
           <div id="selectedChips" class="selected-chips"></div>

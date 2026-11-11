@@ -1116,10 +1116,11 @@ function initReporterSelect() {
 
 
 function initReportTypeToggle() {
-  const typeSelectorSection = $("#typeSelectorSection");
-  const commonInfoSection = $("#commonInfoSection");
-  const formActions = $("#formActions");
-  const statusSelect = $("#status");
+  // پیدا کردن هوشمندانه بخش‌ها از روی ساختار (بدون نیاز به ID)
+  const typeSelectorSection = document.querySelector('input[name="reportType"]').closest('.form-section');
+  const commonInfoSection = document.querySelector('#reportDate').closest('.form-section');
+  const formActions = document.querySelector('#formActions');
+  const statusSelect = document.querySelector('#status');
   
   const allSections = [
     "locationSection", "personnelSection", "detailsSection", 
@@ -1138,7 +1139,7 @@ function initReportTypeToggle() {
       if (formActions) formActions.classList.add("hidden");
       
       allSections.forEach(id => {
-        const el = $("#" + id);
+        const el = document.getElementById(id);
         if (el) el.classList.add("hidden");
       });
       
@@ -1154,45 +1155,69 @@ function initReportTypeToggle() {
     if (formActions) formActions.classList.remove("hidden");
     
     allSections.forEach(id => {
-      const el = $("#" + id);
+      const el = document.getElementById(id);
       if (el) el.classList.add("hidden");
     });
 
     // نمایش بخش مربوطه
     if (type === "patrol") {
-      $("#locationSection").classList.remove("hidden");
-      $("#personnelSection").classList.remove("hidden");
-      if (statusSelect.value !== "normal") {
-        $("#detailsSection").classList.remove("hidden");
+      const loc = document.getElementById("locationSection");
+      const pers = document.getElementById("personnelSection");
+      const det = document.getElementById("detailsSection");
+      
+      if (loc) loc.classList.remove("hidden");
+      if (pers) pers.classList.remove("hidden");
+      if (statusSelect && statusSelect.value !== "normal") {
+        if (det) det.classList.remove("hidden");
       }
     } else {
-      // برای بقیه کارت‌ها، بخش اختصاصی و توضیحات باز می‌شوند
       const sectionMap = {
         illness: "illnessSection", incident: "incidentSection", theft: "theftSection",
         disciplinary: "discSection", ceremony: "ceremonySection", fire: "fireSection",
         mission: "missionSection", gathering: "gatheringSection"
       };
-      const targetSec = $("#" + sectionMap[type]);
+      const targetSec = document.getElementById(sectionMap[type]);
+      const det = document.getElementById("detailsSection");
+      
       if (targetSec) targetSec.classList.remove("hidden");
-      $("#detailsSection").classList.remove("hidden");
+      if (det) det.classList.remove("hidden");
     }
     
     if (typeof renumberSections === "function") renumberSections();
 
-    // اسکرول امن در موبایل
+    // اسکرول امن در موبایل (با استفاده از window.scrollTo که در موبایل پایدارتر است)
     setTimeout(() => {
-      if (commonInfoSection) {
-        commonInfoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   }
 
-  // فقط و فقط به رویداد change گوش می‌دهیم (پایدارترین روش در موبایل)
+  // گوش دادن به رویداد change روی رادیوها
   document.querySelectorAll(`input[name="reportType"]`).forEach(r => {
     r.addEventListener("change", sync);
   });
 
   sync();
+}
+
+function initBackToCards() {
+  const backBtn = document.getElementById("backToCardsBtn");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      if (confirm("آیا از بازگشت به کارت‌ها مطمئن هستید؟ اطلاعات وارد شده پاک خواهند شد.")) {
+        document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
+        document.getElementById("guardForm").reset();
+        
+        // فراخوانی دستی رویداد change برای بازگرداندن به حالت اولیه
+        const firstRadio = document.querySelector(`input[name="reportType"]`);
+        if (firstRadio) firstRadio.dispatchEvent(new Event("change"));
+        
+        // اسکرول به بالا
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+      }
+    });
+  }
 }
 
 function initBackToCards() {

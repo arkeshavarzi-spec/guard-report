@@ -225,20 +225,61 @@ function initRecentActions() {
     showToast("🗑️ گزارش‌ها پاک شدند", "success");
   });
 
-  // منطق حذف تک‌گزارش
   $("#recentList").addEventListener("click", (e) => {
-    const deleteBtn = e.target.closest(".recent-item-delete");
-    if (!deleteBtn) return;
-    
-    const reportId = deleteBtn.getAttribute("data-id");
-    if (!confirm("آیا از حذف این گزارش مطمئن هستید؟")) return;
-    
-    const all = loadReports();
-    const filtered = all.filter(r => r.id !== reportId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-    
-    renderRecentReports();
-    showToast("🗑️ گزارش با موفقیت حذف شد", "success");
+    // --- منطق حذف ---
+    const deleteBtn = e.target.closest(".btn-delete-item");
+    if (deleteBtn) {
+      const reportId = deleteBtn.getAttribute("data-id");
+      if (!confirm("آیا از حذف این گزارش مطمئن هستید؟")) return;
+      const all = loadReports();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all.filter(r => r.id !== reportId)));
+      renderRecentReports();
+      showToast("🗑️ گزارش با موفقیت حذف شد", "success");
+      return;
+    }
+
+    // --- منطق دانلود تک‌گزارش ---
+    const exportBtn = e.target.closest(".btn-export-item");
+    if (exportBtn) {
+      const reportId = exportBtn.getAttribute("data-id");
+      const all = loadReports();
+      const report = all.find(r => r.id === reportId);
+      if (!report) return showToast("گزارش پیدا نشد", "error");
+
+      // استفاده از دیکشنری‌ها و توابع موجود برای ساخت اکسل
+      const typeLabels = { patrol: "گشت شبانه", illness: "گزارش بیماری", fire: "گزارش حریق", mission: "مأموریت", gathering: "گزارش تجمع", incident: "گزارش موردی", theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات" };
+      
+      const wb = XLSX.utils.book_new();
+      const row = {};
+      
+      // تبدیل کلیدهای آبجکت گزارش به لیبل فارسی
+      for (const [key, val] of Object.entries(report)) {
+        if (['id', 'createdAt', 'photo', 'reportType', 'location', 'post', 'personnelIds', 'fireStaffIds'].includes(key)) continue;
+        
+        let finalVal = val;
+        if (Array.isArray(val)) {
+          if (key === 'cerStaff') finalVal = val.map(s => `${s.name} (${s.role || 'بدون سمت'}) - ${s.hours || 0} ساعت`).join(" | ");
+          else if (key === 'personnelNames' || key === 'fireStaffNames') finalVal = val.join(" | ");
+        }
+        
+        // نام ستون‌ها را با دیکشنری معادل‌سازی می‌کنیم (همان دیکشنری که در initRecentActions تعریف کردید)
+        // برای جلوگیری از تکرار کد، یک نگاشت کوچک اینجا می‌سازیم
+        const labelMap = { reportDate: "تاریخ گزارش", reportTime: "ساعت گزارش", reporterName: "ثبت‌کننده", notes: "توضیحات", locationLabel: "محل", postLabel: "پست", status: "وضعیت", personnelNames: "پرسنل حاضر", fireDate: "تاریخ حریق", fireTime: "ساعت حریق", fireLocation: "محل حریق", fireCause: "علت", fireDeptCalled: "تماس با آتش‌نشانی", fireDeptCallTime: "ساعت تماس", fireDeptArriveTime: "ساعت رسیدن", fireDamageLevel: "میزان خسارت", fireCasualties: "خسارت جانی", fireCasualtyDetails: "جزئیات صدمات", fireFinancialDamage: "خسارت مالی", fireDamageDetails: "جزئیات خسارت", fireInitialActions: "اقدامات اولیه", fireStaffNames: "نیروهای اطفاء", gatheringDate: "تاریخ تجمع", gatheringStartTime: "ساعت شروع", gatheringEndTime: "ساعت پایان", gatheringPeopleCount: "تعداد افراد", gatheringReason: "علت تجمع", gatheringSubject: "موضوع", gatheringSpeaker: "سخنران", gatheringOrganizers: "برگزارکنندگان", gatheringLocation: "محل", gatheringTension: "تنش", gatheringTensionDetails: "جزئیات تنش", gatheringActions: "اقدامات" };
+        
+        row[labelMap[key] || key] = finalVal !== null && finalVal !== undefined ? finalVal : "";
+      }
+
+      const ws = XLSX.utils.json_to_sheet([row]);
+      XLSX.utils.book_append_sheet(wb, ws, typeLabels[report.reportType] || "گزارش");
+      
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      const blob = new Blob([wbout], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      const url = URL.createObjectURL(blob);
+      const fileName = `${typeLabels[report.reportType] || 'گزارش'}-${report.reportDate ? report.reportDate.replace(/\//g, '-') : 'بدون-تاریخ'}.xlsx`;
+      
+      smartDownload(url, fileName, blob);
+      showToast("📥 دانلود گزارش آغاز شد", "success");
+    }
   });
 }
 
@@ -580,7 +621,10 @@ function renderRecentReports() {
             ${metaText} • ساعت ${r.reportTime || "—"} • تاریخ ${r.reportDate || "—"} ${statusHtml}
           </div>
         </div>
-        <button class="recent-item-delete" data-id="${r.id}" title="حذف گزارش">🗑</button>
+        <div class="recent-item-actions">
+          <button class="recent-item-btn btn-export-item" data-id="${r.id}" title="دانلود این گزارش">📥</button>
+          <button class="recent-item-btn btn-delete-item" data-id="${r.id}" title="حذف گزارش">🗑</button>
+        </div>
       </div>
     `;
   }).join("");

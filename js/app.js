@@ -483,7 +483,8 @@ function renderRecentReports() {
   const statusLabels = { normal: "عادی", needs_attention: "نیازمند توجه", issue: "مشکل‌دار" };
   const typeLabels = { 
     patrol: "گشت شبانه", illness: "گزارش بیماری", incident: "گزارش موردی", 
-    theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات" 
+    theft: "گزارش سرقت", disciplinary: "تخلف انضباطی", ceremony: "مراسمات",
+    fire: "گزارش حریق", mission: "مأموریت", gathering: "گزارش تجمع"
   };
 
   list.innerHTML = reports.slice(0, 8).map(r => {

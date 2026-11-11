@@ -864,6 +864,16 @@
           <label for="gatheringActions">اقدامات حفاظتی انجام‌شده</label>
           <textarea id="gatheringActions" rows="2" placeholder="اقدامات پرسنل حفاظت فیزیکی..."></textarea>
         </div>
+      
+        <div class="staff-section" style="margin-top: 25px; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
+          <div class="staff-header">
+            <h3>لیست نیروهای حفاظت فیزیکی حاضر (اختیاری)</h3>
+            <button type="button" class="btn btn-ghost" id="addGatherStaffBtn">➕ افزودن نیرو</button>
+          </div>
+          <div id="gatherStaffContainer">
+            <!-- ردیف‌ها توسط JS اضافه می‌شوند -->
+          </div>
+        </div>
       </section>
       <section class="form-section" id="locationSection">
         <div class="section-title">
@@ -944,6 +954,24 @@
         </button>
         <button type="button" class="btn btn-secondary" id="resetBtn">پاک‌سازی فرم</button>
       </div>
+
+      <template id="gatheringStaffRowTemplate">
+        <div class="gather-staff-row">
+          <div class="field">
+            <label>نام و نام خانوادگی</label>
+            <input type="text" class="gather-staff-search" placeholder="جستجو..." autocomplete="off" />
+          </div>
+          <div class="field">
+            <label>کد ملی</label>
+            <input type="text" class="gather-staff-national-id" readonly style="background: #e2e8f0;" placeholder="خودکار" />
+          </div>
+          <div class="field">
+            <label>ساعت حضور</label>
+            <input type="text" class="gather-staff-hours" inputmode="numeric" placeholder="مثلاً ۴" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" />
+          </div>
+          <button type="button" class="btn-remove-gather-staff" title="حذف">×</button>
+        </div>
+      </template>
     </form>
 
 

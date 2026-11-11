@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initFormSubmit();
   initRecentActions();
   initMissionWordExport();
+  initGatheringStaff();
   renderRecentReports();
 });
 
@@ -181,6 +182,21 @@ function initRecentActions() {
         cols = ['reportDate', 'reportTime', 'reporterName', 'missionCategory', 'missionPersonnelName', 'missionPost', 'missionLocation', 'missionSubject', 'missionStartDate', 'missionEndDate', 'missionDuration', 'missionNumber', 'missionIssueDate', 'missionTypeOfficial', 'missionGroupStaffNames', 'missionAccommodation', 'missionVehicle', 'missionEquipment', 'missionCompanyName', 'missionRequestType', 'notes'];
       } else if (type === 'gathering') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'gatheringDate', 'gatheringStartTime', 'gatheringEndTime', 'gatheringPeopleCount', 'gatheringReason', 'gatheringSubject', 'gatheringSpeaker', 'gatheringOrganizers', 'gatheringLocation', 'gatheringTension', 'gatheringTensionDetails', 'gatheringActions', 'notes'];
+        
+        typeReports.forEach((gath, index) => {
+          if (gath.gatheringStaff && gath.gatheringStaff.length > 0) {
+            const staffData = gath.gatheringStaff.map(s => ({
+              'نام نیرو': s.name,
+              'کد ملی': s.nationalId || '',
+              'ساعت حضور': s.hours || ''
+            }));
+            const staffWs = XLSX.utils.json_to_sheet(staffData);
+            let baseName = gath.gatheringSubject ? gath.gatheringSubject : 'تجمع';
+            let sheetName = `نفرات تجمع ${baseName}`.substring(0, 25);
+            if (index > 0) sheetName += ` (${index})`;
+            XLSX.utils.book_append_sheet(wb, staffWs, sheetName);
+          }
+        });
       } else if (type === 'theft') {
         cols = ['reportDate', 'reportTime', 'reporterName', 'theftItemType', 'theftItemDesc', 'theftAssetNo', 'theftValue', 'theftLocation', 'theftDiscoverTime', 'theftProbableTime', 'theftVictimName', 'theftVictimPhone', 'theftDoorStatus', 'theftEvidence', 'theftActions', 'theftPoliceCase', 'theftFollowUp', 'notes'];
       } else if (type === 'disciplinary') {
@@ -451,6 +467,18 @@ function initFormSubmit() {
       if (!report.gatheringReason) return showToast("لطفاً علت تجمع را انتخاب کنید", "error");
       if (!report.gatheringSubject) return showToast("لطفاً موضوع تجمع را وارد کنید", "error");
       if (!report.gatheringLocation) return showToast("لطفاً محل تجمع را وارد کنید", "error");
+
+      report.gatheringStaff = [];
+      document.querySelectorAll("#gatherStaffContainer .gather-staff-row").forEach(row => {
+        const name = row.querySelector(".gather-staff-search").value.trim();
+        if (name) {
+          report.gatheringStaff.push({
+            name: name,
+            nationalId: row.querySelector(".gather-staff-national-id").value,
+            hours: row.querySelector(".gather-staff-hours").value
+          });
+        }
+      });
     } else if (reportType === "mission") {
       report.missionCategory = $("#missionCategory").value;
       report.missionPersonnelId = $("#missionPersonnelId").value;
@@ -689,6 +717,7 @@ function saveReport(report) {
   $("#gatheringTensionDetails").value = "";
   $("#gatheringActions").value = "";
   $("#gatheringTensionDetailsField").classList.add("hidden");
+  $("#gatherStaffContainer").innerHTML = "";
   
   $("#theftSection").classList.add("hidden");
   $("#discSection").classList.add("hidden");
@@ -1646,7 +1675,77 @@ function initMissionGroupStaff() {
   });
 }
 
-async function initMissionWordExport() {
+async 
+function initGatheringStaff() {
+  const addBtn = $("#addGatherStaffBtn");
+  const container = $("#gatherStaffContainer");
+  const template = $("#gatheringStaffRowTemplate");
+  if (!addBtn) return;
+
+  addBtn.addEventListener("click", () => {
+    const clone = template.content.cloneNode(true);
+    const searchInput = clone.querySelector(".gather-staff-search");
+    const natIdInput = clone.querySelector(".gather-staff-national-id");
+
+    const listBox = document.createElement("div");
+    listBox.className = "personnel-list hidden";
+    listBox.style.marginTop = "4px";
+    listBox.style.maxHeight = "150px";
+    listBox.style.position = "absolute";
+    listBox.style.width = "calc(100% - 24px)";
+    listBox.style.zIndex = "100";
+    searchInput.parentNode.style.position = "relative";
+    searchInput.parentNode.appendChild(listBox);
+
+    function renderList(items) {
+      listBox.innerHTML = "";
+      if (!items.length) {
+        listBox.innerHTML = `<div class="personnel-empty" style="padding:10px;font-size:0.85rem">نتیجه‌ای یافت نشد</div>`;
+        return;
+      }
+      items.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "personnel-item";
+        item.style.padding = "8px 12px";
+        item.style.fontSize = "0.85rem";
+        item.innerHTML = `<span>${p.fullName}</span>`;
+        item.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          searchInput.value = p.fullName;
+          natIdInput.value = p.nationalId || "";
+          listBox.classList.add("hidden");
+        });
+        listBox.appendChild(item);
+      });
+    }
+
+    searchInput.addEventListener("focus", () => {
+      listBox.classList.remove("hidden");
+      renderList(PERSONNEL.filter(p => p.fullName.includes(searchInput.value)));
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      listBox.classList.remove("hidden");
+      const q = e.target.value.trim().toLowerCase();
+      renderList(PERSONNEL.filter(p => p.fullName.toLowerCase().includes(q)));
+    });
+
+    searchInput.addEventListener("blur", () => {
+      setTimeout(() => { listBox.classList.add("hidden"); }, 200);
+      const exactMatch = PERSONNEL.find(p => p.fullName === searchInput.value.trim());
+      if (exactMatch) natIdInput.value = exactMatch.nationalId || "";
+      else natIdInput.value = "";
+    });
+
+    const removeBtn = clone.querySelector(".btn-remove-gather-staff");
+    removeBtn.addEventListener("click", (e) => {
+      e.target.closest(".gather-staff-row").remove();
+    });
+    container.appendChild(clone);
+  });
+}
+
+function initMissionWordExport() {
   const btn = $("#exportMissionWordBtn");
   if (!btn) return;
 

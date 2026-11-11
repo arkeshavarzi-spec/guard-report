@@ -1018,3 +1018,39 @@ textarea {
   color: var(--danger);
   background: #fee2e2;
 }
+
+/* ---------- Gathering Staff List ---------- */
+.gather-staff-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  background: #f8fafc;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  position: relative;
+  animation: chipIn 0.25s ease;
+}
+.gather-staff-row .field { margin-bottom: 0; }
+.btn-remove-gather-staff {
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+.btn-remove-gather-staff:hover { background: #b91c1c; }
+
+@media (max-width: 640px) {
+  .gather-staff-row { grid-template-columns: 1fr 1fr; }
+  .btn-remove-gather-staff { grid-column: 1 / -1; justify-self: end; margin-bottom: 0; }
+}

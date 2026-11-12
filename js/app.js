@@ -632,11 +632,26 @@ function initFormSubmit() {
   });
 }
 
-function saveReport(report) {
+async function saveReport(report) {
+  // ذخیره محلی (پشتیبان)
   const all = loadReports();
   all.unshift(report);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  showToast("✅ گزارش با موفقیت ثبت شد", "success");
+
+  // ارسال به Supabase (نسخه ابری)
+  let cloudStatus = '';
+  if (typeof sendReportToSupabase === 'function') {
+    try {
+      await sendReportToSupabase(report);
+      cloudStatus = ' (ابری ✓)';
+    } catch (err) {
+      console.error('Cloud save failed:', err);
+      cloudStatus = ' (فقط محلی)';
+      showToast('⚠️ آفلاین ذخیره شد؛ اتصال ابری برقرار نشد.', 'error');
+    }
+  }
+
+  showToast("✅ گزارش با موفقیت ثبت شد" + cloudStatus, "success");
   
   $("#guardForm").reset();
   

@@ -742,11 +742,11 @@ async function saveReport(report, photoFile) {
     try {
       const cloudData = await sendReportToSupabase(report);
       if (cloudData && cloudData[0]) {
-         // ذخیره شناسه دیتابیس در حافظه محلی برای همگام‌سازی فوری حذف
          let allLocal = loadReports();
          let idx = allLocal.findIndex(r => r.id === report.id);
          if (idx !== -1) {
             allLocal[idx]._dbId = cloudData[0].id;
+            allLocal[idx]._synced = true; // علامت‌گذاری به عنوان آپلود شده
             localStorage.setItem(STORAGE_KEY, JSON.stringify(allLocal));
          }
       }
@@ -800,45 +800,59 @@ async function renderRecentReports() {
 
   let finalReports = [];
 
-  // ۱. تلاش برای خواندن از ابر (منبع اصلی)
   if (typeof currentUser !== 'undefined' && currentUser && typeof fetchMyReportsFromSupabase === 'function') {
     try {
       const cloudReports = await fetchMyReportsFromSupabase();
       
-      // جدا کردن گزارش‌های فعال و پنهان‌شده در ابر
       const activeCloud = cloudReports.filter(r => !r._isHidden);
       const hiddenCloud = cloudReports.filter(r => r._isHidden);
 
-      // پاکسازی حافظه محلی بر اساس داده‌های ابری
       let localReports = loadReports();
       let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
-      
-      // هر گزارشی که در ابر پنهان شده، از گوشی هم پاک شود
+
+      // ۱. مهاجرت: اگر گزارش قدیمی فاقد وضعیت _synced بود، فرض می‌کنیم آپلود شده بوده
+      localReports.forEach(lr => {
+        if (lr._synced === undefined) lr._synced = true;
+      });
+
+      // ۲. پاک کردن گزارش‌هایی که در ابر مخفی شده‌اند
       hiddenCloud.forEach(hr => {
          localReports = localReports.filter(lr => lr.id !== hr.id);
          if (!deletedIds.includes(hr.id)) deletedIds.push(hr.id);
       });
+
+      // ۳. پاک کردن گزارش‌هایی که در ابر نیستند (مدیر آن‌ها را پاک کرده است)
+      const activeCloudIds = new Set(activeCloud.map(r => r.id));
+      const initialLocalLength = localReports.length;
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(localReports));
+      localReports = localReports.filter(lr => {
+          // اگر در ابر آپلود شده بود اما دیگر در ابر نیست -> پاکش کن
+          if (lr._synced === true && !activeCloudIds.has(lr.id)) {
+              return false;
+          }
+          return true;
+      });
+
+      // اگر حافظه محلی تغییر کرد، ذخیره کن
+      if (localReports.length !== initialLocalLength) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(localReports));
+      }
       localStorage.setItem('deleted_reports_v1', JSON.stringify(deletedIds));
 
-      // ادغام گزارش‌های ابری با گزارش‌های محلیِ آپلود نشده
-      const cloudIds = new Set(activeCloud.map(r => r.id));
-      const unsyncedLocal = localReports.filter(r => !cloudIds.has(r.id) && !deletedIds.includes(r.id));
-
+      // ۴. ادغام نهایی: ابری‌ها + محلی‌های آپلود نشده (مثل گزارش‌های آفلاین)
+      const unsyncedLocal = localReports.filter(r => r._synced !== true && !deletedIds.includes(r.id));
       finalReports = [...activeCloud, ...unsyncedLocal];
+
     } catch (err) {
       console.warn("خطا در دریافت از ابر. استفاده از حافظه محلی.", err);
       let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
       finalReports = loadReports().filter(r => !deletedIds.includes(r.id));
     }
   } else {
-    // اگر لاگین نبود، فقط محلی
     let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
     finalReports = loadReports().filter(r => !deletedIds.includes(r.id));
   }
 
-  // مرتب‌سازی نهایی
   finalReports.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
 
   if (!finalReports.length) {

@@ -43,21 +43,30 @@ function initTabs() {
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      // حذف active از همه
+      // ۱. مخفی کردن همه تب‌ها و محتواها
       document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
       
-      // فعال کردن تب کلیک شده
+      // ۲. فعال کردن تب کلیک شده
       tab.classList.add('active');
       const targetId = tab.dataset.tab;
       document.getElementById(targetId).classList.remove('hidden');
 
-      // اگر تب پرسنل باز شد، داده‌ها را لود کن
-      if (targetId === 'personnelTab' && allPersonnelData.length === 0) {
-        fetchPersonnel();
-      }
-      if (targetId === 'locationsTab' && allLocationsData.length === 0) {
-        fetchLocationsData();
+      // ۳. بارگذاری یا رندر مجدد داده‌های مربوط به تب
+      if (targetId === 'reportsTab') {
+        applyFilters(); // همیشه رندر مجدد کن
+      } else if (targetId === 'personnelTab') {
+        if (allPersonnelData.length === 0) {
+          fetchPersonnel(); // اگر داده نداریم، از ابر بگیر
+        } else {
+          renderPersonnelTable(allPersonnelData); // اگر داریم، رندر کن
+        }
+      } else if (targetId === 'locationsTab') {
+        if (allLocationsData.length === 0) {
+          fetchLocationsData(); // اگر داده نداریم، از ابر بگیر
+        } else {
+          renderTree(); // اگر داریم، رندر کن
+        }
       }
     });
   });

@@ -312,7 +312,7 @@ function renderTree() {
           <span class="tree-toggle-icon">◀</span>
           <span class="tree-location-title">${loc.label}</span>
           <span class="tree-location-count">${activeCount} پست</span>
-          <div class="tree-location-actions" onclick="event.stopPropagation();">
+          <div class="tree-location-actions">
             <button class="btn-table action-loc-btn" data-action="edit-loc" data-id="${loc.id}" title="ویرایش">✏️</button>
             <button class="btn-table action-loc-btn ${loc.is_active ? 'btn-hide-row' : ''}" data-action="toggle-loc" data-id="${loc.id}" title="${loc.is_active ? 'غیرفعال' : 'فعال'}">
               ${loc.is_active ? '🚫' : '✅'}
@@ -330,26 +330,31 @@ function renderTree() {
 
 function initLocationsEvents() {
   // باز/بسته کردن درخت
-  document.getElementById("locationsTree")?.addEventListener("click", async (e) => {
+    document.getElementById("locationsTree")?.addEventListener("click", async (e) => {
+    // 🥇 اول: بررسی دکمه‌های عملیاتی (ویرایش، حذف، افزودن پست)
+    const btn = e.target.closest('.action-loc-btn');
+    if (btn) {
+      e.stopPropagation(); // جلوگیری از باز/بسته شدن ناخواسته
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      const locId = btn.dataset.locId;
+      
+      console.log("🎯 Action clicked:", action, "ID:", id || locId);
+
+      if (action === "edit-loc") openLocationModal(id);
+      else if (action === "toggle-loc") await toggleLocationActive(id);
+      else if (action === "add-post") openPostModal(null, locId);
+      else if (action === "edit-post") openPostModal(id);
+      else if (action === "toggle-post") await togglePostActive(id);
+      return;
+    }
+
+    // 🥈 دوم: اگر روی دکمه‌ای نبود، بررسی باز/بسته شدن درخت
     const header = e.target.closest('[data-action="toggle-expand"]');
     if (header) {
       const loc = header.closest('.tree-location');
       loc.classList.toggle('expanded');
-      return;
     }
-
-    const btn = e.target.closest('.action-loc-btn');
-    if (!btn) return;
-    
-    const action = btn.dataset.action;
-    const id = btn.dataset.id;
-    const locId = btn.dataset.locId;
-
-    if (action === "edit-loc") openLocationModal(id);
-    else if (action === "toggle-loc") await toggleLocationActive(id);
-    else if (action === "add-post") openPostModal(null, locId);
-    else if (action === "edit-post") openPostModal(id);
-    else if (action === "toggle-post") await togglePostActive(id);
   });
 
   // دکمه افزودن دانشکده
@@ -437,34 +442,57 @@ async function saveLocation() {
 
 async function toggleLocationActive(id) {
   const loc = allLocationsData.find(l => l.id === id);
-  if (!loc) return;
+  if (!loc) {
+    console.error("❌ Location not found:", id);
+    return;
+  }
   
   const newStatus = !loc.is_active;
-  const locPosts = allPostsData.filter(p => p.location_id === id && p.is_active);
+  const allPostsUnderLoc = allPostsData.filter(p => p.location_id === id);
+  const activePosts = allPostsUnderLoc.filter(p => p.is_active);
+  const inactivePosts = allPostsUnderLoc.filter(p => !p.is_active);
   
   let msg = `آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} دانشکده «${loc.label}» مطمئنید؟\n\n`;
   if (!newStatus) {
-    msg += `⚠️ با این کار، این دانشکده و تمام ${locPosts.length} پست فعال آن به طور خودکار غیرفعال می‌شوند و از فرم گزارش‌دهی حذف می‌شوند.\n\n`;
-    msg += `✅ گزارش‌های قبلی که به این دانشکده ارجاع داده‌اند، دست‌نخورده باقی می‌مانند.\n\n`;
-    msg += `🔄 هر زمان می‌توانید دانشکده را فعال کنید، اما پست‌ها برای جلوگیری از حواس‌پرتی دستی غیرفعال می‌مانند و باید تک‌تک فعال شوند.`;
+    msg += `⚠️ تمام ${activePosts.length} پست فعال این دانشکده نیز غیرفعال می‌شوند.\n\n`;
+    msg += `✅ گزارش‌های قبلی دست‌نخورده باقی می‌مانند.`;
   } else {
-    msg += `ℹ️ توجه: با فعال کردن دانشکده، پست‌های آن به طور خودکار فعال نمی‌شوند. اگر نیاز است، آن‌ها را دستی فعال کنید.`;
+    msg += `ℹ️ تمام ${allPostsUnderLoc.length} پست این دانشکده فعال می‌شوند.\n\n`;
+    if (inactivePosts.length > 0) {
+      msg += `⚠️ توجه: ${inactivePosts.length} پستی که قبلاً دستی غیرفعال بود هم فعال می‌شود.`;
+    }
   }
-  
   if (!confirm(msg)) return;
 
-  // ۱. تغییر وضعیت خود دانشکده
-  const { error: locError } = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id);
-  if (locError) return showToast("خطا در تغییر وضعیت دانشکده", "error");
-
-  // ۲. تغییر وضعیت تمام پست‌های زیرمجموعه
-  if (!newStatus) {
-    // اگر دانشکده غیرفعال شد، پست‌هایش هم غیرفعال شوند
-    const { error: postError } = await supabaseClient.from('posts').update({ is_active: false }).eq('location_id', id).eq('is_active', true);
-    if (postError) console.error("Cascade deactivation error:", postError);
+  try {
+    console.log(`🔄 Updating location ${id} to is_active=${newStatus}`);
+    
+    // آپدیت دانشکده
+    const locRes = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id).select();
+    
+    if (locRes.error) {
+      console.error("❌ Location update failed:", locRes.error);
+      return showToast("خطا در تغییر وضعیت دانشکده: " + locRes.error.message, "error");
+    }
+    
+    console.log(`✅ Location updated. Now cascading to ${allPostsUnderLoc.length} posts...`);
+    
+    // آپدیت تمام پست‌های زیرمجموعه (خواه فعال شوند، خواه غیرفعال)
+    const postRes = await supabaseClient.from('posts').update({ is_active: newStatus }).eq('location_id', id).select();
+    
+    if (postRes.error) {
+      console.error("❌ Post cascade failed:", postRes.error);
+      showToast(`دانشکده تغییر کرد اما پست‌ها نشدند: ${postRes.error.message}`, "error");
+    } else {
+      const updatedCount = postRes.data ? postRes.data.length : 0;
+      console.log(`✅ Cascade updated ${updatedCount} posts`);
+      showToast(`✅ دانشکده و ${updatedCount} پست ${newStatus ? 'فعال' : 'غیرفعال'} شدند`, "success");
+    }
+  } catch (err) {
+    console.error("❌ Unexpected error:", err);
+    return showToast("خطای غیرمنتظره: " + err.message, "error");
   }
-
-  showToast(`✅ دانشکده و پست‌های آن ${newStatus ? 'فعال' : 'غیرفعال'} شدند`, "success");
+  
   await fetchLocationsData();
   if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
 }

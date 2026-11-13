@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>سامانه گزارش‌دهی حفاظت فیزیکی</title>
-  <link rel="stylesheet" href="css/fonts.css?v=700" />
-  <link rel="stylesheet" href="css/jalalidatepicker.min.css?v=700" />
-  <link rel="stylesheet" href="css/styles.css?v=700" />
+  <link rel="stylesheet" href="css/fonts.css?v=800" />
+  <link rel="stylesheet" href="css/jalalidatepicker.min.css?v=800" />
+  <link rel="stylesheet" href="css/styles.css?v=800" />
 </head>
 <body>
   <div class="bg-decoration"></div>
@@ -37,30 +37,33 @@
     </div>
   </div>
 
-  <!-- پروفایل کاربر (شناور) -->
-  <div id="userInfo" class="user-info hidden">
-    <div class="user-info-content">
-      <div class="user-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-      </div>
-      <span id="userEmail" class="user-email"></span>
-    </div>
-    <button id="logoutBtn" class="btn-logout">خروج</button>
-  </div>
 
   <main class="app-container">
     <header class="app-header">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
+      <div class="header-branding">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>سامانه گزارش‌دهی حفاظت فیزیکی</h1>
+          <p>ثبت گزارش گشت شبانه و موارد نیازمند پیگیری</p>
+        </div>
       </div>
-      <div class="header-text">
-        <h1>سامانه گزارش‌دهی حفاظت فیزیکی</h1>
-        <p>ثبت گزارش گشت شبانه و موارد نیازمند پیگیری</p>
+
+      <!-- پروفایل کاربر داخل هدر -->
+      <div id="userInfo" class="user-info hidden">
+        <div class="user-info-content">
+          <div class="user-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span id="userEmail" class="user-email"></span>
+        </div>
+        <button id="logoutBtn" class="btn-logout">خروج</button>
       </div>
     </header>
 
@@ -1022,12 +1025,12 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="js/jalalidatepicker.min.js?v=700"></script>
-  <script src="js/xlsx.full.min.js?v=700"></script>
-  <script src="js/data.js?v=700"></script>
+  <script src="js/jalalidatepicker.min.js?v=800"></script>
+  <script src="js/xlsx.full.min.js?v=800"></script>
+  <script src="js/data.js?v=800"></script>
   
-  <script src="js/supabase.min.js?v=700"></script>
-  <script src="js/supabase-client.js?v=700"></script>
-  <script src="js/app.js?v=700"></script>
+  <script src="js/supabase.min.js?v=800"></script>
+  <script src="js/supabase-client.js?v=800"></script>
+  <script src="js/app.js?v=800"></script>
 </body>
 </html>

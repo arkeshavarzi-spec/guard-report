@@ -486,30 +486,25 @@ function initTabs() {
         
         tab.classList.add('active');
         const targetId = tab.dataset.tab;
-        document.getElementById(targetId).classList.remove('hidden');
+        const targetTab = document.getElementById(targetId);
+        targetTab.classList.remove('hidden');
 
+        // لود کردن داده‌ها (همیشه داده‌ها را از سرور می‌گیریم تا تازه باشند)
         if (targetId === 'reportsTab') {
+          await fetchAllReports();
           applyFilters();
         } else if (targetId === 'personnelTab') {
-          if (allPersonnelData.length === 0) {
-            await fetchPersonnel();
-          } else {
-            renderPersonnelTable(allPersonnelData);
-          }
+          await fetchPersonnel();
         } else if (targetId === 'locationsTab') {
-          if (allLocationsData.length === 0) {
-            await fetchLocationsData();
-          } else {
-            renderTree();
-          }
+          await fetchLocationsData();
         }
       } catch (err) {
         console.error("Tab Error:", err);
+        showToast("خطا در باز کردن تب", "error");
       }
     });
   });
 }
-
 // ---------------------------------------------------------
 // توابع مدیریت پرسنل (Personnel)
 // ---------------------------------------------------------

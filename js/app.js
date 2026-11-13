@@ -740,7 +740,16 @@ async function saveReport(report, photoFile) {
   let cloudStatus = '';
   if (typeof sendReportToSupabase === 'function' && currentUser) {
     try {
-      await sendReportToSupabase(report);
+      const cloudData = await sendReportToSupabase(report);
+      if (cloudData && cloudData[0]) {
+         // ذخیره شناسه دیتابیس در حافظه محلی برای همگام‌سازی فوری حذف
+         let allLocal = loadReports();
+         let idx = allLocal.findIndex(r => r.id === report.id);
+         if (idx !== -1) {
+            allLocal[idx]._dbId = cloudData[0].id;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allLocal));
+         }
+      }
       cloudStatus = ' (ابری ✓)';
     } catch (err) {
       console.error('Cloud save failed:', err);
@@ -787,39 +796,52 @@ async function saveReport(report, photoFile) {
 
 async function renderRecentReports() {
   const list = $("#recentList");
-  list.innerHTML = `<p class="empty-state">در حال بارگذاری گزارش‌ها...</p>`;
-  
-  const deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
-  let localReports = loadReports().filter(r => !deletedIds.includes(r.id));
-  
-  let cloudReports = [];
-  if (typeof fetchMyReportsFromSupabase === 'function' && currentUser) {
-    try {
-      const cloudData = await fetchMyReportsFromSupabase();
-      cloudReports = cloudData.filter(r => !deletedIds.includes(r.id)); 
-    } catch (e) {
-      console.warn("Could not fetch from cloud", e);
-    }
-  }
-  
-  // ادغام هوشمندانه
-  const allReportsMap = new Map();
-  // اول ابری‌ها را اضافه می‌کنیم
-  cloudReports.forEach(r => allReportsMap.set(r.id, r));
-  // بعد محلی‌ها؛ اگر تکراری بودند، _dbId را از نسخه ابری برمی‌داریم
-  localReports.forEach(r => {
-    if (allReportsMap.has(r.id)) {
-       const cloudR = allReportsMap.get(r.id);
-       allReportsMap.set(r.id, { ...r, _dbId: cloudR._dbId });
-    } else {
-       allReportsMap.set(r.id, r);
-    }
-  });
-  
-  const reports = Array.from(allReportsMap.values())
-    .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+  list.innerHTML = `<p class="empty-state">در حال دریافت از سرور...</p>`;
 
-  if (!reports.length) {
+  let finalReports = [];
+
+  // ۱. تلاش برای خواندن از ابر (منبع اصلی)
+  if (typeof currentUser !== 'undefined' && currentUser && typeof fetchMyReportsFromSupabase === 'function') {
+    try {
+      const cloudReports = await fetchMyReportsFromSupabase();
+      
+      // جدا کردن گزارش‌های فعال و پنهان‌شده در ابر
+      const activeCloud = cloudReports.filter(r => !r._isHidden);
+      const hiddenCloud = cloudReports.filter(r => r._isHidden);
+
+      // پاکسازی حافظه محلی بر اساس داده‌های ابری
+      let localReports = loadReports();
+      let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+      
+      // هر گزارشی که در ابر پنهان شده، از گوشی هم پاک شود
+      hiddenCloud.forEach(hr => {
+         localReports = localReports.filter(lr => lr.id !== hr.id);
+         if (!deletedIds.includes(hr.id)) deletedIds.push(hr.id);
+      });
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(localReports));
+      localStorage.setItem('deleted_reports_v1', JSON.stringify(deletedIds));
+
+      // ادغام گزارش‌های ابری با گزارش‌های محلیِ آپلود نشده
+      const cloudIds = new Set(activeCloud.map(r => r.id));
+      const unsyncedLocal = localReports.filter(r => !cloudIds.has(r.id) && !deletedIds.includes(r.id));
+
+      finalReports = [...activeCloud, ...unsyncedLocal];
+    } catch (err) {
+      console.warn("خطا در دریافت از ابر. استفاده از حافظه محلی.", err);
+      let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+      finalReports = loadReports().filter(r => !deletedIds.includes(r.id));
+    }
+  } else {
+    // اگر لاگین نبود، فقط محلی
+    let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+    finalReports = loadReports().filter(r => !deletedIds.includes(r.id));
+  }
+
+  // مرتب‌سازی نهایی
+  finalReports.sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+
+  if (!finalReports.length) {
     list.innerHTML = `<p class="empty-state">هنوز گزارشی ثبت نشده است.</p>`;
     return;
   }
@@ -831,14 +853,13 @@ async function renderRecentReports() {
     fire: "گزارش حریق", mission: "مأموریت", gathering: "گزارش تجمع"
   };
 
-  list.innerHTML = reports.slice(0, 8).map(r => {
+  list.innerHTML = finalReports.slice(0, 8).map(r => {
     let title = typeLabels[r.reportType] || "گزارش";
     let metaText = "";
     
     if (r.reportType === "patrol") {
       title += ` — ${r.locationLabel || "—"} / ${r.postLabel || "—"}`;
-      const names = (r.personnelNames || []).map(n => `<span class="chip-mini">${n}</span>`).join("");
-      metaText = `${names}`;
+      metaText = (r.personnelNames || []).map(n => `<span class="chip-mini">${n}</span>`).join("");
     } else if (r.reportType === "illness") {
       title += ` — ${r.patientName || "بدون نام"}`;
     } else if (r.reportType === "fire") {
@@ -865,17 +886,15 @@ async function renderRecentReports() {
     return `
       <div class="recent-item">
         <div class="recent-item-main">
-          <div class="recent-item-title">
-            ${title}
-          </div>
+          <div class="recent-item-title">${title}</div>
           <div class="recent-item-meta">
             ${metaText} • ساعت ${r.reportTime || "—"} • تاریخ ${reportDate} ${statusHtml}
           </div>
         </div>
         <div class="recent-item-actions">
           ${r.photoUrl ? `<a href="${r.photoUrl}" target="_blank" class="recent-item-btn" title="مشاهده عکس">📷</a>` : ''}
-          <button class="recent-item-btn btn-export-item" data-id="${r.id}" data-dbid="${r._dbId || ''}" title="دانلود این گزارش">📥</button>
-          <button class="recent-item-btn btn-delete-item" data-id="${r.id}" data-dbid="${r._dbId || ''}" title="حذف گزارش">🗑</button>
+          <button class="recent-item-btn btn-export-item" data-id="${r.id}" data-dbid="${r._dbId || ''}" title="دانلود">📥</button>
+          <button class="recent-item-btn btn-delete-item" data-id="${r.id}" data-dbid="${r._dbId || ''}" title="حذف">🗑</button>
         </div>
       </div>
     `;

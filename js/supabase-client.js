@@ -170,18 +170,16 @@ async function fetchMyReportsFromSupabase() {
     .eq('auth_user_id', currentUser.id)
     .order('created_at', { ascending: false });
   
-  if (error) {
-    console.error("Error fetching reports:", error);
-    return [];
-  }
+  if (error) throw error;
   
-  // فیلتر کردن گزارش‌هایی که کاربر فعلی پنهان کرده است
-  return data
-    .filter(r => {
-      const hiddenBy = r.hidden_by || [];
-      return !hiddenBy.includes(currentUser.id);
-    })
-    .map(r => ({ ...r.details, _dbId: r.id }));
+  return data.map(r => {
+    const hiddenBy = r.hidden_by || [];
+    return { 
+      ...r.details, 
+      _dbId: r.id, 
+      _isHidden: hiddenBy.includes(currentUser.id) 
+    };
+  });
 }
 
 // تابع جدید برای پنهان کردن گزارش در دیتابیس
@@ -189,7 +187,6 @@ async function hideReportInSupabase(localId, dbId) {
   if (!currentUser) throw new Error('کاربر وارد نشده است');
   if (!dbId) throw new Error('شناسه دیتابیس یافت نشد');
 
-  // ۱. گرفتن لیست فعلی پنهان‌شده‌ها
   const { data: report, error: getError } = await supabaseClient
     .from('reports')
     .select('hidden_by')
@@ -201,8 +198,6 @@ async function hideReportInSupabase(localId, dbId) {
   const hiddenBy = report.hidden_by || [];
   if (!hiddenBy.includes(currentUser.id)) {
     hiddenBy.push(currentUser.id);
-    
-    // ۲. آپدیت لیست
     const { error: updateError } = await supabaseClient
       .from('reports')
       .update({ hidden_by: hiddenBy })

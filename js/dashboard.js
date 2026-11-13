@@ -35,6 +35,11 @@ const excelLabels = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // سینک پرسنل
+    if (typeof fetchAndSyncPersonnel === 'function') {
+      await fetchAndSyncPersonnel();
+    }
+
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { window.location.href = 'index.html'; return; }
     currentUserId = session.user.id;

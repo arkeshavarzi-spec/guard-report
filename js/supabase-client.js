@@ -264,3 +264,59 @@ async function hideAllReportsInSupabase() {
   const { error } = await supabaseClient.rpc('hide_all_my_reports');
   if (error) throw error;
 }
+
+// =========================================================
+// سینک هوشمند پرسنل (ابر ← کش ← فایل پشتیبان)
+// =========================================================
+async function fetchAndSyncPersonnel() {
+  // ۱. بارگذاری از کش (اگر وجود دارد)
+  const cached = localStorage.getItem('personnel_cache_v1');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.personnel && parsed.reporters) {
+        updateGlobalPersonnel(parsed.personnel, parsed.reporters);
+      }
+    } catch(e) { console.warn("Cache parse error", e); }
+  }
+
+  // ۲. تلاش برای دریافت از Supabase
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    try {
+      const { data, error } = await supabaseClient.from('personnel').select('*').eq('is_active', true);
+      
+      if (!error && data && data.length > 0) {
+        const newPersonnel = data.map(p => ({
+          id: p.id,
+          fullName: p.full_name,
+          nationalId: p.national_id || '',
+          shaba: p.shaba || '',
+          phone: p.phone || ''
+        }));
+        
+        const newReporters = data.filter(p => p.can_report).map(p => p.id);
+        
+        // ذخیره در کش برای دفعات بعد
+        localStorage.setItem('personnel_cache_v1', JSON.stringify({ personnel: newPersonnel, reporters: newReporters }));
+        
+        // به‌روزرسانی آرایه‌های سراسری
+        updateGlobalPersonnel(newPersonnel, newReporters);
+      }
+    } catch(e) {
+      console.warn("Could not sync from cloud. Using cache/fallback.", e);
+    }
+  }
+}
+
+// تابع کمکی برای به‌روزرسانی آرایه‌های سراسری
+function updateGlobalPersonnel(newPersonnel, newReporters) {
+  if (typeof PERSONNEL !== 'undefined' && Array.isArray(PERSONNEL)) {
+    PERSONNEL.length = 0;
+    PERSONNEL.push(...newPersonnel);
+  }
+  if (typeof REPORTERS !== 'undefined' && Array.isArray(REPORTERS)) {
+    REPORTERS.length = 0;
+    REPORTERS.push(...newReporters);
+  }
+}

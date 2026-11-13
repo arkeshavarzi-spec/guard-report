@@ -322,15 +322,26 @@ function initRecentActions() {
   });
 
   $("#recentList").addEventListener("click", (e) => {
-    // --- منطق حذف ---
+    // --- منطق حذف (فقط از دید کاربر، بدون حذف از دیتابیس) ---
     const deleteBtn = e.target.closest(".btn-delete-item");
     if (deleteBtn) {
       const reportId = deleteBtn.getAttribute("data-id");
-      if (!confirm("آیا از حذف این گزارش مطمئن هستید؟")) return;
+      if (!confirm("آیا از حذف این گزارش از لیست خود مطمئن هستید؟ (گزارش در سیستم مرکزی باقی می‌ماند)")) return;
+      
+      // ۱. اضافه کردن به لیست حذف‌شده‌ها
+      let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+      if (!deletedIds.includes(reportId)) {
+        deletedIds.push(reportId);
+        localStorage.setItem('deleted_reports_v1', JSON.stringify(deletedIds));
+      }
+      
+      // ۲. حذف از حافظه محلی (اگر بود)
       const all = loadReports();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(all.filter(r => r.id !== reportId)));
+      
+      // ۳. رندر مجدد
       renderRecentReports();
-      showToast("🗑️ گزارش با موفقیت حذف شد", "success");
+      showToast("🗑️ گزارش از لیست شما حذف شد", "success");
       return;
     }
 
@@ -752,9 +763,42 @@ async function saveReport(report, photoFile) {
   renderRecentReports();
 }
 
-function renderRecentReports() {
+async function renderRecentReports() {
   const list = $("#recentList");
-  const reports = loadReports();
+  list.innerHTML = `<p class="empty-state">در حال بارگذاری گزارش‌ها...</p>`;
+  
+  // گرفتن لیست گزارش‌های حذف‌شده از حافظه محلی
+  const deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+  
+  // ۱. گرفتن گزارش‌های محلی
+  let localReports = loadReports().filter(r => !deletedIds.includes(r.id));
+  
+  // ۲. گرفتن گزارش‌های ابری (اگر کاربر لاگین است)
+  let cloudReports = [];
+  if (typeof fetchMyReportsFromSupabase === 'function' && currentUser) {
+    try {
+      const cloudData = await fetchMyReportsFromSupabase();
+      // تبدیل ساختار ابری به فرمت محلی
+      cloudReports = cloudData
+        .filter(r => !deletedIds.includes(r.details.id)) // فیلتر کردن حذف‌شده‌ها
+        .map(r => r.details); // details همان ساختار اصلی است
+    } catch (e) {
+      console.warn("Could not fetch from cloud", e);
+    }
+  }
+  
+  // ۳. ادغام گزارش‌ها و حذف تکراری‌ها (بر اساس id)
+  const allReportsMap = new Map();
+  // اول محلی‌ها را می‌گذاریم
+  localReports.forEach(r => allReportsMap.set(r.id, r));
+  // سپس ابری‌ها (اگر محلی نبود، اضافه می‌شوند)
+  cloudReports.forEach(r => {
+    if (!allReportsMap.has(r.id)) allReportsMap.set(r.id, r);
+  });
+  
+  // تبدیل به آرایه و مرتب‌سازی بر اساس تاریخ ایجاد (نزولی)
+  const reports = Array.from(allReportsMap.values())
+    .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
 
   if (!reports.length) {
     list.innerHTML = `<p class="empty-state">هنوز گزارشی ثبت نشده است.</p>`;
@@ -782,8 +826,6 @@ function renderRecentReports() {
       title += ` — ${r.fireLocation || "بدون محل"}`;
     } else if (r.reportType === "mission") {
       title += ` — ${r.missionPersonnelName || "بدون نام"}`;
-    } else if (r.reportType === "mission") {
-      title += ` — ${r.missionPersonnelName || "بدون نام"}`;
     } else if (r.reportType === "gathering") {
       title += ` — ${r.gatheringSubject || "بدون موضوع"}`;
     } else if (r.reportType === "incident") {
@@ -799,6 +841,7 @@ function renderRecentReports() {
     }
 
     const statusHtml = r.status ? `<span class="status-pill status-${r.status}">${statusLabels[r.status] || r.status}</span>` : "";
+    const reportDate = r.reportDate || (r.report_date ? r.report_date : "—");
     
     return `
       <div class="recent-item">
@@ -807,7 +850,7 @@ function renderRecentReports() {
             ${title}
           </div>
           <div class="recent-item-meta">
-            ${metaText} • ساعت ${r.reportTime || "—"} • تاریخ ${r.reportDate || "—"} ${statusHtml}
+            ${metaText} • ساعت ${r.reportTime || "—"} • تاریخ ${reportDate} ${statusHtml}
           </div>
         </div>
         <div class="recent-item-actions">

@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser = data.user;
         showApp(data.user.email);
         showToast('✅ خوش آمدید', 'success');
+  if (typeof renderRecentReports === 'function') renderRecentReports();
       } catch (e) {
         console.error("Network Error:", e);
         err.textContent = 'خطای شبکه: لطفاً اتصال اینترنت خود را بررسی کنید.';
@@ -149,11 +150,28 @@ async function sendReportToSupabase(report) {
       report_time: report.reportTime,
       reporter_id: report.reporterId || '',
       reporter_name: report.reporterName || '',
+      auth_user_id: currentUser.id,
       details: report,
       notes: report.notes || '',
       status: 'unread'
     }])
     .select();
   if (error) throw error;
+  return data;
+}
+
+// دریافت گزارش‌های کاربر فعلی از Supabase
+async function fetchMyReportsFromSupabase() {
+  if (!currentUser) return [];
+  const { data, error } = await supabaseClient
+    .from('reports')
+    .select('*')
+    .eq('auth_user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error("Error fetching reports:", error);
+    return [];
+  }
   return data;
 }

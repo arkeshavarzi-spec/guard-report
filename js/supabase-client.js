@@ -164,15 +164,6 @@ async function sendReportToSupabase(report) {
 async function fetchMyReportsFromSupabase() {
   if (!currentUser) return [];
   
-  // گرفتن لیست گزارش‌هایی که این کاربر پنهان کرده است
-  const { data: hiddenData } = await supabaseClient
-    .from('hidden_reports')
-    .select('report_id')
-    .eq('user_id', currentUser.id);
-    
-  const hiddenIds = hiddenData ? hiddenData.map(h => h.report_id) : [];
-
-  // گرفتن گزارش‌های کاربر
   const { data, error } = await supabaseClient
     .from('reports')
     .select('*')
@@ -184,46 +175,39 @@ async function fetchMyReportsFromSupabase() {
     return [];
   }
   
-  // فیلتر کردن و اضافه کردن شناسه دیتابیس به آبجکت
+  // فیلتر کردن گزارش‌هایی که کاربر فعلی پنهان کرده است
   return data
-    .filter(r => !hiddenIds.includes(r.id))
-    .map(r => ({
-       ...r.details,
-       _dbId: r.id // ذخیره شناسه اصلی دیتابیس
-    }));
+    .filter(r => {
+      const hiddenBy = r.hidden_by || [];
+      return !hiddenBy.includes(currentUser.id);
+    })
+    .map(r => ({ ...r.details, _dbId: r.id }));
 }
 
 // تابع جدید برای پنهان کردن گزارش در دیتابیس
 async function hideReportInSupabase(localId, dbId) {
-  if (!currentUser) return;
-  let targetId = dbId;
+  if (!currentUser) throw new Error('کاربر وارد نشده است');
+  if (!dbId) throw new Error('شناسه دیتابیس یافت نشد');
 
-  // اگر شناسه دیتابیس را نداشتیم، با شناسه محلی آن را پیدا می‌کنیم
-  if (!targetId) {
-     console.log("شناسه دیتابیس یافت نشد، جستجو بر اساس شناسه محلی:", localId);
-     const { data, error } = await supabaseClient
-       .from('reports')
-       .select('id')
-       .eq('details->>id', localId)
-       .single();
-       
-     if (error) console.error("خطا در جستجوی گزارش:", error);
-     if (data) targetId = data.id;
-  }
+  // ۱. گرفتن لیست فعلی پنهان‌شده‌ها
+  const { data: report, error: getError } = await supabaseClient
+    .from('reports')
+    .select('hidden_by')
+    .eq('id', dbId)
+    .single();
+  
+  if (getError) throw getError;
 
-  if (targetId) {
-     const { error } = await supabaseClient
-       .from('hidden_reports')
-       .insert([{ user_id: currentUser.id, report_id: targetId }]);
-       
-     if (error) {
-       console.error("خطا در پنهان‌سازی ابری:", error);
-       throw error;
-     } else {
-       console.log("گزارش با موفقیت در ابر پنهان شد:", targetId);
-     }
-  } else {
-     console.error("گزارش در دیتابیس پیدا نشد.");
-     throw new Error("گزارش در دیتابیس پیدا نشد");
+  const hiddenBy = report.hidden_by || [];
+  if (!hiddenBy.includes(currentUser.id)) {
+    hiddenBy.push(currentUser.id);
+    
+    // ۲. آپدیت لیست
+    const { error: updateError } = await supabaseClient
+      .from('reports')
+      .update({ hidden_by: hiddenBy })
+      .eq('id', dbId);
+      
+    if (updateError) throw updateError;
   }
 }

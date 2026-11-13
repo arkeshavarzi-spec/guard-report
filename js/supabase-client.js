@@ -163,6 +163,16 @@ async function sendReportToSupabase(report) {
 // دریافت گزارش‌های کاربر فعلی از Supabase
 async function fetchMyReportsFromSupabase() {
   if (!currentUser) return [];
+  
+  // ۱. گرفتن لیست گزارش‌هایی که این کاربر پنهان کرده است
+  const { data: hiddenData } = await supabaseClient
+    .from('hidden_reports')
+    .select('report_id')
+    .eq('user_id', currentUser.id);
+    
+  const hiddenIds = hiddenData ? hiddenData.map(h => h.report_id) : [];
+
+  // ۲. گرفتن گزارش‌های کاربر
   const { data, error } = await supabaseClient
     .from('reports')
     .select('*')
@@ -173,5 +183,28 @@ async function fetchMyReportsFromSupabase() {
     console.error("Error fetching reports:", error);
     return [];
   }
-  return data;
+  
+  // ۳. فیلتر کردن گزارش‌های پنهان شده
+  return data.filter(r => !hiddenIds.includes(r.id));
+}
+
+// تابع جدید برای پنهان کردن گزارش در دیتابیس
+async function hideReportInSupabase(reportId) {
+  if (!currentUser) throw new Error('کاربر وارد نشده است');
+  
+  // پیدا کردن UUID اصلی گزارش در دیتابیس (چون در فرانت‌اند ممکن است ID متفاوت باشد)
+  // ما ID اصلی دیتابیس را در details.id ذخیره نکرده بودیم، بنابراین با جستجوی دقیق آن را پیدا می‌کنیم
+  const { data: reportData } = await supabaseClient
+    .from('reports')
+    .select('id')
+    .eq('details->>id', reportId)
+    .single();
+
+  if (!reportData) throw new Error('گزارش در دیتابیس یافت نشد');
+
+  const { error } = await supabaseClient
+    .from('hidden_reports')
+    .insert([{ user_id: currentUser.id, report_id: reportData.id }]);
+
+  if (error) throw error;
 }

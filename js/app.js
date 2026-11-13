@@ -321,25 +321,45 @@ function initRecentActions() {
     showToast("🗑️ گزارش‌ها پاک شدند", "success");
   });
 
-  $("#recentList").addEventListener("click", (e) => {
-    // --- منطق حذف (فقط از دید کاربر، بدون حذف از دیتابیس) ---
+  $("#recentList").addEventListener("click", async (e) => {
+    // --- منطق حذف (پنهان‌سازی ابری) ---
     const deleteBtn = e.target.closest(".btn-delete-item");
     if (deleteBtn) {
       const reportId = deleteBtn.getAttribute("data-id");
       if (!confirm("آیا از حذف این گزارش از لیست خود مطمئن هستید؟ (گزارش در سیستم مرکزی باقی می‌ماند)")) return;
       
-      // ۱. اضافه کردن به لیست حذف‌شده‌ها
-      let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
-      if (!deletedIds.includes(reportId)) {
-        deletedIds.push(reportId);
-        localStorage.setItem('deleted_reports_v1', JSON.stringify(deletedIds));
+      deleteBtn.textContent = '...';
+      deleteBtn.disabled = true;
+
+      // پنهان کردن در دیتابیس ابری
+      if (typeof hideReportInSupabase === 'function' && currentUser) {
+        try {
+          await hideReportInSupabase(reportId);
+        } catch (err) {
+          console.error("Error hiding report:", err);
+          showToast("خطا در پنهان‌سازی ابری. گزارش فقط از این دستگاه حذف شد.", "error");
+          
+          // فال‌بک به روش محلی
+          let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+          if (!deletedIds.includes(reportId)) {
+            deletedIds.push(reportId);
+            localStorage.setItem('deleted_reports_v1', JSON.stringify(deletedIds));
+          }
+        }
+      } else {
+        // اگر آفلاین بود، فقط محلی حذف کن
+        let deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+        if (!deletedIds.includes(reportId)) {
+          deletedIds.push(reportId);
+          localStorage.setItem('deleted_reports_v1', JSON.stringify(deletedIds));
+        }
       }
       
-      // ۲. حذف از حافظه محلی (اگر بود)
+      // حذف از حافظه محلی
       const all = loadReports();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(all.filter(r => r.id !== reportId)));
       
-      // ۳. رندر مجدد
+      // رندر مجدد
       renderRecentReports();
       showToast("🗑️ گزارش از لیست شما حذف شد", "success");
       return;

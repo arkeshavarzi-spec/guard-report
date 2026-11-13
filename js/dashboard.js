@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await fetchAllReports();
     populateLocationFilter();
+    initReporterFilterSearch();
     applyFilters();
     
     setupTableEvents();
@@ -141,13 +142,78 @@ function populateLocationFilter() {
   }
 }
 
+
+
+
+let uniqueReporterNames = [];
+
+function initReporterFilterSearch() {
+  const searchInput = document.getElementById("filterReporterSearch");
+  const listBox = document.getElementById("filterReporterList");
+  const hiddenInput = document.getElementById("filterReporter");
+  
+  if (!searchInput || !listBox) return;
+
+  // استخراج نام‌های یکتا
+  const namesSet = new Set();
+  allReports.forEach(r => {
+    if (r.reporterName && r.reporterName.trim()) namesSet.add(r.reporterName.trim());
+  });
+  uniqueReporterNames = Array.from(namesSet).sort((a, b) => a.localeCompare(b, 'fa'));
+
+  function renderList(items) {
+    listBox.innerHTML = "";
+    if (!items.length) {
+      listBox.innerHTML = `<div class="personnel-empty" style="padding:10px;font-size:0.85rem">نتیجه‌ای یافت نشد</div>`;
+      return;
+    }
+    items.forEach(name => {
+      const item = document.createElement("div");
+      item.className = "personnel-item";
+      item.style.padding = "8px 12px";
+      item.style.fontSize = "0.85rem";
+      item.innerHTML = `<span>${name}</span>`;
+      
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault(); // جلوگیری از blur
+        searchInput.value = name;
+        hiddenInput.value = name;
+        listBox.classList.add("hidden");
+      });
+      listBox.appendChild(item);
+    });
+  }
+
+  searchInput.addEventListener("focus", () => {
+    listBox.classList.remove("hidden");
+    const q = searchInput.value.trim().toLowerCase();
+    renderList(q ? uniqueReporterNames.filter(n => n.toLowerCase().includes(q)) : uniqueReporterNames);
+  });
+
+  searchInput.addEventListener("input", (e) => {
+    listBox.classList.remove("hidden");
+    const q = e.target.value.trim().toLowerCase();
+    // اگر کاربر متن را پاک کرد، فیلتر لغو شود
+    if (!q) hiddenInput.value = ""; 
+    renderList(q ? uniqueReporterNames.filter(n => n.toLowerCase().includes(q)) : uniqueReporterNames);
+  });
+
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => { 
+      listBox.classList.add("hidden"); 
+      // اگر متنی تایپ شده بود اما انتخاب نشد، متن را پاک کن
+      if (!hiddenInput.value) searchInput.value = "";
+    }, 200);
+  });
+}
+
 function applyFilters() {
   const dateFrom = document.getElementById("filterDateFrom").value.trim();
   const dateTo = document.getElementById("filterDateTo").value.trim();
   const type = document.getElementById("filterType").value;
   const location = document.getElementById("filterLocation").value;
   const status = document.getElementById("filterStatus").value;
-  const reporter = document.getElementById("filterReporter").value.trim().toLowerCase();
+  const reporter = document.getElementById("filterReporter").value.trim();
 
   let filtered = [...allReports];
 
@@ -160,7 +226,7 @@ function applyFilters() {
   if (dateTo) filtered = filtered.filter(r => r.reportDate && r.reportDate <= dateTo);
   if (type) filtered = filtered.filter(r => r.reportType === type);
   if (status) filtered = filtered.filter(r => r._status === status);
-  if (reporter) filtered = filtered.filter(r => r.reporterName && r.reporterName.toLowerCase().includes(reporter));
+  if (reporter) filtered = filtered.filter(r => r.reporterName && r.reporterName.trim() === reporter);
   
   if (location) {
     filtered = filtered.filter(r => {

@@ -120,7 +120,11 @@
         </div>
         <div class="field">
           <label>ثبت‌کننده</label>
-          <input type="text" id="filterReporter" placeholder="جستجوی نام..." />
+          <div class="search-select">
+            <input type="text" id="filterReporterSearch" class="search-input" placeholder="جستجوی نام..." autocomplete="off" style="padding: 10px 12px; font-size: 0.9rem;" />
+            <div id="filterReporterList" class="personnel-list hidden" style="position: absolute; z-index: 1000; width: 100%; max-height: 200px; box-shadow: var(--shadow-md); background: #fff; margin-top: 4px;"></div>
+            <input type="hidden" id="filterReporter" value="" />
+          </div>
         </div>
       </div>
       <div class="filter-actions">
@@ -174,10 +178,10 @@
 
   <script src="js/jalalidatepicker.min.js"></script>
   <script src="js/xlsx.full.min.js"></script>
-  <script src="js/supabase.min.js?v=1020"></script>
-  <script src="js/data.js?v=1020"></script>
-  <script src="js/supabase-client.js?v=1020"></script>
+  <script src="js/supabase.min.js?v=1022"></script>
+  <script src="js/data.js?v=1022"></script>
+  <script src="js/supabase-client.js?v=1022"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="js/dashboard.js?v=1020"></script>
+  <script src="js/dashboard.js?v=1022"></script>
 </body>
 </html>

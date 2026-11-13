@@ -2357,26 +2357,39 @@ function initFormReset() {
   if (!resetBtn) return;
 
   resetBtn.addEventListener("click", () => {
-    const confirmed = confirm("آیا از پاک‌سازی تمام اطلاعات فرم مطمئن هستید؟");
+    const confirmed = confirm("آیا از پاک‌سازی اطلاعات فرم مطمئن هستید؟");
     if (!confirmed) return;
 
+    // ۱. ذخیره کارت فعلی که باز است
+    const selectedRadio = document.querySelector(`input[name="reportType"]:checked`);
+    const currentType = selectedRadio ? selectedRadio.value : null;
+
+    // ۲. ریست کردن فرم
     $("#guardForm").reset();
+
+    // ۳. پاک کردن مقادیر سفارشی (چون reset معمولی اینها را پاک نمی‌کند)
     $("#personnelIds").value = "[]";
     $("#selectedChips").innerHTML = "";
+    $("#fireStaffIds").value = "[]";
+    $("#selectedFireStaff").innerHTML = "";
     $("#reporterId").value = "";
-    $("#reporterList").innerHTML = "";
     $("#selectedReporter").innerHTML = "";
-    initReporterSelect();
+    $("#staffContainer").innerHTML = "";
+    if ($("#gatherStaffContainer")) $("#gatherStaffContainer").innerHTML = "";
     $("#photoPreview").hidden = true;
     $("#photoPlaceholder").hidden = false;
-    $("#post").disabled = true;
-    $("#post").innerHTML = `<option value="">ابتدا محل را انتخاب کنید</option>`;
-
-    // برداشتن تیک تمام کارت‌ها
-    document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
-    document.querySelector(`input[name="reportType"]`).dispatchEvent(new Event("change"));
-
-    if (typeof renumberSections === "function") renumberSections();
+    
+    // ۴. دوباره تیک زدن همان کارت (تا کاربر در همان فرم بماند)
+    if (currentType) {
+      const radio = document.querySelector(`input[name="reportType"][value="${currentType}"]`);
+      if (radio) {
+        radio.checked = true;
+        // اجرای دستی رویداد برای بازسازی لیست‌ها و وضعیت‌ها
+        radio.dispatchEvent(new Event("change"));
+      }
+    }
+    
+    initReporterSelect(); // بازسازی لیست ۲۲ نفره ثبت‌کننده
     showToast("فرم پاک‌سازی شد", "success");
   });
 }

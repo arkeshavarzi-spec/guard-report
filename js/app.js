@@ -155,8 +155,32 @@ function loadReports() {
 
 
 function initRecentActions() {
-  $("#exportBtn").addEventListener("click", () => {
-    const reports = loadReports();
+  $("#exportBtn").addEventListener("click", async () => {
+    showToast("در حال آماده‌سازی فایل اکسل از سرور...", "info");
+    
+    let allReports = [];
+    const deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
+
+    // ۱. گرفتن تمام گزارش‌های ابری کاربر
+    if (typeof fetchMyReportsFromSupabase === 'function' && currentUser) {
+      try {
+        const cloudData = await fetchMyReportsFromSupabase();
+        const activeCloud = cloudData.filter(r => !r._isHidden);
+        allReports = [...allReports, ...activeCloud];
+      } catch (e) {
+        console.warn("خطا در خواندن از ابر", e);
+      }
+    }
+
+    // ۲. گرفتن گزارش‌های محلی که هنوز آپلود نشده‌اند (آفلاین)
+    const localReports = loadReports().filter(r => r._synced !== true && !deletedIds.includes(r.id));
+    allReports = [...allReports, ...localReports];
+
+    // ۳. حذف تکراری‌ها (بر اساس شناسه)
+    const uniqueMap = new Map();
+    allReports.forEach(r => uniqueMap.set(r.id, r));
+    const reports = Array.from(uniqueMap.values());
+
     if (!reports.length) return showToast("گزارشی برای خروجی وجود ندارد", "error");
 
     const labels = {
@@ -386,8 +410,22 @@ function initRecentActions() {
     const exportBtn = e.target.closest(".btn-export-item");
     if (exportBtn) {
       const reportId = exportBtn.getAttribute("data-id");
-      const all = loadReports();
-      const report = all.find(r => r.id === reportId);
+      let report = null;
+
+      // جستجو در ابر
+      if (typeof fetchMyReportsFromSupabase === 'function' && currentUser) {
+        try {
+          const cloudData = await fetchMyReportsFromSupabase();
+          report = cloudData.find(r => r.id === reportId);
+        } catch (e) {}
+      }
+      
+      // اگر در ابر نبود، در حافظه محلی بگرد
+      if (!report) {
+        const all = loadReports();
+        report = all.find(r => r.id === reportId);
+      }
+      
       if (!report) return showToast("گزارش پیدا نشد", "error");
 
       // استفاده از دیکشنری‌ها و توابع موجود برای ساخت اکسل

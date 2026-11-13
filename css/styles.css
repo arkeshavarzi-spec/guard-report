@@ -1435,3 +1435,41 @@ body, html {
     margin-top: 2px !important;
   }
 }
+
+/* ---------- Custom Logo Adjustments ---------- */
+/* در هدر */
+.logo {
+  width: 44px !important;
+  height: 44px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: grid !important;
+  place-items: center !important;
+}
+.logo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+  background: #fff; /* پس‌زمینه سفید برای اینکه لوگو با متن انگلیسی داخلش بهتر دیده شود */
+}
+
+/* در موبایل، هدر باریک‌تر می‌شود پس لوگو هم کمی کوچک‌تر می‌شود */
+@media (max-width: 640px) {
+  .logo {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+/* در صفحه لاگین */
+.login-logo {
+  margin: 0 auto 24px !important;
+}
+.login-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 50% !important;
+  background: #fff;
+}

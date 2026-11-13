@@ -491,21 +491,45 @@
 }
 .header-text { text-align: right !important; }
 
-/* ---------- MOBILE TABLE TO CARD & ACTIONS GRID ---------- */
+
+
+/* ---------- MOBILE FIX: KPI GRID & SPECIFIC TABLES ---------- */
 @media (max-width: 768px) {
-  .app-header { padding: 10px 16px !important; }
-  .header-branding .logo { width: 36px !important; height: 36px !important; }
-  .header-text h1 { font-size: 0.95rem !important; margin: 0 !important; }
-  .header-text p { font-size: 0.7rem !important; margin: 0 !important; }
-  
-  /* جدول کارتی */
-  .table-responsive { overflow-x: visible !important; }
-  .data-table, .data-table tbody, .data-table tr, .data-table td {
+  /* ۱. کارت‌های آماری ۲ در ۲ */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .kpi-card { padding: 15px 10px !important; }
+  .kpi-value { font-size: 1.8rem !important; }
+
+  /* ۲. اصلاح نوار جستجوی پرسنل */
+  #personnelTab .filter-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  #personnelTab .filter-row > div {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  #personnelTab .filter-row button {
+    width: 100% !important;
+  }
+
+  /* ۳. جدول گزارش‌ها (کارتی) */
+  #reportsTab .table-responsive { overflow-x: visible !important; }
+  #reportsTab .data-table, 
+  #reportsTab .data-table tbody, 
+  #reportsTab .data-table tr, 
+  #reportsTab .data-table td {
     display: block !important;
     width: 100% !important;
   }
-  .data-table thead { display: none !important; }
-  .data-table tr {
+  #reportsTab .data-table thead { display: none !important; }
+  #reportsTab .data-table tr {
     margin-bottom: 15px !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
@@ -513,7 +537,7 @@
     background: #fff !important;
     box-shadow: var(--shadow-sm) !important;
   }
-  .data-table td {
+  #reportsTab .data-table td {
     border: none !important;
     padding: 6px 0 !important;
     display: flex !important;
@@ -522,28 +546,62 @@
     font-size: 0.85rem !important;
     text-align: right !important;
   }
-  .data-table td:nth-child(1)::before { content: "وضعیت:"; font-weight: bold; color: var(--text-muted); }
-  .data-table td:nth-child(2)::before { content: "نوع:"; font-weight: bold; color: var(--text-muted); }
-  .data-table td:nth-child(3)::before { content: "موضوع/محل:"; font-weight: bold; color: var(--text-muted); }
-  .data-table td:nth-child(4)::before { content: "ثبت‌کننده:"; font-weight: bold; color: var(--text-muted); }
-  .data-table td:nth-child(5)::before { content: "تاریخ:"; font-weight: bold; color: var(--text-muted); }
-  
-  /* دکمه‌های عملیات به صورت شبکه 2 ستونه */
-  .data-table td:nth-child(6) {
+  #reportsTab .data-table td:nth-child(1)::before { content: "وضعیت:"; font-weight: bold; color: var(--text-muted); }
+  #reportsTab .data-table td:nth-child(2)::before { content: "نوع:"; font-weight: bold; color: var(--text-muted); }
+  #reportsTab .data-table td:nth-child(3)::before { content: "موضوع/محل:"; font-weight: bold; color: var(--text-muted); }
+  #reportsTab .data-table td:nth-child(4)::before { content: "ثبت‌کننده:"; font-weight: bold; color: var(--text-muted); }
+  #reportsTab .data-table td:nth-child(5)::before { content: "تاریخ:"; font-weight: bold; color: var(--text-muted); }
+  #reportsTab .data-table td:nth-child(6) {
     border-top: 1px dashed var(--border) !important;
     margin-top: 8px !important;
     padding-top: 12px !important;
-    display: flex !important;
     justify-content: center !important;
   }
-  .table-actions {
+  #reportsTab .table-actions {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 8px !important;
     width: 100% !important;
   }
-  .btn-table {
+  #reportsTab .btn-table { width: 100% !important; padding: 8px !important; }
+
+  /* ۴. جدول پرسنل (کارتی با لیبل‌های خودش) */
+  #personnelTab .table-responsive { overflow-x: visible !important; }
+  #personnelTab .data-table, 
+  #personnelTab .data-table tbody, 
+  #personnelTab .data-table tr, 
+  #personnelTab .data-table td {
+    display: block !important;
     width: 100% !important;
-    padding: 8px !important;
+  }
+  #personnelTab .data-table thead { display: none !important; }
+  #personnelTab .data-table tr {
+    margin-bottom: 15px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 12px !important;
+    background: #fff !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  #personnelTab .data-table td {
+    border: none !important;
+    padding: 6px 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 0.85rem !important;
+    text-align: right !important;
+  }
+  #personnelTab .data-table td:nth-child(1)::before { content: "نام:"; font-weight: bold; color: var(--text-muted); }
+  #personnelTab .data-table td:nth-child(2)::before { content: "کد ملی:"; font-weight: bold; color: var(--text-muted); }
+  #personnelTab .data-table td:nth-child(3)::before { content: "شبا:"; font-weight: bold; color: var(--text-muted); }
+  #personnelTab .data-table td:nth-child(4)::before { content: "تلفن:"; font-weight: bold; color: var(--text-muted); }
+  #personnelTab .data-table td:nth-child(5)::before { content: "مسئول ثبت:"; font-weight: bold; color: var(--text-muted); }
+  #personnelTab .data-table td:nth-child(6)::before { content: "وضعیت:"; font-weight: bold; color: var(--text-muted); }
+  #personnelTab .data-table td:nth-child(7) {
+    border-top: 1px dashed var(--border) !important;
+    margin-top: 8px !important;
+    padding-top: 12px !important;
+    justify-content: center !important;
   }
 }

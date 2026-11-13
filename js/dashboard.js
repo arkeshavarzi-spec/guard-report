@@ -479,7 +479,8 @@ async function updateReportStatus(newStatus) {
 function initTabs() {
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach(tab => {
-    tab.addEventListener('click', async () => {
+    tab.addEventListener('click', async (e) => {
+      e.preventDefault(); // جلوگیری از رفتار پیش‌فرض لمس در موبایل
       try {
         document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
@@ -489,13 +490,14 @@ function initTabs() {
         const targetTab = document.getElementById(targetId);
         targetTab.classList.remove('hidden');
 
-        // لود کردن داده‌ها (همیشه داده‌ها را از سرور می‌گیریم تا تازه باشند)
+        // لود کردن داده‌ها
         if (targetId === 'reportsTab') {
           await fetchAllReports();
           applyFilters();
         } else if (targetId === 'personnelTab') {
           await fetchPersonnel();
         } else if (targetId === 'locationsTab') {
+          console.log("Locations tab clicked. Fetching data...");
           await fetchLocationsData();
         }
       } catch (err) {
@@ -504,8 +506,7 @@ function initTabs() {
       }
     });
   });
-}
-// ---------------------------------------------------------
+}// ---------------------------------------------------------
 // توابع مدیریت پرسنل (Personnel)
 // ---------------------------------------------------------
 async function fetchPersonnel() {

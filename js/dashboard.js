@@ -476,42 +476,10 @@ async function updateReportStatus(newStatus) {
 // ---------------------------------------------------------
 // توابع مدیریت تب‌ها
 // ---------------------------------------------------------
-function initTabs() {
-  const tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', async (e) => {
-      e.preventDefault(); // جلوگیری از رفتار پیش‌فرض لمس در موبایل
-      try {
-        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-        
-        tab.classList.add('active');
-        const targetId = tab.dataset.tab;
-        const targetTab = document.getElementById(targetId);
-        targetTab.classList.remove('hidden');
 
-        // لود کردن داده‌ها
-        if (targetId === 'reportsTab') {
-          await fetchAllReports();
-          applyFilters();
-        } else if (targetId === 'personnelTab') {
-          await fetchPersonnel();
-        } else if (targetId === 'locationsTab') {
-          console.log("Locations tab clicked. Fetching data...");
-          await fetchLocationsData();
-          console.log("Locations data fetched successfully.");
-        }
-      } catch (err) {
-        console.error("Tab Error:", err);
-        showToast("خطا در باز کردن تب", "error");
-      }
-    });
-  });
-}// ---------------------------------------------------------
-// توابع مدیریت پرسنل (Personnel)
-// ---------------------------------------------------------
 async function fetchPersonnel() {
   const tbody = document.getElementById("personnelTableBody");
+  if (!tbody) return;
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr>`;
 
   const { data, error } = await supabaseClient.from('personnel').select('*');
@@ -525,6 +493,50 @@ async function fetchPersonnel() {
   renderPersonnelTable(allPersonnelData);
 }
 
+
+function initTabs() {
+  const tabsContainer = document.querySelector('.dashboard-tabs');
+  if (!tabsContainer) return;
+
+  // استفاده از Event Delegation روی کانتینر تب‌ها
+  tabsContainer.addEventListener('click', async (e) => {
+    // پیدا کردن نزدیک‌ترین دکمه تب به المان کلیک شده (حتی اگر روی متن یا آیکون کلیک شود)
+    const tab = e.target.closest('.tab-btn');
+    if (!tab) return;
+    
+    e.preventDefault(); 
+    e.stopPropagation();
+
+    try {
+      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      
+      tab.classList.add('active');
+      const targetId = tab.dataset.tab;
+      const targetTab = document.getElementById(targetId);
+      
+      if (!targetTab) {
+        console.error("Target tab not found:", targetId);
+        return;
+      }
+      
+      targetTab.classList.remove('hidden');
+
+      // لود کردن داده‌ها
+      if (targetId === 'reportsTab') {
+        await fetchAllReports();
+        applyFilters();
+      } else if (targetId === 'personnelTab') {
+        await fetchPersonnel();
+      } else if (targetId === 'locationsTab') {
+        console.log("Locations tab clicked. Fetching data...");
+        await fetchLocationsData();
+      }
+    } catch (err) {
+      console.error("Tab Error:", err);
+    }
+  });
+}
 function renderPersonnelTable(data) {
   const tbody = document.getElementById("personnelTableBody");
   
@@ -563,17 +575,64 @@ function renderPersonnelTable(data) {
 
 function initPersonnelEvents() {
   const searchInput = document.getElementById("searchPersonnel");
-  if (searchInput) {
+  const searchList = document.getElementById("personnelSearchList");
+  const searchHidden = document.getElementById("searchPersonnelId");
+  
+  if (searchInput && searchList) {
+    function renderSearchList(items) {
+      searchList.innerHTML = "";
+      if (!items.length) {
+        searchList.innerHTML = `<div class="personnel-empty" style="padding:10px;font-size:0.85rem">نتیجه‌ای یافت نشد</div>`;
+        return;
+      }
+      items.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "personnel-item";
+        item.style.padding = "8px 12px";
+        item.style.fontSize = "0.85rem";
+        item.innerHTML = `<span>${p.full_name}</span><span style="font-family:monospace; color:#94a3b8; font-size:0.75rem;">${p.national_id || ''}</span>`;
+        
+        item.addEventListener("mousedown", (e) => {
+          e.preventDefault(); // جلوگیری از blur
+          searchInput.value = p.full_name;
+          searchHidden.value = p.id;
+          searchList.classList.add("hidden");
+          // فیلتر کردن جدول برای همین شخص
+          renderPersonnelTable([p]);
+        });
+        searchList.appendChild(item);
+      });
+    }
+
+    searchInput.addEventListener("focus", () => {
+      searchList.classList.remove("hidden");
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = q ? allPersonnelData.filter(p => p.full_name.toLowerCase().includes(q) || (p.national_id && p.national_id.includes(q))) : allPersonnelData;
+      renderSearchList(filtered);
+    });
+
     searchInput.addEventListener("input", (e) => {
+      searchList.classList.remove("hidden");
       const q = e.target.value.trim().toLowerCase();
-      const filtered = allPersonnelData.filter(p => 
-        p.full_name.toLowerCase().includes(q) || 
-        (p.national_id && p.national_id.includes(q))
-      );
-      renderPersonnelTable(filtered);
+      if (!q) {
+        searchHidden.value = "";
+        renderPersonnelTable(allPersonnelData); // اگر پاک شد، همه را نشان بده
+      }
+      const filtered = q ? allPersonnelData.filter(p => p.full_name.toLowerCase().includes(q) || (p.national_id && p.national_id.includes(q))) : allPersonnelData;
+      renderSearchList(filtered);
+    });
+
+    searchInput.addEventListener("blur", () => {
+      setTimeout(() => { 
+        searchList.classList.add("hidden"); 
+        if (!searchHidden.value && searchInput.value === "") {
+           renderPersonnelTable(allPersonnelData);
+        }
+      }, 200);
     });
   }
 
+  // بقیه رویدادها (دکمه‌ها)
   const tbody = document.getElementById("personnelTableBody");
   if (tbody) {
     tbody.addEventListener("click", async (e) => {
@@ -594,7 +653,6 @@ function initPersonnelEvents() {
   });
   document.getElementById("savePersonnelBtn")?.addEventListener("click", savePersonnel);
 }
-
 function openPersonnelModal(id) {
   const modal = document.getElementById("personnelModal");
   const title = document.getElementById("personnelModalTitle");

@@ -477,24 +477,6 @@
 
 
 
-/* ---------- GLOBAL HEADER FIX ---------- */
-.app-header {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-direction: row !important;
-}
-.header-branding {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-}
-.header-text { text-align: right !important; }
-
-
-
-
-
 /* ---------- MOBILE FIX: KPI GRID & SPECIFIC TABLES ---------- */
 @media (max-width: 768px) {
   .kpi-grid {
@@ -615,4 +597,33 @@
     padding: 10px 8px !important;
     font-size: 0.8rem !important;
   }
+}
+
+/* حل مشکل کلیک تب‌ها در موبایل */
+.dashboard-tabs {
+  touch-action: manipulation;
+}
+.tab-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; /* حذف هایلایت آبی هنگام کلیک در موبایل */
+  cursor: pointer;
+  z-index: 10;
+  position: relative;
+}
+
+/* ---------- FIX DESKTOP HEADER WIDTH ---------- */
+.dashboard-header {
+  max-width: 1160px !important;
+  margin: 20px auto 24px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* اطمینان از هم‌عرض بودن کانتینر اصلی */
+.dashboard-container {
+  max-width: 1160px !important;
+  margin: 0 auto !important;
+  padding: 0 0 60px 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }

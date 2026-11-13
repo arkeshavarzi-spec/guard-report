@@ -5,8 +5,29 @@
 const SUPABASE_URL = 'https://flhfnpjrcisgoghvwbyd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_WmrUwWR3TpCTrIildF37_w_VcfAgXXs';
 
-// مقداردهی اولیه با تنظیمات پایدار برای دور زدن خطای QUIC
+// ۱. تعریف یک fetch سفارشی با قابلیت تلاش مجدد
+const customFetch = async (url, options = {}) => {
+  const maxRetries = 3;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      // اگر خطای 5xx بود، دوباره تلاش کن
+      if (response.status >= 500) throw new Error(`Server error: ${response.status}`);
+      return response;
+    } catch (err) {
+      if (i === maxRetries - 1) throw err;
+      // صبر کوتاه قبل از تلاش مجدد (Exponential Backoff)
+      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+    }
+  }
+};
+
+// ۲. مقداردهی اولیه کلاینت با fetch سفارشی
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: {
+    fetch: customFetch // استفاده از fetch سفارشی برای تمام درخواست‌ها
+  },
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -59,12 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
         if (error) {
-          err.textContent = (error.message === 'Invalid login credentials' ? 'ایمیل یا رمز عبور اشتباه است.' : error.message);
+          err.textContent = 'خطا: ' + (error.message === 'Invalid login credentials' ? 'ایمیل یا رمز عبور اشتباه است.' : error.message);
           return;
         }
-
         currentUser = data.user;
         showApp(data.user.email);
         showToast('✅ خوش آمدید', 'success');
@@ -78,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // دکمه خروج
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
@@ -92,10 +110,37 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
 });
 
+// --- آپلود عکس به Supabase Storage با روش ArrayBuffer ---
+async function uploadImageToSupabase(file) {
+  if (!file) return null;
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+  // ۱. تبدیل فایل به ArrayBuffer (مطمئن‌ترین روش برای آپلود)
+  const arrayBuffer = await file.arrayBuffer();
+
+  // ۲. آپلود با استفاده از ArrayBuffer
+  const { data, error } = await supabaseClient.storage
+    .from('report-images')
+    .upload(fileName, arrayBuffer, {
+      contentType: file.type,
+      upsert: false
+    });
+
+  if (error) throw error;
+
+  // ۳. دریافت لینک عمومی
+  const { data: urlData } = supabaseClient.storage
+    .from('report-images')
+    .getPublicUrl(fileName);
+
+  return urlData.publicUrl;
+}
+
 // ارسال گزارش به Supabase
 async function sendReportToSupabase(report) {
   if (!currentUser) throw new Error('کاربر وارد نشده است');
-
   const { data, error } = await supabaseClient
     .from('reports')
     .insert([{
@@ -109,30 +154,6 @@ async function sendReportToSupabase(report) {
       status: 'unread'
     }])
     .select();
-
   if (error) throw error;
   return data;
-}
-
-// آپلود عکس به باکس Supabase و دریافت لینک عمومی
-async function uploadImageToSupabase(file) {
-  if (!file) return null;
-  
-  // ساخت یک نام یکتا برای فایل
-  const fileExt = file.name.split('.').pop();
-  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-  
-  // آپلود فایل به باکس report-images
-  const { data, error } = await supabaseClient.storage
-    .from('report-images')
-    .upload(fileName, file);
-
-  if (error) throw error;
-
-  // دریافت لینک عمومی (Public URL)
-  const { data: urlData } = supabaseClient.storage
-    .from('report-images')
-    .getPublicUrl(fileName);
-
-  return urlData.publicUrl;
 }

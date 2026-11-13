@@ -499,6 +499,7 @@ function initTabs() {
         } else if (targetId === 'locationsTab') {
           console.log("Locations tab clicked. Fetching data...");
           await fetchLocationsData();
+          console.log("Locations data fetched successfully.");
         }
       } catch (err) {
         console.error("Tab Error:", err);
@@ -536,7 +537,7 @@ function renderPersonnelTable(data) {
     <tr>
       <td data-label="نام و نام خانوادگی" style="font-weight: 700;">${p.full_name}</td>
       <td data-label="کد ملی" style="font-family: monospace;">${p.national_id || '—'}</td>
-      <td data-label="شماره شبا" style="font-family: monospace; direction: ltr; text-align: right;">${p.shaba || '—'}</td>
+      <td data-label="شماره شبا" style="font-family: monospace;"><span style="direction: ltr; display: inline-block;">${p.shaba || '—'}</span></td>
       <td data-label="تلفن" style="font-family: monospace;">${p.phone || '—'}</td>
       <td data-label="مسئول ثبت">
         ${p.can_report 

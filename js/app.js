@@ -1071,11 +1071,11 @@ function initReporterSelect() {
 
 
 function initReportTypeToggle() {
-  // پیدا کردن هوشمندانه بخش‌ها از روی ساختار (بدون نیاز به ID)
   const typeSelectorSection = document.querySelector('input[name="reportType"]').closest('.form-section');
   const commonInfoSection = document.querySelector('#reportDate').closest('.form-section');
   const formActions = document.querySelector('#formActions');
   const statusSelect = document.querySelector('#status');
+  const photoField = document.getElementById('photoField');
   
   const allSections = [
     "locationSection", "personnelSection", "detailsSection", 
@@ -1087,7 +1087,6 @@ function initReportTypeToggle() {
   function sync() {
     const selected = document.querySelector(`input[name="reportType"]:checked`);
     
-    // حالت اولیه: نمایش کارت‌ها، مخفی کردن بقیه
     if (!selected) {
       if (typeSelectorSection) typeSelectorSection.classList.remove("hidden");
       if (commonInfoSection) commonInfoSection.classList.add("hidden");
@@ -1104,7 +1103,6 @@ function initReportTypeToggle() {
 
     const type = selected.value;
     
-    // حالت تمرکز: مخفی کردن کارت‌ها، نمایش فرم
     if (typeSelectorSection) typeSelectorSection.classList.add("hidden");
     if (commonInfoSection) commonInfoSection.classList.remove("hidden");
     if (formActions) formActions.classList.remove("hidden");
@@ -1137,16 +1135,31 @@ function initReportTypeToggle() {
       if (targetSec) targetSec.classList.remove("hidden");
       if (det) det.classList.remove("hidden");
     }
+
+    // 🎯 منطق مخفی/نمایان کردن پنل عکس
+    const allowedPhotoTypes = ["incident", "fire", "theft"];
+    if (photoField) {
+      if (allowedPhotoTypes.includes(type)) {
+        photoField.classList.remove("hidden");
+      } else {
+        photoField.classList.add("hidden");
+        // پاک کردن عکسی که شاید قبلاً انتخاب شده بود
+        const photoInput = document.getElementById("photo");
+        if (photoInput) photoInput.value = "";
+        const photoPreview = document.getElementById("photoPreview");
+        if (photoPreview) { photoPreview.hidden = true; photoPreview.src = ""; }
+        const photoPlaceholder = document.getElementById("photoPlaceholder");
+        if (photoPlaceholder) photoPlaceholder.hidden = false;
+      }
+    }
     
     if (typeof renumberSections === "function") renumberSections();
 
-    // اسکرول امن در موبایل (با استفاده از window.scrollTo که در موبایل پایدارتر است)
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   }
 
-  // گوش دادن به رویداد change روی رادیوها
   document.querySelectorAll(`input[name="reportType"]`).forEach(r => {
     r.addEventListener("change", sync);
   });

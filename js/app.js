@@ -326,15 +326,17 @@ function initRecentActions() {
     const deleteBtn = e.target.closest(".btn-delete-item");
     if (deleteBtn) {
       const reportId = deleteBtn.getAttribute("data-id");
+      const dbId = deleteBtn.getAttribute("data-dbid");
+      
       if (!confirm("آیا از حذف این گزارش از لیست خود مطمئن هستید؟ (گزارش در سیستم مرکزی باقی می‌ماند)")) return;
       
       deleteBtn.textContent = '...';
       deleteBtn.disabled = true;
 
       // پنهان کردن در دیتابیس ابری
-      if (typeof hideReportInSupabase === 'function' && currentUser) {
+      if (dbId && typeof hideReportInSupabase === 'function' && currentUser) {
         try {
-          await hideReportInSupabase(reportId);
+          await hideReportInSupabase(dbId);
         } catch (err) {
           console.error("Error hiding report:", err);
           showToast("خطا در پنهان‌سازی ابری. گزارش فقط از این دستگاه حذف شد.", "error");
@@ -787,36 +789,33 @@ async function renderRecentReports() {
   const list = $("#recentList");
   list.innerHTML = `<p class="empty-state">در حال بارگذاری گزارش‌ها...</p>`;
   
-  // گرفتن لیست گزارش‌های حذف‌شده از حافظه محلی
   const deletedIds = JSON.parse(localStorage.getItem('deleted_reports_v1') || '[]');
-  
-  // ۱. گرفتن گزارش‌های محلی
   let localReports = loadReports().filter(r => !deletedIds.includes(r.id));
   
-  // ۲. گرفتن گزارش‌های ابری (اگر کاربر لاگین است)
   let cloudReports = [];
   if (typeof fetchMyReportsFromSupabase === 'function' && currentUser) {
     try {
       const cloudData = await fetchMyReportsFromSupabase();
-      // تبدیل ساختار ابری به فرمت محلی
-      cloudReports = cloudData
-        .filter(r => !deletedIds.includes(r.details.id)) // فیلتر کردن حذف‌شده‌ها
-        .map(r => r.details); // details همان ساختار اصلی است
+      cloudReports = cloudData.filter(r => !deletedIds.includes(r.id)); 
     } catch (e) {
       console.warn("Could not fetch from cloud", e);
     }
   }
   
-  // ۳. ادغام گزارش‌ها و حذف تکراری‌ها (بر اساس id)
+  // ادغام هوشمندانه
   const allReportsMap = new Map();
-  // اول محلی‌ها را می‌گذاریم
-  localReports.forEach(r => allReportsMap.set(r.id, r));
-  // سپس ابری‌ها (اگر محلی نبود، اضافه می‌شوند)
-  cloudReports.forEach(r => {
-    if (!allReportsMap.has(r.id)) allReportsMap.set(r.id, r);
+  // اول ابری‌ها را اضافه می‌کنیم
+  cloudReports.forEach(r => allReportsMap.set(r.id, r));
+  // بعد محلی‌ها؛ اگر تکراری بودند، _dbId را از نسخه ابری برمی‌داریم
+  localReports.forEach(r => {
+    if (allReportsMap.has(r.id)) {
+       const cloudR = allReportsMap.get(r.id);
+       allReportsMap.set(r.id, { ...r, _dbId: cloudR._dbId });
+    } else {
+       allReportsMap.set(r.id, r);
+    }
   });
   
-  // تبدیل به آرایه و مرتب‌سازی بر اساس تاریخ ایجاد (نزولی)
   const reports = Array.from(allReportsMap.values())
     .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
 
@@ -875,8 +874,8 @@ async function renderRecentReports() {
         </div>
         <div class="recent-item-actions">
           ${r.photoUrl ? `<a href="${r.photoUrl}" target="_blank" class="recent-item-btn" title="مشاهده عکس">📷</a>` : ''}
-          <button class="recent-item-btn btn-export-item" data-id="${r.id}" title="دانلود این گزارش">📥</button>
-          <button class="recent-item-btn btn-delete-item" data-id="${r.id}" title="حذف گزارش">🗑</button>
+          <button class="recent-item-btn btn-export-item" data-id="${r.id}" data-dbid="${r._dbId || ''}" title="دانلود این گزارش">📥</button>
+          <button class="recent-item-btn btn-delete-item" data-id="${r.id}" data-dbid="${r._dbId || ''}" title="حذف گزارش">🗑</button>
         </div>
       </div>
     `;

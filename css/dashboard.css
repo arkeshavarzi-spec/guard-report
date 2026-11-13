@@ -747,3 +747,9 @@
 .tab-content > section:first-child {
   margin-top: 0 !important;
 }
+
+/* ---------- CENTER KPI CARDS TEXT ---------- */
+.kpi-card {
+  align-items: center !important; /* وسط‌چین کردن المان‌ها در فلکس */
+  text-align: center !important;  /* وسط‌چین کردن متن‌ها */
+}

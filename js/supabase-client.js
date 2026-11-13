@@ -113,3 +113,26 @@ async function sendReportToSupabase(report) {
   if (error) throw error;
   return data;
 }
+
+// آپلود عکس به باکس Supabase و دریافت لینک عمومی
+async function uploadImageToSupabase(file) {
+  if (!file) return null;
+  
+  // ساخت یک نام یکتا برای فایل
+  const fileExt = file.name.split('.').pop();
+  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+  
+  // آپلود فایل به باکس report-images
+  const { data, error } = await supabaseClient.storage
+    .from('report-images')
+    .upload(fileName, file);
+
+  if (error) throw error;
+
+  // دریافت لینک عمومی (Public URL)
+  const { data: urlData } = supabaseClient.storage
+    .from('report-images')
+    .getPublicUrl(fileName);
+
+  return urlData.publicUrl;
+}

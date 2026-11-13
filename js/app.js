@@ -59,6 +59,42 @@ function initLocationSelect() {
 }
 
 
+
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // محاسبه ابعاد جدید با حفظ نسبت تصویر
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // تبدیل به Blob با کیفیت مشخص (فرمت JPEG)
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
 function initPhotoUploader() {
   const uploader = $("#photoUploader");
   const input = $("#photo");
@@ -67,13 +103,15 @@ function initPhotoUploader() {
 
   uploader.addEventListener("click", () => input.click());
 
-  input.addEventListener("change", () => {
+  input.addEventListener("change", async () => {
     const file = input.files[0];
     if (!file) {
       preview.hidden = true;
       placeholder.hidden = false;
       return;
     }
+
+    // نمایش پیش‌نمایش اولیه (اختیاری)
     const reader = new FileReader();
     reader.onload = (e) => {
       preview.src = e.target.result;
@@ -81,6 +119,27 @@ function initPhotoUploader() {
       placeholder.hidden = true;
     };
     reader.readAsDataURL(file);
+
+    // فشرده‌سازی عکس (حداکثر عرض 1600 پیکسل و کیفیت 80%)
+    try {
+      const compressedBlob = await compressImage(file, 1600, 0.8);
+      
+      // جایگزینی فایل اصلی با فایل فشرده‌شده در input
+      const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+        type: "image/jpeg",
+        lastModified: Date.now()
+      });
+      
+      // استفاده از DataTransfer برای جایگزینی فایل در input
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(compressedFile);
+      input.files = dataTransfer.files;
+      
+      showToast("عکس با موفقیت فشرده شد", "success");
+    } catch (err) {
+      console.error("خطا در فشرده‌سازی عکس:", err);
+      showToast("خطا در فشرده‌سازی، عکس اصلی ارسال می‌شود", "error");
+    }
   });
 }
 
@@ -622,25 +681,31 @@ function initFormSubmit() {
       });
     }
 
-    if (photoFile) {
-      const reader = new FileReader();
-      reader.onload = (ev) => { report.photo = ev.target.result; saveReport(report); };
-      reader.readAsDataURL(photoFile);
-    } else {
-      saveReport(report);
-    }
+    saveReport(report, photoFile);
   });
 }
 
-async function saveReport(report) {
-  // ذخیره محلی (پشتیبان)
+async function saveReport(report, photoFile) {
+  // ۱. آپلود عکس (اگر وجود داشته باشد و کاربر آنلاین باشد)
+  if (photoFile && typeof uploadImageToSupabase === 'function' && currentUser) {
+    try {
+      showToast("⏳ در حال آپلود عکس...", "info");
+      const photoUrl = await uploadImageToSupabase(photoFile);
+      report.photoUrl = photoUrl;
+    } catch (err) {
+      console.error("خطا در آپلود عکس:", err);
+      showToast("⚠️ آپلود عکس ناموفق بود، گزارش بدون عکس ذخیره می‌شود.", "error");
+    }
+  }
+
+  // ۲. ذخیره محلی (پشتیبان)
   const all = loadReports();
   all.unshift(report);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 
-  // ارسال به Supabase (نسخه ابری)
+  // ۳. ارسال به Supabase (نسخه ابری)
   let cloudStatus = '';
-  if (typeof sendReportToSupabase === 'function') {
+  if (typeof sendReportToSupabase === 'function' && currentUser) {
     try {
       await sendReportToSupabase(report);
       cloudStatus = ' (ابری ✓)';
@@ -677,135 +742,9 @@ async function saveReport(report) {
   
   $("#photoPreview").hidden = true;
   $("#photoPlaceholder").hidden = false;
+  $("#photo").value = ""; // پاک کردن فایل عکس
   
-  $("#illnessSection").classList.add("hidden");
-  $("#incidentSection").classList.add("hidden");
-  $("#gatheringSection").classList.add("hidden");
-  $("#missionSection").classList.add("hidden");
-  $("#missionCategory").value = "";
-  $("#missionSharedFields").classList.add("hidden");
-  $("#missionOfficialFields").classList.add("hidden");
-  $("#missionCorporateFields").classList.add("hidden");
-  $("#missionPersonnelId").value = "";
-  $("#missionPersonnel").value = "";
-  $("#selectedMissionPersonnel").innerHTML = "";
-  $("#missionPost").value = "حفاظت فیزیکی";
-  $("#missionLocation").value = "";
-  $("#missionSubject").value = "";
-  $("#missionStartDate").value = "";
-  $("#missionEndDate").value = "";
-  $("#missionDuration").value = "";
-  $("#missionNumber").value = "";
-  $("#missionIssueDate").value = "";
-  $("#missionTypeOfficial").value = "individual";
-  $("#missionAccommodation").value = "provided";
-  $("#missionVehicle").value = "gov_car_driver";
-  $("#missionEquipment").value = "";
-  $("#missionGroupStaffIds").value = "[]";
-  $("#selectedMissionGroupStaff").innerHTML = "";
-  $("#missionGroupStaffSearch").value = "";
-  $("#missionCompanyName").value = "شرکت نیل آب فسا";
-  $("#missionRequestType").value = "issue";
-  $("#missionSection").classList.add("hidden");
-  $("#missionCategory").value = "";
-  $("#missionSharedFields").classList.add("hidden");
-  $("#missionOfficialFields").classList.add("hidden");
-  $("#missionCorporateFields").classList.add("hidden");
-  $("#missionPersonnelId").value = "";
-  $("#missionPersonnel").value = "";
-  $("#selectedMissionPersonnel").innerHTML = "";
-  $("#missionPost").value = "حفاظت فیزیکی";
-  $("#missionLocation").value = "";
-  $("#missionSubject").value = "";
-  $("#missionStartDate").value = "";
-  $("#missionEndDate").value = "";
-  $("#missionDuration").value = "";
-  $("#missionNumber").value = "";
-  $("#missionIssueDate").value = "";
-  $("#missionTypeOfficial").value = "individual";
-  $("#missionAccommodation").value = "provided";
-  $("#missionVehicle").value = "gov_car_driver";
-  $("#missionEquipment").value = "";
-  $("#missionGroupStaffIds").value = "[]";
-  $("#selectedMissionGroupStaff").innerHTML = "";
-  $("#missionGroupStaffSearch").value = "";
-  $("#missionCompanyName").value = "شرکت نیل آب فسا";
-  $("#missionRequestType").value = "issue";
-  $("#gatheringDate").value = "";
-  $("#gatheringStartTime").value = "";
-  $("#gatheringEndTime").value = "";
-  $("#gatheringPeopleCount").value = "";
-  $("#gatheringReason").value = "";
-  $("#gatheringSubject").value = "";
-  $("#gatheringSpeaker").value = "";
-  $("#gatheringOrganizers").value = "";
-  $("#gatheringLocation").value = "";
-  $("#gatheringTension").value = "";
-  $("#gatheringTensionDetails").value = "";
-  $("#gatheringActions").value = "";
-  $("#gatheringTensionDetailsField").classList.add("hidden");
-  $("#gatherStaffContainer").innerHTML = "";
-  
-  $("#theftSection").classList.add("hidden");
-  $("#discSection").classList.add("hidden");
-  $("#ceremonySection").classList.add("hidden");
-  $("#fireSection").classList.add("hidden");
-  $("#missionSection").classList.add("hidden");
-  $("#gatheringSection").classList.add("hidden");
-  $("#missionSection").classList.add("hidden");
-  $("#missionCategory").value = "";
-  $("#missionSharedFields").classList.add("hidden");
-  $("#missionOfficialFields").classList.add("hidden");
-  $("#missionCorporateFields").classList.add("hidden");
-  $("#missionPersonnelId").value = "";
-  $("#missionPersonnel").value = "";
-  $("#selectedMissionPersonnel").innerHTML = "";
-  $("#missionPost").value = "حفاظت فیزیکی";
-  $("#missionLocation").value = "";
-  $("#missionSubject").value = "";
-  $("#missionStartDate").value = "";
-  $("#missionEndDate").value = "";
-  $("#missionDuration").value = "";
-  $("#missionNumber").value = "";
-  $("#missionIssueDate").value = "";
-  $("#missionTypeOfficial").value = "individual";
-  $("#missionAccommodation").value = "provided";
-  $("#missionVehicle").value = "gov_car_driver";
-  $("#missionEquipment").value = "";
-  $("#missionGroupStaffIds").value = "[]";
-  $("#selectedMissionGroupStaff").innerHTML = "";
-  $("#missionGroupStaffSearch").value = "";
-  $("#missionCompanyName").value = "شرکت نیل آب فسا";
-  $("#missionRequestType").value = "issue";
-  $("#missionSection").classList.add("hidden");
-  $("#missionCategory").value = "";
-  $("#missionSharedFields").classList.add("hidden");
-  $("#missionOfficialFields").classList.add("hidden");
-  $("#missionCorporateFields").classList.add("hidden");
-  $("#missionPersonnelId").value = "";
-  $("#missionPersonnel").value = "";
-  $("#selectedMissionPersonnel").innerHTML = "";
-  $("#missionPost").value = "حفاظت فیزیکی";
-  $("#missionLocation").value = "";
-  $("#missionSubject").value = "";
-  $("#missionStartDate").value = "";
-  $("#missionEndDate").value = "";
-  $("#missionDuration").value = "";
-  $("#missionNumber").value = "";
-  $("#missionIssueDate").value = "";
-  $("#missionTypeOfficial").value = "individual";
-  $("#missionAccommodation").value = "provided";
-  $("#missionVehicle").value = "gov_car_driver";
-  $("#missionEquipment").value = "";
-  $("#missionGroupStaffIds").value = "[]";
-  $("#selectedMissionGroupStaff").innerHTML = "";
-  $("#missionGroupStaffSearch").value = "";
-  $("#missionCompanyName").value = "شرکت نیل آب فسا";
-  $("#missionRequestType").value = "issue";
-  
-  $("#detailsSection").classList.remove("hidden");
-
-  // برداشتن تیک تمام کارت‌ها
+  // پنهان کردن همه بخش‌ها
   document.querySelectorAll(`input[name="reportType"]`).forEach(r => r.checked = false);
   document.querySelector(`input[name="reportType"]`).dispatchEvent(new Event("change"));
   
@@ -872,6 +811,7 @@ function renderRecentReports() {
           </div>
         </div>
         <div class="recent-item-actions">
+          ${r.photoUrl ? `<a href="${r.photoUrl}" target="_blank" class="recent-item-btn" title="مشاهده عکس">📷</a>` : ''}
           <button class="recent-item-btn btn-export-item" data-id="${r.id}" title="دانلود این گزارش">📥</button>
           <button class="recent-item-btn btn-delete-item" data-id="${r.id}" title="حذف گزارش">🗑</button>
         </div>

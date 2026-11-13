@@ -50,14 +50,14 @@ async function checkAuth() {
 
 function showLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
-  document.getElementById('userInfo').classList.add('hidden');
+  document.getElementById('userMenuContainer').classList.add('hidden');
   const app = document.querySelector('.app-container');
   if (app) app.style.display = 'none';
 }
 
 function showApp(email) {
   document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('userInfo').classList.remove('hidden');
+  document.getElementById('userMenuContainer').classList.remove('hidden');
   document.getElementById('userEmail').textContent = email;
   const app = document.querySelector('.app-container');
   if (app) app.style.display = '';
@@ -97,6 +97,33 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+
+  // منطق منوی آواتار (Dropdown)
+  const userMenuBtn = document.getElementById('userMenuBtn');
+  const userDropdown = document.getElementById('userDropdown');
+  
+  if (userMenuBtn && userDropdown) {
+    userMenuBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("Avatar clicked! Toggling dropdown...");
+      userDropdown.classList.toggle('hidden');
+      userMenuBtn.classList.toggle('active');
+    });
+
+    // بستن منو وقتی روی جای دیگری کلیک شود
+    document.addEventListener('click', (e) => {
+      // استفاده از contains بررسی می‌کند که آیا کلیک روی خود دکمه (یا آیکون داخل آن) بوده یا خیر
+      if (!userDropdown.classList.contains('hidden') && 
+          !userDropdown.contains(e.target) && 
+          !userMenuBtn.contains(e.target)) {
+        userDropdown.classList.add('hidden');
+        userMenuBtn.classList.remove('active');
+      }
+    });
+  }
+
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {

@@ -68,7 +68,7 @@ body {
   box-shadow: var(--shadow-lg);
   margin-bottom: 28px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .app-header::after {
@@ -171,7 +171,7 @@ body {
 .type-card input {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none; z-index: 0;
 }
 
 .type-card-content {
@@ -517,7 +517,7 @@ textarea {
   opacity: 0;
   transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 999;
-  pointer-events: none;
+  pointer-events: none; z-index: 0;
 }
 
 .toast.show {
@@ -1141,218 +1141,262 @@ textarea {
 
 
 
-/* ---------- App Header with User Profile ---------- */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 18px;
-  padding: 24px 30px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  margin-bottom: 28px;
-  position: relative;
-  overflow: hidden;
+/* ---------- Responsive Header ---------- */
+
+
+.dropdown-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #f8fafc;
 }
-.app-header::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -20%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.header-branding {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  z-index: 1;
+.dropdown-header span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  direction: ltr;
+  display: block;
+  text-align: left;
 }
 
-/* استایل پروفایل داخل هدر */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 999px;
-  padding: 6px 6px 6px 14px;
-  z-index: 1;
-  animation: slideDown 0.4s ease-out;
-}
-.user-info.hidden { display: none !important; }
-
-.user-info-content {
+.dropdown-logout {
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  text-align: right;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--danger);
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: background 0.2s;
 }
-.user-icon {
-  width: 26px;
-  height: 26px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.user-email {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
-  direction: ltr;
-  font-family: monospace, sans-serif;
+.dropdown-logout:hover {
+  background: #fee2e2;
 }
 
-.btn-logout {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: var(--danger) !important;
-  border: none !important;
-  border-radius: 999px !important;
-  padding: 6px 14px !important;
-  font-family: var(--font) !important;
-  font-size: 0.75rem !important;
-  font-weight: 800 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-}
-.btn-logout:hover {
-  background: #fff !important;
-  transform: scale(1.05);
-}
+/* ---------- Mobile Responsive (نوار باریک) ---------- */
 
-/* ---------- Responsive Header ---------- */
-@media (max-width: 640px) {
-  .app-header {
-    flex-direction: column;
-    padding: 20px;
-    gap: 16px;
-  }
-  .header-branding {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-  .user-info {
-    width: 100%;
-    justify-content: space-between;
-    padding: 8px 12px;
-  }
-}
 
-/* ---------- App Header with User Profile ---------- */
+/* ---------- FINAL HEADER & DROPDOWN FIX ---------- */
 .app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 18px;
-  padding: 24px 30px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: #fff;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  margin-bottom: 28px;
+  overflow: visible !important; /* جلوگیری از بریده شدن منو */
+}
+
+.user-menu-container {
   position: relative;
-  overflow: hidden;
-}
-.app-header::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -20%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.header-branding {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  z-index: 1;
+  z-index: 5000 !important; /* بالاتر از هدر و کارت‌ها */
 }
 
-/* استایل پروفایل داخل هدر */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 999px;
-  padding: 6px 6px 6px 14px;
-  z-index: 1;
-  animation: slideDown 0.4s ease-out;
-}
-.user-info.hidden { display: none !important; }
-
-.user-info-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.user-icon {
-  width: 26px;
-  height: 26px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.user-email {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
-  direction: ltr;
-  font-family: monospace, sans-serif;
+.user-dropdown {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  background: #ffffff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25) !important;
+  border: 1px solid #e2e8f0 !important;
+  min-width: 220px !important;
+  z-index: 99999 !important; /* بالاترین لایه ممکن */
+  display: block;
 }
 
-.btn-logout {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: var(--danger) !important;
-  border: none !important;
-  border-radius: 999px !important;
-  padding: 6px 14px !important;
-  font-family: var(--font) !important;
-  font-size: 0.75rem !important;
-  font-weight: 800 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-}
-.btn-logout:hover {
-  background: #fff !important;
-  transform: scale(1.05);
+/* اطمینان از اینکه کلاس hidden روی منو کار می‌کند */
+.user-dropdown.hidden {
+  display: none !important;
 }
 
-/* ---------- Responsive Header ---------- */
+/* استایل منوی کشویی در موبایل */
+
+
+/* ---------- Mobile Header Optimization ---------- */
 @media (max-width: 640px) {
   .app-header {
-    flex-direction: column;
-    padding: 20px;
-    gap: 16px;
+    padding: 10px 16px !important; /* هدر باریک‌تر */
+    margin-bottom: 16px !important;
+    flex-direction: row !important; /* حفظ چیدمان افقی */
+    justify-content: space-between !important; /* چپ و راست */
+    align-items: center !important;
+    gap: 0 !important;
   }
+  
   .header-branding {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
+    flex-direction: row !important; /* لوگو و متن کنار هم */
+    text-align: right !important;
+    gap: 10px !important;
   }
-  .user-info {
-    width: 100%;
-    justify-content: space-between;
-    padding: 8px 12px;
+  
+  .logo {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+  }
+  
+  .logo svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  
+  .header-text h1 {
+    font-size: 0.9rem !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .header-text p {
+    display: none !important; /* پنهان کردن زیرنویس در موبایل */
+  }
+  
+  /* آواتار در سمت چپ */
+  .user-menu-container {
+    margin-left: 0 !important;
+  }
+  
+  .avatar-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  
+  .avatar-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* تنظیم موقعیت منوی کشویی در موبایل (باز شدن به سمت راست) */
+  .user-dropdown {
+    left: 0 !important;
+    right: auto !important;
+    min-width: 180px !important;
+  }
+}
+
+/* ---------- Dropdown Logout Button (Icon Only) ---------- */
+.dropdown-logout {
+  width: 100%;
+  padding: 14px !important;
+  background: transparent;
+  border: none;
+  display: flex !important;
+  justify-content: center !important; /* وسط چین کردن آیکون */
+  align-items: center;
+  color: var(--danger);
+  cursor: pointer;
+  transition: background 0.2s;
+  border-top: 1px solid var(--border) !important; /* خط جداکننده */
+}
+
+.dropdown-logout:hover {
+  background: #fee2e2;
+}
+
+/* ---------- FINAL MOBILE HEADER & AVATAR FIX ---------- */
+.app-header {
+  display: flex !important;
+  align-items: center !important; /* تراز عمودی دقیق */
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  min-height: 60px !important; /* جلوگیری از کشیده شدن */
+}
+
+.header-branding {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.header-text h1 {
+  font-size: 1rem !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+}
+
+.header-text p {
+  display: none !important; /* پنهان کردن متن زیرین در موبایل */
+}
+
+/* اصلاح قطعی آواتار */
+.avatar-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important; /* دایره کامل */
+  background: rgba(255, 255, 255, 0.15) !important; /* شیشه‌ای */
+  border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+  color: #fff !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important; /* حذف استایل پیش‌فرض دکمه در برخی مرورگرها */
+  appearance: none !important;
+}
+
+.avatar-btn:hover, .avatar-btn.active {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.avatar-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+}
+
+/* تنظیم منوی کشویی */
+.user-dropdown {
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  right: auto !important;
+  min-width: 200px !important;
+}
+
+/* ---------- FIX HORIZONTAL OVERFLOW AND HEADER TEXT ---------- */
+body, html {
+  overflow-x: hidden !important; /* جلوگیری قطعی از اسکرول افقی */
+  max-width: 100vw !important;
+}
+
+/* اصلاح متن طولانی هدر برای اینکه صفحه را پهن نکند */
+.header-branding {
+  min-width: 0 !important;
+}
+.header-text {
+  min-width: 0 !important;
+}
+.header-text h1 {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important; /* اگر متن طولانی بود، سه نقطه بگذارد */
+}
+
+@media (max-width: 640px) {
+  /* منوی کشویی در موبایل باید به سمت راست (داخل صفحه) باز شود */
+  .user-dropdown {
+    left: 0 !important;
+    right: auto !important;
+    min-width: 180px !important;
+    max-width: calc(100vw - 32px) !important; /* هرگز از عرض صفحه بیشتر نشود */
+  }
+  
+  .app-container {
+    width: 100% !important;
+    padding: 12px !important;
+    margin: 0 !important;
+  }
+}
+
+/* ---------- Mobile Avatar Size Adjustment ---------- */
+@media (max-width: 640px) {
+  .avatar-btn {
+    width: 32px !important; /* کوچک‌تر از سپر (که 34px است) */
+    height: 32px !important;
+  }
+  
+  .avatar-btn svg {
+    width: 16px !important;
+    height: 16px !important;
   }
 }

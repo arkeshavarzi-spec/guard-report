@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>سامانه گزارش‌دهی حفاظت فیزیکی</title>
-  <link rel="stylesheet" href="css/fonts.css?v=900" />
-  <link rel="stylesheet" href="css/jalalidatepicker.min.css?v=900" />
-  <link rel="stylesheet" href="css/styles.css?v=900" />
+  <link rel="stylesheet" href="css/fonts.css?v=1007" />
+  <link rel="stylesheet" href="css/jalalidatepicker.min.css?v=1007" />
+  <link rel="stylesheet" href="css/styles.css?v=1007" />
 </head>
 <body>
   <div class="bg-decoration"></div>
@@ -52,18 +52,23 @@
         </div>
       </div>
 
-      <!-- پروفایل کاربر داخل هدر -->
-      <div id="userInfo" class="user-info hidden">
-        <div class="user-info-content">
-          <div class="user-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+      <!-- منوی آواتار کاربر (گوشه بالا سمت چپ) -->
+      <div id="userMenuContainer" class="user-menu-container hidden">
+        <button type="button" id="userMenuBtn" class="avatar-btn" title="پروفایل کاربر">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
+        
+        <div id="userDropdown" class="user-dropdown hidden">
+          <div class="dropdown-header">
+            <span id="userEmail">email@example.com</span>
           </div>
-          <span id="userEmail" class="user-email"></span>
+          <button type="button" id="logoutBtn" class="dropdown-logout" title="خروج از حساب">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+          </button>
         </div>
-        <button id="logoutBtn" class="btn-logout">خروج</button>
       </div>
     </header>
 
@@ -1025,12 +1030,12 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="js/jalalidatepicker.min.js?v=900"></script>
-  <script src="js/xlsx.full.min.js?v=900"></script>
-  <script src="js/data.js?v=900"></script>
+  <script src="js/jalalidatepicker.min.js?v=1007"></script>
+  <script src="js/xlsx.full.min.js?v=1007"></script>
+  <script src="js/data.js?v=1007"></script>
   
-  <script src="js/supabase.min.js?v=900"></script>
-  <script src="js/supabase-client.js?v=900"></script>
-  <script src="js/app.js?v=900"></script>
+  <script src="js/supabase.min.js?v=1007"></script>
+  <script src="js/supabase-client.js?v=1007"></script>
+  <script src="js/app.js?v=1007"></script>
 </body>
 </html>

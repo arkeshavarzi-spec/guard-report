@@ -710,3 +710,40 @@
     width: 100% !important;
   }
 }
+
+/* ---------- ABSOLUTELY ZERO GAP FIX ---------- */
+/* کاهش فاصله پایین تب‌ها به حداقل (فقط ۸ پیکسل) */
+.dashboard-tabs {
+  margin-bottom: 8px !important; 
+}
+
+/* صفر کردن هرگونه فاصله بالای تب‌ها */
+#personnelTab, #locationsTab, #reportsTab {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  display: block !important; /* برای اطمینان از اینکه فضا اشغال نمی‌کند */
+}
+
+#personnelTab.hidden, #locationsTab.hidden, #reportsTab.hidden {
+  display: none !important;
+}
+
+/* صفر کردن فاصله بالای اولین سکشن (کادر جستجو) */
+#personnelTab > section:first-child,
+#locationsTab > section:first-child {
+  margin-top: 0 !important;
+}
+
+/* ---------- FINAL STRUCTURAL FIX ---------- */
+#personnelTab, #locationsTab, #reportsTab {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+.dashboard-tabs {
+  margin-bottom: 16px !important;
+}
+/* اطمینان از اینکه محتوای تب‌ها فاصله اضافی از بالا ندارد */
+.tab-content > section:first-child {
+  margin-top: 0 !important;
+}

@@ -1400,3 +1400,38 @@ body, html {
     height: 16px !important;
   }
 }
+
+/* ---------- Restore Header Subtitle in Mobile ---------- */
+@media (max-width: 640px) {
+  .header-text p {
+    display: block !important; /* نمایش مجدد متن */
+    font-size: 0.7rem !important; /* فونت ریز و ظریف */
+    margin-top: 3px !important;
+    line-height: 1.2 !important;
+    opacity: 0.9 !important;
+    color: #eff6ff !important; /* رنگ آبی خیلی روشن برای هماهنگی */
+  }
+  
+  .header-text h1 {
+    font-size: 0.85rem !important; /* کمی کوچک‌تر تا هدر باریک بماند */
+    margin-bottom: 0 !important;
+  }
+}
+
+/* ---------- Restore Header Subtitle Globally ---------- */
+.header-text p {
+  display: block !important; /* نمایش در همه دستگاه‌ها */
+  font-size: 0.85rem !important; /* اندازه مناسب برای دسکتاپ */
+  margin-top: 4px !important;
+  opacity: 0.9 !important;
+  color: #eff6ff !important; /* رنگ آبی خیلی روشن برای هماهنگی با پس‌زمینه */
+  line-height: 1.4 !important;
+}
+
+/* در موبایل کمی ریزتر شود تا هدر باریک بماند */
+@media (max-width: 640px) {
+  .header-text p {
+    font-size: 0.7rem !important;
+    margin-top: 2px !important;
+  }
+}

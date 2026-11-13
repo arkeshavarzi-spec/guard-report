@@ -206,3 +206,10 @@ async function hideReportInSupabase(localId, dbId) {
     if (updateError) throw updateError;
   }
 }
+
+// پنهان کردن دسته‌جمعی تمام گزارش‌های کاربر
+async function hideAllReportsInSupabase() {
+  if (!currentUser) return;
+  const { error } = await supabaseClient.rpc('hide_all_my_reports');
+  if (error) throw error;
+}

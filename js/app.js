@@ -314,11 +314,26 @@ function initRecentActions() {
     smartDownload(url, `guard-reports-${new Date().toISOString().slice(0,10)}.xlsx`, blob);
   });
 
-  $("#clearBtn").addEventListener("click", () => {
-    if (!confirm("همه گزارش‌های ذخیره‌شده محلی پاک شوند؟")) return;
+  $("#clearBtn").addEventListener("click", async () => {
+    if (!confirm("آیا از حذف تمام گزارش‌ها از لیست خود مطمئن هستید؟ (گزارش‌ها در سیستم مرکزی باقی می‌مانند)")) return;
+    
+    // ۱. پاک کردن حافظه محلی
     localStorage.removeItem(STORAGE_KEY);
+    
+    // ۲. پنهان کردن در ابر
+    if (typeof hideAllReportsInSupabase === 'function' && currentUser) {
+      try {
+        showToast("در حال پنهان‌سازی...", "info");
+        await hideAllReportsInSupabase();
+      } catch (err) {
+        console.error("خطا در پنهان‌سازی دسته‌جمعی:", err);
+        showToast("خطا در همگام‌سازی، گزارش‌ها فقط از این دستگاه پاک شدند.", "error");
+      }
+    }
+    
+    // ۳. رندر مجدد
     renderRecentReports();
-    showToast("🗑️ گزارش‌ها پاک شدند", "success");
+    showToast("🗑️ همه گزارش‌ها از لیست شما پاک شدند", "success");
   });
 
   $("#recentList").addEventListener("click", async (e) => {

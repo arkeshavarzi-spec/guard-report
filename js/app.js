@@ -334,9 +334,9 @@ function initRecentActions() {
       deleteBtn.disabled = true;
 
       // پنهان کردن در دیتابیس ابری
-      if (dbId && typeof hideReportInSupabase === 'function' && currentUser) {
+      if (typeof hideReportInSupabase === 'function' && currentUser) {
         try {
-          await hideReportInSupabase(dbId);
+          await hideReportInSupabase(reportId, dbId);
         } catch (err) {
           console.error("Error hiding report:", err);
           showToast("خطا در پنهان‌سازی ابری. گزارش فقط از این دستگاه حذف شد.", "error");

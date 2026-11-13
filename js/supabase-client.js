@@ -194,12 +194,36 @@ async function fetchMyReportsFromSupabase() {
 }
 
 // تابع جدید برای پنهان کردن گزارش در دیتابیس
-async function hideReportInSupabase(dbId) {
-  if (!currentUser) throw new Error('کاربر وارد نشده است');
-  
-  const { error } = await supabaseClient
-    .from('hidden_reports')
-    .insert([{ user_id: currentUser.id, report_id: dbId }]);
+async function hideReportInSupabase(localId, dbId) {
+  if (!currentUser) return;
+  let targetId = dbId;
 
-  if (error) throw error;
+  // اگر شناسه دیتابیس را نداشتیم، با شناسه محلی آن را پیدا می‌کنیم
+  if (!targetId) {
+     console.log("شناسه دیتابیس یافت نشد، جستجو بر اساس شناسه محلی:", localId);
+     const { data, error } = await supabaseClient
+       .from('reports')
+       .select('id')
+       .eq('details->>id', localId)
+       .single();
+       
+     if (error) console.error("خطا در جستجوی گزارش:", error);
+     if (data) targetId = data.id;
+  }
+
+  if (targetId) {
+     const { error } = await supabaseClient
+       .from('hidden_reports')
+       .insert([{ user_id: currentUser.id, report_id: targetId }]);
+       
+     if (error) {
+       console.error("خطا در پنهان‌سازی ابری:", error);
+       throw error;
+     } else {
+       console.log("گزارش با موفقیت در ابر پنهان شد:", targetId);
+     }
+  } else {
+     console.error("گزارش در دیتابیس پیدا نشد.");
+     throw new Error("گزارش در دیتابیس پیدا نشد");
+  }
 }

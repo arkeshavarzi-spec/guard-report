@@ -1,12 +1,18 @@
 /* =========================================================
-   منطق داشبورد مدیریتی (نسخه تمیز - شبیه ویندوز)
+   منطق داشبورد مدیریتی (نسخه نهایی و کامل)
    ========================================================= */
 
 let allReports = [];
 let currentUserId = null;
-let showHiddenReports = false; // وضعیت نمایش فایل‌های پنهان (پیش‌فرض: خاموش)
+let showHiddenReports = false;
 let selectedReportIdForModal = null;
 let myChart = null;
+
+let allPersonnelData = [];
+let allLocationsData = [];
+let allPostsData = [];
+let showInactiveLocations = false;
+let uniqueReporterNames = [];
 
 const typeLabels = { 
   patrol: "گشت شبانه", illness: "گزارش بیماری", incident: "گزارش موردی", 
@@ -33,569 +39,8 @@ const excelLabels = {
   missionPost: "پست سازمانی", missionNumber: "شماره مأموریت", missionEndDate: "تاریخ پایان", missionSubject: "موضوع", missionVehicle: "وسیله", missionCategory: "نوع مأموریت", missionDuration: "مدت", missionEquipment: "تجهیزات", missionIssueDate: "تاریخ صدور", missionStartDate: "تاریخ شروع", missionTypeOfficial: "نوع (رسمی)", missionAccommodation: "محل اقامت", missionGroupStaffNames: "نیروهای گروهی"
 };
 
-
-// =========================================================
-// منطق مدیریت پرسنل
-// =========================================================
-let allPersonnelData = [];
-
-function initTabs() {
-  const tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      // ۱. مخفی کردن همه تب‌ها و محتواها
-      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      
-      // ۲. فعال کردن تب کلیک شده
-      tab.classList.add('active');
-      const targetId = tab.dataset.tab;
-      document.getElementById(targetId).classList.remove('hidden');
-
-      // ۳. بارگذاری یا رندر مجدد داده‌های مربوط به تب
-      if (targetId === 'reportsTab') {
-        applyFilters(); // همیشه رندر مجدد کن
-      } else if (targetId === 'personnelTab') {
-        if (allPersonnelData.length === 0) {
-          fetchPersonnel(); // اگر داده نداریم، از ابر بگیر
-        } else {
-          renderPersonnelTable(allPersonnelData); // اگر داریم، رندر کن
-        }
-      } else if (targetId === 'locationsTab') {
-        if (allLocationsData.length === 0) {
-          fetchLocationsData(); // اگر داده نداریم، از ابر بگیر
-        } else {
-          renderTree(); // اگر داریم، رندر کن
-        }
-      }
-    });
-  });
-}
-
-async function fetchPersonnel() {
-  const tbody = document.getElementById("personnelTableBody");
-  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr>`;
-
-  const { data, error } = await supabaseClient.from('personnel').select('*');
-  
-  if (error) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">خطا در دریافت اطلاعات</td></tr>`;
-    return;
-  }
-  
-  // مرتب‌سازی الفبایی صحیح فارسی در سمت کلاینت (دیتابیس برای فارسی دقیق نیست)
-  allPersonnelData = data.sort((a, b) => a.full_name.localeCompare(b.full_name, 'fa'));
-  renderPersonnelTable(allPersonnelData);
-}
-
-function renderPersonnelTable(data) {
-  const tbody = document.getElementById("personnelTableBody");
-  
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">پرسنلی یافت نشد.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = data.map(p => `
-    <tr>
-      <td style="font-weight: 700;">${p.full_name}</td>
-      <td style="font-family: monospace;">${p.national_id || '—'}</td>
-      <td style="font-family: monospace; direction: ltr; text-align: right;">${p.shaba || '—'}</td>
-      <td style="font-family: monospace;">${p.phone || '—'}</td>
-      <td>
-        ${p.can_report 
-          ? `<span class="badge-reporter">✅ بله</span>` 
-          : `<span class="badge-not-reporter">❌ خیر</span>`}
-      </td>
-      <td>
-        ${p.is_active 
-          ? `<span class="badge-active">فعال</span>` 
-          : `<span class="badge-inactive">غیرفعال</span>`}
-      </td>
-      <td>
-        <div class="table-actions">
-          <button class="btn-table action-p-btn" data-action="edit" data-id="${p.id}" title="ویرایش">✏️</button>
-          <button class="btn-table action-p-btn" data-action="toggle-active" data-id="${p.id}" title="${p.is_active ? 'غیرفعال کردن' : 'فعال کردن'}">
-            ${p.is_active ? '🚫' : '✅'}
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join("");
-}
-
-function initPersonnelEvents() {
-  const searchInput = document.getElementById("searchPersonnel");
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      const filtered = allPersonnelData.filter(p => 
-        p.full_name.toLowerCase().includes(q) || 
-        (p.national_id && p.national_id.includes(q))
-      );
-      renderPersonnelTable(filtered);
-    });
-  }
-
-  // Event Delegation برای دکمه‌های جدول پرسنل
-  const tbody = document.getElementById("personnelTableBody");
-  if (tbody) {
-    tbody.addEventListener("click", async (e) => {
-      const btn = e.target.closest(".action-p-btn");
-      if (!btn) return;
-      
-      const action = btn.dataset.action;
-      const id = btn.dataset.id;
-
-      if (action === "edit") openPersonnelModal(id);
-      else if (action === "toggle-active") await togglePersonnelActive(id);
-    });
-  }
-
-  // دکمه افزودن پرسنل
-  document.getElementById("addPersonnelBtn")?.addEventListener("click", () => openPersonnelModal(null));
-  
-  // دکمه خروجی اکسل پرسنل
-  document.getElementById("exportPersonnelBtn")?.addEventListener("click", exportPersonnelToExcel);
-  
-  // دکمه بستن مودال
-  document.getElementById("closePersonnelModal")?.addEventListener("click", () => {
-    document.getElementById("personnelModal").classList.add("hidden");
-  });
-
-  // دکمه ذخیره
-  document.getElementById("savePersonnelBtn")?.addEventListener("click", savePersonnel);
-}
-
-function openPersonnelModal(id) {
-  const modal = document.getElementById("personnelModal");
-  const title = document.getElementById("personnelModalTitle");
-  const editId = document.getElementById("editPersonnelId");
-  
-  if (id) {
-    // ویرایش
-    const p = allPersonnelData.find(x => x.id === id);
-    if (!p) return;
-    title.textContent = "ویرایش پرسنل";
-    editId.value = p.id;
-    document.getElementById("pFullName").value = p.full_name;
-    document.getElementById("pNationalId").value = p.national_id || '';
-    document.getElementById("pShaba").value = p.shaba || '';
-    document.getElementById("pPhone").value = p.phone || '';
-    document.getElementById("pCanReport").checked = p.can_report;
-  } else {
-    // افزودن
-    title.textContent = "افزودن پرسنل جدید";
-    editId.value = "";
-    document.getElementById("pFullName").value = "";
-    document.getElementById("pNationalId").value = "";
-    document.getElementById("pShaba").value = "";
-    document.getElementById("pPhone").value = "";
-    document.getElementById("pCanReport").checked = false;
-  }
-  modal.classList.remove("hidden");
-}
-
-async function savePersonnel() {
-  const id = document.getElementById("editPersonnelId").value;
-  const fullName = document.getElementById("pFullName").value.trim();
-  const natId = document.getElementById("pNationalId").value.trim();
-  const shaba = document.getElementById("pShaba").value.trim();
-  const phone = document.getElementById("pPhone").value.trim();
-  const canReport = document.getElementById("pCanReport").checked;
-
-  if (!fullName || !natId) return showToast("نام و کد ملی الزامی است", "error");
-
-  const payload = {
-    full_name: fullName,
-    national_id: natId,
-    shaba: shaba,
-    phone: phone,
-    can_report: canReport
-  };
-
-  let error;
-  if (id) {
-    // ویرایش
-    const { error: err } = await supabaseClient.from('personnel').update(payload).eq('id', id);
-    error = err;
-  } else {
-    // ثبت جدید (استفاده از کد ملی به عنوان شناسه)
-    const newId = `p_${natId}`;
-    payload.id = newId;
-    payload.is_active = true;
-    const { error: err } = await supabaseClient.from('personnel').insert([payload]);
-    error = err;
-  }
-
-  if (error) {
-    console.error(error);
-    return showToast("خطا در ذخیره‌سازی", "error");
-  }
-
-  showToast("✅ اطلاعات ذخیره شد", "success");
-  document.getElementById("personnelModal").classList.add("hidden");
-  
-  // رفرش لیست و سینک ابری
-  await fetchPersonnel();
-  if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
-}
-
-async function togglePersonnelActive(id) {
-  const p = allPersonnelData.find(x => x.id === id);
-  if (!p) return;
-  
-  const newStatus = !p.is_active;
-  if (!confirm(`آیا از ${newStatus ? 'فعال کردن' : 'غیرفعال کردن'} این شخص مطمئنید؟`)) return;
-  
-  const { error } = await supabaseClient.from('personnel').update({ is_active: newStatus }).eq('id', id);
-  if (error) return showToast("خطا در تغییر وضعیت", "error");
-  
-  showToast(`✅ وضعیت به ${newStatus ? 'فعال' : 'غیرفعال'} تغییر کرد`, "success");
-  await fetchPersonnel();
-  if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
-}
-
-
-// =========================================================
-// منطق مدیریت اماکن و پست‌ها (درخت)
-// =========================================================
-let allLocationsData = [];
-let allPostsData = [];
-let showInactiveLocations = false;
-
-async function fetchLocationsData() {
-  const container = document.getElementById("locationsTree");
-  if (!container) return;
-  container.innerHTML = '<p style="text-align:center; padding:20px;">در حال بارگذاری...</p>';
-
-  const [locRes, postRes] = await Promise.all([
-    supabaseClient.from('locations').select('*').order('sort_order'),
-    supabaseClient.from('posts').select('*').order('sort_order')
-  ]);
-
-  if (locRes.error || postRes.error) {
-    container.innerHTML = '<p style="color:red; text-align:center; padding:20px;">خطا در بارگذاری اطلاعات</p>';
-    return;
-  }
-
-  allLocationsData = locRes.data || [];
-  allPostsData = postRes.data || [];
-  renderTree();
-}
-
-function renderTree() {
-  const container = document.getElementById("locationsTree");
-  if (!container) return;
-
-  let visibleLocs = showInactiveLocations 
-    ? allLocationsData 
-    : allLocationsData.filter(l => l.is_active);
-
-  if (!visibleLocs.length) {
-    container.innerHTML = '<p style="text-align:center; padding:20px;">دانشکده‌ای یافت نشد.</p>';
-    return;
-  }
-
-  container.innerHTML = visibleLocs.map(loc => {
-    const locPosts = allPostsData.filter(p => 
-      p.location_id === loc.id && (showInactiveLocations || p.is_active)
-    );
-    const activeCount = allPostsData.filter(p => p.location_id === loc.id && p.is_active).length;
-
-    const postsHtml = locPosts.map(post => `
-      <div class="tree-post ${post.is_active ? '' : 'inactive'}">
-        <span class="tree-post-label">${post.label}</span>
-        <div class="tree-post-actions">
-          <button class="btn-table action-loc-btn" data-action="edit-post" data-id="${post.id}" title="ویرایش">✏️</button>
-          <button class="btn-table action-loc-btn ${post.is_active ? 'btn-hide-row' : ''}" data-action="toggle-post" data-id="${post.id}" title="${post.is_active ? 'غیرفعال' : 'فعال'}">
-            ${post.is_active ? '🚫' : '✅'}
-          </button>
-        </div>
-      </div>
-    `).join('');
-
-    return `
-      <div class="tree-location ${loc.is_active ? '' : 'inactive'}" data-loc-id="${loc.id}">
-        <div class="tree-location-header" data-action="toggle-expand">
-          <span class="tree-toggle-icon">◀</span>
-          <span class="tree-location-title">${loc.label}</span>
-          <span class="tree-location-count">${activeCount} پست</span>
-          <div class="tree-location-actions">
-            <button class="btn-table action-loc-btn" data-action="edit-loc" data-id="${loc.id}" title="ویرایش">✏️</button>
-            <button class="btn-table action-loc-btn ${loc.is_active ? 'btn-hide-row' : ''}" data-action="toggle-loc" data-id="${loc.id}" title="${loc.is_active ? 'غیرفعال' : 'فعال'}">
-              ${loc.is_active ? '🚫' : '✅'}
-            </button>
-          </div>
-        </div>
-        <div class="tree-posts">
-          ${postsHtml || '<p style="color: var(--text-muted); font-size: 0.85rem;">این دانشکده هنوز پستی ندارد.</p>'}
-          ${loc.is_active ? `<button class="tree-add-post-btn action-loc-btn" data-action="add-post" data-loc-id="${loc.id}">➕ افزودن پست جدید</button>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function initLocationsEvents() {
-  // باز/بسته کردن درخت
-    document.getElementById("locationsTree")?.addEventListener("click", async (e) => {
-    // 🥇 اول: بررسی دکمه‌های عملیاتی (ویرایش، حذف، افزودن پست)
-    const btn = e.target.closest('.action-loc-btn');
-    if (btn) {
-      e.stopPropagation(); // جلوگیری از باز/بسته شدن ناخواسته
-      const action = btn.dataset.action;
-      const id = btn.dataset.id;
-      const locId = btn.dataset.locId;
-      
-      console.log("🎯 Action clicked:", action, "ID:", id || locId);
-
-      if (action === "edit-loc") openLocationModal(id);
-      else if (action === "toggle-loc") await toggleLocationActive(id);
-      else if (action === "add-post") openPostModal(null, locId);
-      else if (action === "edit-post") openPostModal(id);
-      else if (action === "toggle-post") await togglePostActive(id);
-      return;
-    }
-
-    // 🥈 دوم: اگر روی دکمه‌ای نبود، بررسی باز/بسته شدن درخت
-    const header = e.target.closest('[data-action="toggle-expand"]');
-    if (header) {
-      const loc = header.closest('.tree-location');
-      loc.classList.toggle('expanded');
-    }
-  });
-
-  // دکمه افزودن دانشکده
-  document.getElementById("addLocationBtn")?.addEventListener("click", () => openLocationModal(null));
-
-  // دکمه نمایش غیرفعال‌ها
-  document.getElementById("toggleInactiveLocBtn")?.addEventListener("click", (e) => {
-    showInactiveLocations = !showInactiveLocations;
-    const btn = e.target;
-    if (showInactiveLocations) {
-      btn.innerHTML = "🙈 مخفی کردن غیرفعال‌ها";
-      btn.style.color = "var(--primary)";
-      btn.style.borderColor = "var(--primary)";
-    } else {
-      btn.innerHTML = "👁️ نمایش غیرفعال‌ها";
-      btn.style.color = "var(--warning)";
-      btn.style.borderColor = "var(--warning)";
-    }
-    renderTree();
-  });
-
-  // مودال دانشکده
-  document.getElementById("closeLocationModal")?.addEventListener("click", () => {
-    document.getElementById("locationModal").classList.add("hidden");
-  });
-  document.getElementById("saveLocationBtn")?.addEventListener("click", saveLocation);
-
-  // مودال پست
-  document.getElementById("closePostModal")?.addEventListener("click", () => {
-    document.getElementById("postModal").classList.add("hidden");
-  });
-  document.getElementById("savePostBtn")?.addEventListener("click", savePost);
-}
-
-function openLocationModal(id) {
-  const modal = document.getElementById("locationModal");
-  const title = document.getElementById("locationModalTitle");
-  const editId = document.getElementById("editLocationId");
-  const labelInput = document.getElementById("lLabel");
-  const sortInput = document.getElementById("lSortOrder");
-
-  if (id) {
-    const loc = allLocationsData.find(l => l.id === id);
-    if (!loc) return;
-    title.textContent = "ویرایش دانشکده/واحد";
-    editId.value = loc.id;
-    labelInput.value = loc.label;
-    sortInput.value = loc.sort_order;
-  } else {
-    title.textContent = "افزودن دانشکده/واحد جدید";
-    editId.value = "";
-    labelInput.value = "";
-    sortInput.value = 100;
-  }
-  modal.classList.remove("hidden");
-}
-
-async function saveLocation() {
-  const editId = document.getElementById("editLocationId").value;
-  const label = document.getElementById("lLabel").value.trim();
-  const sortOrder = parseInt(document.getElementById("lSortOrder").value) || 100;
-
-  if (!label) return showToast("نام دانشکده الزامی است", "error");
-
-  if (!editId) {
-    const newId = `loc_${Date.now().toString().slice(-8)}`;
-    
-    if (!confirm(`دانشکده «${label}» ساخته می‌شود. آیا مطمئنید؟`)) return;
-
-    const { error } = await supabaseClient.from('locations').insert([{
-      id: newId, label, sort_order: sortOrder, is_active: true
-    }]);
-    if (error) { console.error(error); return showToast("خطا در ثبت", "error"); }
-  } else {
-    if (!confirm(`آیا از تغییر نام به «${label}» مطمئنید؟`)) return;
-    const { error } = await supabaseClient.from('locations').update({ label, sort_order: sortOrder }).eq('id', editId);
-    if (error) return showToast("خطا در ویرایش", "error");
-  }
-
-  showToast("✅ ذخیره شد", "success");
-  document.getElementById("locationModal").classList.add("hidden");
-  await fetchLocationsData();
-  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
-}
-
-async function toggleLocationActive(id) {
-  const loc = allLocationsData.find(l => l.id === id);
-  if (!loc) {
-    console.error("❌ Location not found:", id);
-    return;
-  }
-  
-  const newStatus = !loc.is_active;
-  const allPostsUnderLoc = allPostsData.filter(p => p.location_id === id);
-  const activePosts = allPostsUnderLoc.filter(p => p.is_active);
-  const inactivePosts = allPostsUnderLoc.filter(p => !p.is_active);
-  
-  let msg = `آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} دانشکده «${loc.label}» مطمئنید؟\n\n`;
-  if (!newStatus) {
-    msg += `⚠️ تمام ${activePosts.length} پست فعال این دانشکده نیز غیرفعال می‌شوند.\n\n`;
-    msg += `✅ گزارش‌های قبلی دست‌نخورده باقی می‌مانند.`;
-  } else {
-    msg += `ℹ️ تمام ${allPostsUnderLoc.length} پست این دانشکده فعال می‌شوند.\n\n`;
-    if (inactivePosts.length > 0) {
-      msg += `⚠️ توجه: ${inactivePosts.length} پستی که قبلاً دستی غیرفعال بود هم فعال می‌شود.`;
-    }
-  }
-  if (!confirm(msg)) return;
-
-  try {
-    console.log(`🔄 Updating location ${id} to is_active=${newStatus}`);
-    
-    // آپدیت دانشکده
-    const locRes = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id).select();
-    
-    if (locRes.error) {
-      console.error("❌ Location update failed:", locRes.error);
-      return showToast("خطا در تغییر وضعیت دانشکده: " + locRes.error.message, "error");
-    }
-    
-    console.log(`✅ Location updated. Now cascading to ${allPostsUnderLoc.length} posts...`);
-    
-    // آپدیت تمام پست‌های زیرمجموعه (خواه فعال شوند، خواه غیرفعال)
-    const postRes = await supabaseClient.from('posts').update({ is_active: newStatus }).eq('location_id', id).select();
-    
-    if (postRes.error) {
-      console.error("❌ Post cascade failed:", postRes.error);
-      showToast(`دانشکده تغییر کرد اما پست‌ها نشدند: ${postRes.error.message}`, "error");
-    } else {
-      const updatedCount = postRes.data ? postRes.data.length : 0;
-      console.log(`✅ Cascade updated ${updatedCount} posts`);
-      showToast(`✅ دانشکده و ${updatedCount} پست ${newStatus ? 'فعال' : 'غیرفعال'} شدند`, "success");
-    }
-  } catch (err) {
-    console.error("❌ Unexpected error:", err);
-    return showToast("خطای غیرمنتظره: " + err.message, "error");
-  }
-  
-  await fetchLocationsData();
-  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
-}
-
-function openPostModal(id, locationId) {
-  const modal = document.getElementById("postModal");
-  const title = document.getElementById("postModalTitle");
-  const editId = document.getElementById("editPostId");
-  const locSelect = document.getElementById("pLocationId");
-  const locField = document.getElementById("postLocationField");
-  const labelInput = document.getElementById("pLabel");
-  const sortInput = document.getElementById("pSortOrder");
-
-  // پر کردن لیست دانشکده‌های فعال
-  const activeLocs = allLocationsData.filter(l => l.is_active);
-  locSelect.innerHTML = activeLocs.map(l => `<option value="${l.id}">${l.label}</option>`).join('');
-
-  if (id) {
-    const post = allPostsData.find(p => p.id === id);
-    if (!post) return;
-    title.textContent = "ویرایش پست";
-    editId.value = post.id;
-    locField.style.display = "none"; // امکان تغییر دانشکده نیست
-    labelInput.value = post.label;
-    sortInput.value = post.sort_order;
-  } else {
-    title.textContent = "افزودن پست جدید";
-    editId.value = "";
-    locField.style.display = "block";
-    locSelect.value = locationId || activeLocs[0]?.id;
-    labelInput.value = "";
-    sortInput.value = 100;
-  }
-  modal.classList.remove("hidden");
-}
-
-async function savePost() {
-  const editId = document.getElementById("editPostId").value;
-  const locId = document.getElementById("pLocationId").value;
-  const label = document.getElementById("pLabel").value.trim();
-  const sortOrder = parseInt(document.getElementById("pSortOrder").value) || 100;
-
-  if (!label) return showToast("نام پست الزامی است", "error");
-
-  if (!editId) {
-    if (!locId) return showToast("دانشکده را انتخاب کنید", "error");
-    
-    const newId = `post_${Date.now().toString().slice(-8)}`;
-    
-    const locName = allLocationsData.find(l => l.id === locId)?.label || locId;
-    if (!confirm(`پست «${label}» به دانشکده «${locName}» اضافه می‌شود.\n\n⚠️ این پست پس از ساخت به دانشکده دیگری قابل انتقال نیست.\n\nآیا مطمئنید؟`)) return;
-
-    const { error } = await supabaseClient.from('posts').insert([{
-      id: newId, location_id: locId, label, sort_order: sortOrder, is_active: true
-    }]);
-    if (error) { console.error(error); return showToast("خطا در ثبت", "error"); }
-  } else {
-    if (!confirm(`آیا از تغییر نام پست به «${label}» مطمئنید؟`)) return;
-
-    const { error } = await supabaseClient.from('posts').update({ label, sort_order: sortOrder }).eq('id', editId);
-    if (error) return showToast("خطا در ویرایش", "error");
-  }
-
-  showToast("✅ ذخیره شد", "success");
-  document.getElementById("postModal").classList.add("hidden");
-  await fetchLocationsData();
-  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
-}
-
-async function togglePostActive(id) {
-  const post = allPostsData.find(p => p.id === id);
-  if (!post) return;
-  
-  const newStatus = !post.is_active;
-  if (!confirm(`آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} پست «${post.label}» مطمئنید؟\n\n${!newStatus ? '⚠️ این پست از فرم حذف می‌شود، اما گزارش‌های قبلی دست‌نخورده می‌مانند.' : ''}`)) return;
-
-  const { error } = await supabaseClient.from('posts').update({ is_active: newStatus }).eq('id', id);
-  if (error) return showToast("خطا در تغییر وضعیت", "error");
-
-  showToast(`✅ ${newStatus ? 'فعال' : 'غیرفعال'} شد`, "success");
-  await fetchLocationsData();
-  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // سینک پرسنل و اماکن
-    if (typeof fetchAndSyncPersonnel === 'function') {
-      await fetchAndSyncPersonnel();
-    }
-    if (typeof fetchAndSyncLocations === 'function') {
-      await fetchAndSyncLocations();
-    }
-
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { window.location.href = 'index.html'; return; }
     currentUserId = session.user.id;
@@ -613,23 +58,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('userMenuContainer').classList.remove('hidden');
     setupHeaderEvents();
 
+    if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
+    if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+
     await fetchAllReports();
     populateLocationFilter();
     initReporterFilterSearch();
     applyFilters();
     
+    initTabs();
     setupTableEvents();
     setupFilterEvents();
     setupModalEvents();
-    initTabs();
-    initLocationsEvents();
     initPersonnelEvents();
+    initLocationsEvents();
     
   } catch (err) {
     console.error("Dashboard Init Error:", err);
   }
 });
 
+// ---------------------------------------------------------
+// توابع گزارش‌ها (Reports)
+// ---------------------------------------------------------
 async function fetchAllReports() {
   const tbody = document.getElementById("dashboardTableBody");
   tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px;">در حال بارگذاری...</td></tr>`;
@@ -648,7 +99,7 @@ async function fetchAllReports() {
        _dbId: r.id, 
        _status: r.status, 
        _createdAt: r.created_at,
-       _isHidden: hiddenBy.includes(currentUserId) // آیا این گزارش توسط من پنهان شده؟
+       _isHidden: hiddenBy.includes(currentUserId) 
      };
   });
 
@@ -678,7 +129,9 @@ function drawChart() {
   const data = Object.values(counts);
   
   if (myChart) myChart.destroy();
-  const ctx = document.getElementById('reportsChart').getContext('2d');
+  const canvas = document.getElementById('reportsChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
   myChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -701,11 +154,6 @@ function populateLocationFilter() {
   }
 }
 
-
-
-
-let uniqueReporterNames = [];
-
 function initReporterFilterSearch() {
   const searchInput = document.getElementById("filterReporterSearch");
   const listBox = document.getElementById("filterReporterList");
@@ -713,7 +161,6 @@ function initReporterFilterSearch() {
   
   if (!searchInput || !listBox) return;
 
-  // استخراج نام‌های یکتا
   const namesSet = new Set();
   allReports.forEach(r => {
     if (r.reporterName && r.reporterName.trim()) namesSet.add(r.reporterName.trim());
@@ -732,9 +179,8 @@ function initReporterFilterSearch() {
       item.style.padding = "8px 12px";
       item.style.fontSize = "0.85rem";
       item.innerHTML = `<span>${name}</span>`;
-      
       item.addEventListener("mousedown", (e) => {
-        e.preventDefault(); // جلوگیری از blur
+        e.preventDefault();
         searchInput.value = name;
         hiddenInput.value = name;
         listBox.classList.add("hidden");
@@ -752,7 +198,6 @@ function initReporterFilterSearch() {
   searchInput.addEventListener("input", (e) => {
     listBox.classList.remove("hidden");
     const q = e.target.value.trim().toLowerCase();
-    // اگر کاربر متن را پاک کرد، فیلتر لغو شود
     if (!q) hiddenInput.value = ""; 
     renderList(q ? uniqueReporterNames.filter(n => n.toLowerCase().includes(q)) : uniqueReporterNames);
   });
@@ -760,7 +205,6 @@ function initReporterFilterSearch() {
   searchInput.addEventListener("blur", () => {
     setTimeout(() => { 
       listBox.classList.add("hidden"); 
-      // اگر متنی تایپ شده بود اما انتخاب نشد، متن را پاک کن
       if (!hiddenInput.value) searchInput.value = "";
     }, 200);
   });
@@ -776,7 +220,6 @@ function applyFilters() {
 
   let filtered = [...allReports];
 
-  // 🚨 فیلتر ویندوزی: اگر دکمه نمایش پنهان‌ها خاموش است، موارد پنهان را نشان نده
   if (!showHiddenReports) {
     filtered = filtered.filter(r => !r._isHidden);
   }
@@ -806,7 +249,6 @@ function renderTable(reports) {
   }
 
   tbody.innerHTML = reports.map(r => {
-    // استایل اختصاصی برای موارد پنهان‌شده (شبیه ویندوز - کمی محو)
     const rowStyle = r._isHidden ? 'opacity: 0.5; background: #f8fafc;' : '';
     const typeTitle = typeLabels[r.reportType] || "گزارش";
     let subject = r.incidentSubject || r.notes || '—';
@@ -822,22 +264,20 @@ function renderTable(reports) {
 
     return `
       <tr style="${rowStyle}">
-        <td><span class="dash-status ${r._status}">${statusLabels[r._status] || r._status}</span></td>
-        <td style="font-weight: 600;">${typeTitle}</td>
-        <td>${subject}</td>
-        <td>${r.reporterName || '—'}</td>
-        <td style="direction: ltr; text-align: right; font-family: monospace;">${r.reportDate || '—'} - ${r.reportTime || ''}</td>
-        <td>
+        <td data-label="وضعیت"><span class="dash-status ${r._status}">${statusLabels[r._status] || r._status}</span></td>
+        <td data-label="نوع گزارش" style="font-weight: 600;">${typeTitle}</td>
+        <td data-label="موضوع / محل">${subject}</td>
+        <td data-label="ثبت‌کننده">${r.reporterName || '—'}</td>
+        <td data-label="تاریخ" style="direction: ltr; text-align: right; font-family: monospace;">${r.reportDate || '—'} - ${r.reportTime || ''}</td>
+        <td data-label="عملیات">
           <div class="table-actions">
             ${r.photoUrl ? `<a href="${r.photoUrl}" target="_blank" class="btn-table" title="عکس">📷</a>` : ''}
             <button class="btn-table action-btn" data-action="view" data-id="${r._dbId}" title="مشاهده">👁</button>
             <button class="btn-table action-btn" data-action="download" data-id="${r._dbId}" title="دانلود">📥</button>
-            
             ${r._isHidden 
               ? `<button class="btn-table action-btn" data-action="unhide" data-id="${r._dbId}" title="نمایش مجدد">👁️‍🗨️</button>`
               : `<button class="btn-table action-btn btn-hide-row" data-action="hide" data-id="${r._dbId}" title="پنهان کردن">🙈</button>`
             }
-            
             <button class="btn-table action-btn btn-delete-row" data-action="delete" data-id="${r._dbId}" title="حذف کامل">🗑</button>
           </div>
         </td>
@@ -851,7 +291,6 @@ function setupTableEvents() {
   tbody.addEventListener("click", async (e) => {
     const btn = e.target.closest(".action-btn");
     if (!btn) return;
-    
     const action = btn.dataset.action;
     const id = btn.dataset.id;
 
@@ -863,13 +302,9 @@ function setupTableEvents() {
   });
 }
 
-// ---------------------------------------------------------
-// توابع اصلی (پنهان کردن و نمایش)
-// ---------------------------------------------------------
 async function toggleVisibility(dbId, shouldHide) {
   const { data: report, error: getErr } = await supabaseClient.from('reports').select('hidden_by').eq('id', dbId).single();
   if (getErr) return showToast("خطا در ارتباط با سرور", "error");
-  
   let hidden = report.hidden_by || [];
   
   if (shouldHide) {
@@ -884,9 +319,7 @@ async function toggleVisibility(dbId, shouldHide) {
   const rep = allReports.find(r => r._dbId === dbId);
   if (rep) rep._isHidden = shouldHide;
   
-  updateKPIs(); 
-  applyFilters();
-  
+  updateKPIs(); applyFilters();
   showToast(shouldHide ? "🙈 گزارش پنهان شد" : "👁️‍🗨️ گزارش نمایش داده شد", "success");
 }
 
@@ -924,13 +357,9 @@ async function deleteReportPermanently(dbId) {
   showToast("🗑️ حذف شد", "success");
 }
 
-// ---------------------------------------------------------
-// تنظیمات فیلترها و هدر
-// ---------------------------------------------------------
 function setupHeaderEvents() {
   const userMenuBtn = document.getElementById('userMenuBtn');
   const userDropdown = document.getElementById('userDropdown');
-  
   if (userMenuBtn && userDropdown) {
     userMenuBtn.addEventListener('click', (e) => {
       e.preventDefault(); e.stopPropagation();
@@ -955,11 +384,12 @@ function setupFilterEvents() {
   document.getElementById("resetFilterBtn").addEventListener("click", () => {
     document.getElementById("filterDateFrom").value = ""; document.getElementById("filterDateTo").value = "";
     document.getElementById("filterType").value = ""; document.getElementById("filterLocation").value = "";
-    document.getElementById("filterStatus").value = ""; document.getElementById("filterReporter").value = "";
+    document.getElementById("filterStatus").value = ""; 
+    document.getElementById("filterReporter").value = "";
+    document.getElementById("filterReporterSearch").value = "";
     applyFilters();
   });
 
-  // دکمه نمایش/عدم نمایش موارد پنهان (شبیه ویندوز)
   const toggleBtn = document.getElementById("toggleHiddenBtn");
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
@@ -980,7 +410,6 @@ function setupFilterEvents() {
   document.getElementById("exportFullExcelBtn").addEventListener("click", () => {
     const reports = window.currentFilteredReports || allReports.filter(r => !r._isHidden);
     if (!reports.length) return showToast("گزارشی نیست", "error");
-    
     const exportData = reports.map(r => {
       const row = { 'وضعیت': statusLabels[r._status] || r._status, 'نوع': typeLabels[r.reportType] || r.reportType };
       for (const [k, v] of Object.entries(r)) {
@@ -1044,6 +473,512 @@ async function updateReportStatus(newStatus) {
   updateKPIs(); applyFilters();
 }
 
+// ---------------------------------------------------------
+// توابع مدیریت تب‌ها
+// ---------------------------------------------------------
+function initTabs() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', async () => {
+      try {
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        
+        tab.classList.add('active');
+        const targetId = tab.dataset.tab;
+        document.getElementById(targetId).classList.remove('hidden');
+
+        if (targetId === 'reportsTab') {
+          applyFilters();
+        } else if (targetId === 'personnelTab') {
+          if (allPersonnelData.length === 0) {
+            await fetchPersonnel();
+          } else {
+            renderPersonnelTable(allPersonnelData);
+          }
+        } else if (targetId === 'locationsTab') {
+          if (allLocationsData.length === 0) {
+            await fetchLocationsData();
+          } else {
+            renderTree();
+          }
+        }
+      } catch (err) {
+        console.error("Tab Error:", err);
+      }
+    });
+  });
+}
+
+// ---------------------------------------------------------
+// توابع مدیریت پرسنل (Personnel)
+// ---------------------------------------------------------
+async function fetchPersonnel() {
+  const tbody = document.getElementById("personnelTableBody");
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr>`;
+
+  const { data, error } = await supabaseClient.from('personnel').select('*');
+  
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">خطا در دریافت اطلاعات</td></tr>`;
+    return;
+  }
+  
+  allPersonnelData = data.sort((a, b) => a.full_name.localeCompare(b.full_name, 'fa'));
+  renderPersonnelTable(allPersonnelData);
+}
+
+function renderPersonnelTable(data) {
+  const tbody = document.getElementById("personnelTableBody");
+  
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">پرسنلی یافت نشد.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td data-label="نام و نام خانوادگی" style="font-weight: 700;">${p.full_name}</td>
+      <td data-label="کد ملی" style="font-family: monospace;">${p.national_id || '—'}</td>
+      <td data-label="شماره شبا" style="font-family: monospace; direction: ltr; text-align: right;">${p.shaba || '—'}</td>
+      <td data-label="تلفن" style="font-family: monospace;">${p.phone || '—'}</td>
+      <td data-label="مسئول ثبت">
+        ${p.can_report 
+          ? `<span class="badge-reporter">✅ بله</span>` 
+          : `<span class="badge-not-reporter">❌ خیر</span>`}
+      </td>
+      <td data-label="وضعیت">
+        ${p.is_active 
+          ? `<span class="badge-active">فعال</span>` 
+          : `<span class="badge-inactive">غیرفعال</span>`}
+      </td>
+      <td data-label="عملیات">
+        <div class="table-actions">
+          <button class="btn-table action-p-btn" data-action="edit" data-id="${p.id}" title="ویرایش">✏️</button>
+          <button class="btn-table action-p-btn" data-action="toggle-active" data-id="${p.id}" title="${p.is_active ? 'غیرفعال کردن' : 'فعال کردن'}">
+            ${p.is_active ? '🚫' : '✅'}
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function initPersonnelEvents() {
+  const searchInput = document.getElementById("searchPersonnel");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const filtered = allPersonnelData.filter(p => 
+        p.full_name.toLowerCase().includes(q) || 
+        (p.national_id && p.national_id.includes(q))
+      );
+      renderPersonnelTable(filtered);
+    });
+  }
+
+  const tbody = document.getElementById("personnelTableBody");
+  if (tbody) {
+    tbody.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".action-p-btn");
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+
+      if (action === "edit") openPersonnelModal(id);
+      else if (action === "toggle-active") await togglePersonnelActive(id);
+    });
+  }
+
+  document.getElementById("addPersonnelBtn")?.addEventListener("click", () => openPersonnelModal(null));
+  document.getElementById("exportPersonnelBtn")?.addEventListener("click", exportPersonnelToExcel);
+  document.getElementById("closePersonnelModal")?.addEventListener("click", () => {
+    document.getElementById("personnelModal").classList.add("hidden");
+  });
+  document.getElementById("savePersonnelBtn")?.addEventListener("click", savePersonnel);
+}
+
+function openPersonnelModal(id) {
+  const modal = document.getElementById("personnelModal");
+  const title = document.getElementById("personnelModalTitle");
+  const editId = document.getElementById("editPersonnelId");
+  
+  if (id) {
+    const p = allPersonnelData.find(x => x.id === id);
+    if (!p) return;
+    title.textContent = "ویرایش پرسنل";
+    editId.value = p.id;
+    document.getElementById("pFullName").value = p.full_name;
+    document.getElementById("pNationalId").value = p.national_id || '';
+    document.getElementById("pShaba").value = p.shaba || '';
+    document.getElementById("pPhone").value = p.phone || '';
+    document.getElementById("pCanReport").checked = p.can_report;
+  } else {
+    title.textContent = "افزودن پرسنل جدید";
+    editId.value = "";
+    document.getElementById("pFullName").value = "";
+    document.getElementById("pNationalId").value = "";
+    document.getElementById("pShaba").value = "";
+    document.getElementById("pPhone").value = "";
+    document.getElementById("pCanReport").checked = false;
+  }
+  modal.classList.remove("hidden");
+}
+
+async function savePersonnel() {
+  const id = document.getElementById("editPersonnelId").value;
+  const fullName = document.getElementById("pFullName").value.trim();
+  const natId = document.getElementById("pNationalId").value.trim();
+  const shaba = document.getElementById("pShaba").value.trim();
+  const phone = document.getElementById("pPhone").value.trim();
+  const canReport = document.getElementById("pCanReport").checked;
+
+  if (!fullName || !natId) return showToast("نام و کد ملی الزامی است", "error");
+
+  const payload = {
+    full_name: fullName, national_id: natId, shaba: shaba, phone: phone, can_report: canReport
+  };
+
+  let error;
+  if (id) {
+    const { error: err } = await supabaseClient.from('personnel').update(payload).eq('id', id);
+    error = err;
+  } else {
+    const newId = `p_${natId}`;
+    payload.id = newId; payload.is_active = true;
+    const { error: err } = await supabaseClient.from('personnel').insert([payload]);
+    error = err;
+  }
+
+  if (error) return showToast("خطا در ذخیره‌سازی", "error");
+
+  showToast("✅ اطلاعات ذخیره شد", "success");
+  document.getElementById("personnelModal").classList.add("hidden");
+  await fetchPersonnel();
+  if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
+}
+
+async function togglePersonnelActive(id) {
+  const p = allPersonnelData.find(x => x.id === id);
+  if (!p) return;
+  const newStatus = !p.is_active;
+  if (!confirm(`آیا از ${newStatus ? 'فعال کردن' : 'غیرفعال کردن'} این شخص مطمئنید؟`)) return;
+  
+  const { error } = await supabaseClient.from('personnel').update({ is_active: newStatus }).eq('id', id);
+  if (error) return showToast("خطا در تغییر وضعیت", "error");
+  
+  showToast(`✅ وضعیت به ${newStatus ? 'فعال' : 'غیرفعال'} تغییر کرد`, "success");
+  await fetchPersonnel();
+  if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
+}
+
+function exportPersonnelToExcel() {
+  if (!allPersonnelData || allPersonnelData.length === 0) return showToast("لیست پرسنل خالی است", "error");
+  const sorted = [...allPersonnelData].sort((a, b) => a.full_name.localeCompare(b.full_name, 'fa'));
+
+  const exportData = sorted.map((p, idx) => ({
+    'ردیف': idx + 1, 'نام و نام خانوادگی': p.full_name, 'کد ملی': p.national_id || '',
+    'شماره شبا': p.shaba || '', 'شماره تلفن': p.phone || '',
+    'مسئول ثبت گزارش': p.can_report ? 'بله' : 'خیر', 'وضعیت': p.is_active ? 'فعال' : 'غیرفعال'
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  ws['!cols'] = [{ wch: 6 }, { wch: 30 }, { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 18 }, { wch: 10 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "لیست پرسنل");
+  XLSX.writeFile(wb, `Personnel-List-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  showToast("📥 لیست پرسنل دانلود شد", "success");
+}
+
+// ---------------------------------------------------------
+// توابع مدیریت اماکن (Locations & Posts)
+// ---------------------------------------------------------
+async function fetchLocationsData() {
+  const container = document.getElementById("locationsTree");
+  if (!container) return;
+  container.innerHTML = '<p style="text-align:center; padding:20px;">در حال بارگذاری...</p>';
+
+  try {
+    const [locRes, postRes] = await Promise.all([
+      supabaseClient.from('locations').select('*').order('sort_order'),
+      supabaseClient.from('posts').select('*').order('sort_order')
+    ]);
+
+    if (locRes.error) throw locRes.error;
+    if (postRes.error) throw postRes.error;
+
+    allLocationsData = locRes.data || [];
+    allPostsData = postRes.data || [];
+    renderTree();
+  } catch (err) {
+    console.error("Error fetching locations:", err);
+    container.innerHTML = `<p style="color:red; text-align:center; padding:20px;">خطا در بارگذاری: ${err.message}</p>`;
+  }
+}
+
+function renderTree() {
+  const container = document.getElementById("locationsTree");
+  if (!container) return;
+
+  let visibleLocs = showInactiveLocations ? allLocationsData : allLocationsData.filter(l => l.is_active);
+
+  if (!visibleLocs.length) {
+    container.innerHTML = '<p style="text-align:center; padding:20px;">دانشکده‌ای یافت نشد.</p>';
+    return;
+  }
+
+  container.innerHTML = visibleLocs.map(loc => {
+    const locPosts = allPostsData.filter(p => p.location_id === loc.id && (showInactiveLocations || p.is_active));
+    const activeCount = allPostsData.filter(p => p.location_id === loc.id && p.is_active).length;
+
+    const postsHtml = locPosts.map(post => `
+      <div class="tree-post ${post.is_active ? '' : 'inactive'}">
+        <span class="tree-post-label">${post.label}</span>
+        <div class="tree-post-actions">
+          <button class="btn-table action-loc-btn" data-action="edit-post" data-id="${post.id}" title="ویرایش">✏️</button>
+          <button class="btn-table action-loc-btn ${post.is_active ? 'btn-hide-row' : ''}" data-action="toggle-post" data-id="${post.id}" title="${post.is_active ? 'غیرفعال' : 'فعال'}">
+            ${post.is_active ? '🚫' : '✅'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="tree-location ${loc.is_active ? '' : 'inactive'}" data-loc-id="${loc.id}">
+        <div class="tree-location-header" data-action="toggle-expand">
+          <span class="tree-toggle-icon">◀</span>
+          <span class="tree-location-title">${loc.label}</span>
+          <span class="tree-location-count">${activeCount} پست</span>
+          <div class="tree-location-actions">
+            <button class="btn-table action-loc-btn" data-action="edit-loc" data-id="${loc.id}" title="ویرایش">✏️</button>
+            <button class="btn-table action-loc-btn ${loc.is_active ? 'btn-hide-row' : ''}" data-action="toggle-loc" data-id="${loc.id}" title="${loc.is_active ? 'غیرفعال' : 'فعال'}">
+              ${loc.is_active ? '🚫' : '✅'}
+            </button>
+          </div>
+        </div>
+        <div class="tree-posts">
+          ${postsHtml || '<p style="color: var(--text-muted); font-size: 0.85rem;">این دانشکده هنوز پستی ندارد.</p>'}
+          ${loc.is_active ? `<button class="tree-add-post-btn action-loc-btn" data-action="add-post" data-loc-id="${loc.id}">➕ افزودن پست جدید</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function initLocationsEvents() {
+  document.getElementById("locationsTree")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest('.action-loc-btn');
+    if (btn) {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      const locId = btn.dataset.locId;
+      
+      if (action === "edit-loc") openLocationModal(id);
+      else if (action === "toggle-loc") await toggleLocationActive(id);
+      else if (action === "add-post") openPostModal(null, locId);
+      else if (action === "edit-post") openPostModal(id);
+      else if (action === "toggle-post") await togglePostActive(id);
+      return;
+    }
+
+    const header = e.target.closest('[data-action="toggle-expand"]');
+    if (header) {
+      const loc = header.closest('.tree-location');
+      loc.classList.toggle('expanded');
+    }
+  });
+
+  document.getElementById("addLocationBtn")?.addEventListener("click", () => openLocationModal(null));
+
+  document.getElementById("toggleInactiveLocBtn")?.addEventListener("click", (e) => {
+    showInactiveLocations = !showInactiveLocations;
+    const btn = e.target;
+    if (showInactiveLocations) {
+      btn.innerHTML = "🙈 مخفی کردن غیرفعال‌ها";
+      btn.style.color = "var(--primary)";
+      btn.style.borderColor = "var(--primary)";
+    } else {
+      btn.innerHTML = "👁️ نمایش غیرفعال‌ها";
+      btn.style.color = "var(--warning)";
+      btn.style.borderColor = "var(--warning)";
+    }
+    renderTree();
+  });
+
+  document.getElementById("closeLocationModal")?.addEventListener("click", () => {
+    document.getElementById("locationModal").classList.add("hidden");
+  });
+  document.getElementById("saveLocationBtn")?.addEventListener("click", saveLocation);
+
+  document.getElementById("closePostModal")?.addEventListener("click", () => {
+    document.getElementById("postModal").classList.add("hidden");
+  });
+  document.getElementById("savePostBtn")?.addEventListener("click", savePost);
+}
+
+function openLocationModal(id) {
+  const modal = document.getElementById("locationModal");
+  const title = document.getElementById("locationModalTitle");
+  const editId = document.getElementById("editLocationId");
+  const labelInput = document.getElementById("lLabel");
+  const sortInput = document.getElementById("lSortOrder");
+
+  if (id) {
+    const loc = allLocationsData.find(l => l.id === id);
+    if (!loc) return;
+    title.textContent = "ویرایش دانشکده/واحد";
+    editId.value = loc.id;
+    labelInput.value = loc.label;
+    sortInput.value = loc.sort_order;
+  } else {
+    title.textContent = "افزودن دانشکده/واحد جدید";
+    editId.value = "";
+    labelInput.value = "";
+    sortInput.value = 100;
+  }
+  modal.classList.remove("hidden");
+}
+
+async function saveLocation() {
+  const editId = document.getElementById("editLocationId").value;
+  const label = document.getElementById("lLabel").value.trim();
+  const sortOrder = parseInt(document.getElementById("lSortOrder").value) || 100;
+
+  if (!label) return showToast("نام دانشکده الزامی است", "error");
+
+  if (!editId) {
+    const newId = `loc_${Date.now().toString().slice(-8)}`;
+    if (!confirm(`دانشکده «${label}» ساخته می‌شود. آیا مطمئنید؟`)) return;
+    const { error } = await supabaseClient.from('locations').insert([{ id: newId, label, sort_order: sortOrder, is_active: true }]);
+    if (error) { console.error(error); return showToast("خطا در ثبت", "error"); }
+  } else {
+    if (!confirm(`آیا از تغییر نام به «${label}» مطمئنید؟`)) return;
+    const { error } = await supabaseClient.from('locations').update({ label, sort_order: sortOrder }).eq('id', editId);
+    if (error) return showToast("خطا در ویرایش", "error");
+  }
+
+  showToast("✅ ذخیره شد", "success");
+  document.getElementById("locationModal").classList.add("hidden");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+async function toggleLocationActive(id) {
+  const loc = allLocationsData.find(l => l.id === id);
+  if (!loc) return;
+  
+  const newStatus = !loc.is_active;
+  const allPostsUnderLoc = allPostsData.filter(p => p.location_id === id);
+  const activePosts = allPostsUnderLoc.filter(p => p.is_active);
+  const inactivePosts = allPostsUnderLoc.filter(p => !p.is_active);
+  
+  let msg = `آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} دانشکده «${loc.label}» مطمئنید؟\n\n`;
+  if (!newStatus) {
+    msg += `⚠️ تمام ${activePosts.length} پست فعال این دانشکده نیز غیرفعال می‌شوند.\n\n`;
+    msg += `✅ گزارش‌های قبلی دست‌نخورده باقی می‌مانند.`;
+  } else {
+    msg += `ℹ️ تمام ${allPostsUnderLoc.length} پست این دانشکده فعال می‌شوند.\n\n`;
+    if (inactivePosts.length > 0) {
+      msg += `⚠️ توجه: ${inactivePosts.length} پستی که قبلاً دستی غیرفعال بود هم فعال می‌شود.`;
+    }
+  }
+  if (!confirm(msg)) return;
+
+  try {
+    const locRes = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id).select();
+    if (locRes.error) throw locRes.error;
+    
+    const postRes = await supabaseClient.from('posts').update({ is_active: newStatus }).eq('location_id', id).select();
+    if (postRes.error) throw postRes.error;
+    
+    const updatedCount = postRes.data ? postRes.data.length : 0;
+    showToast(`✅ دانشکده و ${updatedCount} پست ${newStatus ? 'فعال' : 'غیرفعال'} شدند`, "success");
+  } catch (err) {
+    console.error("❌ Toggle error:", err);
+    return showToast("خطا در تغییر وضعیت: " + err.message, "error");
+  }
+  
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+function openPostModal(id, locationId) {
+  const modal = document.getElementById("postModal");
+  const title = document.getElementById("postModalTitle");
+  const editId = document.getElementById("editPostId");
+  const locSelect = document.getElementById("pLocationId");
+  const locField = document.getElementById("postLocationField");
+  const labelInput = document.getElementById("pLabel");
+  const sortInput = document.getElementById("pSortOrder");
+
+  const activeLocs = allLocationsData.filter(l => l.is_active);
+  locSelect.innerHTML = activeLocs.map(l => `<option value="${l.id}">${l.label}</option>`).join('');
+
+  if (id) {
+    const post = allPostsData.find(p => p.id === id);
+    if (!post) return;
+    title.textContent = "ویرایش پست";
+    editId.value = post.id;
+    locField.style.display = "none";
+    labelInput.value = post.label;
+    sortInput.value = post.sort_order;
+  } else {
+    title.textContent = "افزودن پست جدید";
+    editId.value = "";
+    locField.style.display = "block";
+    locSelect.value = locationId || activeLocs[0]?.id;
+    labelInput.value = "";
+    sortInput.value = 100;
+  }
+  modal.classList.remove("hidden");
+}
+
+async function savePost() {
+  const editId = document.getElementById("editPostId").value;
+  const locId = document.getElementById("pLocationId").value;
+  const label = document.getElementById("pLabel").value.trim();
+  const sortOrder = parseInt(document.getElementById("pSortOrder").value) || 100;
+
+  if (!label) return showToast("نام پست الزامی است", "error");
+
+  if (!editId) {
+    if (!locId) return showToast("دانشکده را انتخاب کنید", "error");
+    const newId = `post_${Date.now().toString().slice(-8)}`;
+    const locName = allLocationsData.find(l => l.id === locId)?.label || locId;
+    if (!confirm(`پست «${label}» به دانشکده «${locName}» اضافه می‌شود.\n\n⚠️ این پست پس از ساخت به دانشکده دیگری قابل انتقال نیست.`)) return;
+
+    const { error } = await supabaseClient.from('posts').insert([{ id: newId, location_id: locId, label, sort_order: sortOrder, is_active: true }]);
+    if (error) return showToast("خطا در ثبت", "error");
+  } else {
+    if (!confirm(`آیا از تغییر نام پست به «${label}» مطمئنید؟`)) return;
+    const { error } = await supabaseClient.from('posts').update({ label, sort_order: sortOrder }).eq('id', editId);
+    if (error) return showToast("خطا در ویرایش", "error");
+  }
+
+  showToast("✅ ذخیره شد", "success");
+  document.getElementById("postModal").classList.add("hidden");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+async function togglePostActive(id) {
+  const post = allPostsData.find(p => p.id === id);
+  if (!post) return;
+  
+  const newStatus = !post.is_active;
+  if (!confirm(`آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} پست «${post.label}» مطمئنید؟\n\n${!newStatus ? '⚠️ این پست از فرم حذف می‌شود، اما گزارش‌های قبلی دست‌نخورده می‌مانند.' : ''}`)) return;
+
+  const { error } = await supabaseClient.from('posts').update({ is_active: newStatus }).eq('id', id);
+  if (error) return showToast("خطا در تغییر وضعیت", "error");
+
+  showToast(`✅ ${newStatus ? 'فعال' : 'غیرفعال'} شد`, "success");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+// ---------------------------------------------------------
+// Utility (Toast)
+// ---------------------------------------------------------
 let toastTimer;
 function showToast(message, type = "success") {
   const toast = document.getElementById("toast");
@@ -1052,42 +987,4 @@ function showToast(message, type = "success") {
   toast.className = `toast show ${type}`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
-}
-
-function exportPersonnelToExcel() {
-  if (!allPersonnelData || allPersonnelData.length === 0) {
-    return showToast("لیست پرسنل خالی است", "error");
-  }
-
-  // مرتب‌سازی الفبایی قبل از خروجی
-  const sorted = [...allPersonnelData].sort((a, b) => a.full_name.localeCompare(b.full_name, 'fa'));
-
-  const exportData = sorted.map((p, idx) => ({
-    'ردیف': idx + 1,
-    'نام و نام خانوادگی': p.full_name,
-    'کد ملی': p.national_id || '',
-    'شماره شبا': p.shaba || '',
-    'شماره تلفن': p.phone || '',
-    'مسئول ثبت گزارش': p.can_report ? 'بله' : 'خیر',
-    'وضعیت': p.is_active ? 'فعال' : 'غیرفعال'
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  // تنظیم عرض ستون‌ها
-  ws['!cols'] = [
-    { wch: 6 },  // ردیف
-    { wch: 30 }, // نام
-    { wch: 15 }, // کد ملی
-    { wch: 30 }, // شبا
-    { wch: 15 }, // تلفن
-    { wch: 18 }, // مسئول ثبت
-    { wch: 10 }  // وضعیت
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "لیست پرسنل");
-
-  const today = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Personnel-List-${today}.xlsx`);
-  showToast("📥 لیست پرسنل دانلود شد", "success");
 }

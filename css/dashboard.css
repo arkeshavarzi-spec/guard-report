@@ -484,84 +484,66 @@
 }
 .tree-add-post-btn:hover { background: #eff6ff; border-color: var(--primary); }
 
-/* ---------- DASHBOARD MOBILE RESPONSIVE FIX ---------- */
+
+
+
+
+
+
+/* ---------- PERFECT MOBILE VIEW (Header & Tables) ---------- */
 @media (max-width: 768px) {
-  /* هدر */
+  /* هدر کاملاً افقی و باریک */
   .dashboard-header {
-    flex-direction: column !important;
-    padding: 12px !important;
+    flex-direction: row !important;
+    padding: 10px 16px !important;
     gap: 10px !important;
-    text-align: center !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 60px !important;
   }
   .header-branding {
-    flex-direction: column !important;
-    gap: 8px !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    text-align: right !important;
   }
-  .header-text h1 { font-size: 1.1rem !important; }
-  .header-text p { font-size: 0.8rem !important; }
-  
-  /* تب‌ها */
-  .dashboard-tabs {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    justify-content: flex-start !important;
-    padding-bottom: 8px !important;
-    gap: 8px !important;
+  .header-branding .logo { width: 34px !important; height: 34px !important; }
+  .header-text h1 { font-size: 0.95rem !important; margin: 0 !important; }
+  .header-text p { font-size: 0.7rem !important; margin: 0 !important; }
+  .header-actions { margin-right: auto !important; }
+
+  /* تبدیل جدول به کارت */
+  .table-responsive { overflow-x: visible !important; }
+  .data-table, .data-table tbody, .data-table tr, .data-table td {
+    display: block !important;
+    width: 100% !important;
   }
-  .tab-btn {
-    white-space: nowrap !important;
+  .data-table thead { display: none !important; }
+  .data-table tr {
+    margin-bottom: 15px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 12px !important;
+    background: #fff !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  .data-table td {
+    border: none !important;
+    padding: 6px 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     font-size: 0.85rem !important;
-    padding: 8px 12px !important;
+    text-align: right !important;
   }
-  
-  /* کارت‌های آماری */
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
-  }
-  .kpi-card { padding: 12px !important; }
-  .kpi-value { font-size: 1.5rem !important; }
-  
-  /* فیلترها */
-  .filter-row {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-  .filter-actions, 
-  #personnelTab .filter-row > div:last-child,
-  #locationsTab .filter-section > div {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    width: 100% !important;
-  }
-  .filter-actions .btn,
-  #personnelTab .field button,
-  #locationsTab .field button {
-    width: 100% !important;
-  }
-  
-  /* جدول‌ها */
-  .table-responsive {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  .data-table th, .data-table td {
-    padding: 10px 8px !important;
-    font-size: 0.8rem !important;
-    white-space: nowrap !important;
-  }
-  
-  /* نمودار */
-  .chart-wrapper { height: 200px !important; }
-  
-  /* دکمه‌های عملیات در جدول */
-  .table-actions {
-    gap: 4px !important;
-  }
-  .btn-table {
-    padding: 4px 6px !important;
-    font-size: 0.8rem !important;
+  .data-table td:nth-child(1)::before { content: "وضعیت:"; font-weight: bold; color: var(--text-muted); }
+  .data-table td:nth-child(2)::before { content: "نوع:"; font-weight: bold; color: var(--text-muted); }
+  .data-table td:nth-child(3)::before { content: "موضوع/محل:"; font-weight: bold; color: var(--text-muted); }
+  .data-table td:nth-child(4)::before { content: "ثبت‌کننده:"; font-weight: bold; color: var(--text-muted); }
+  .data-table td:nth-child(5)::before { content: "تاریخ:"; font-weight: bold; color: var(--text-muted); }
+  .data-table td:nth-child(6) {
+    border-top: 1px dashed var(--border) !important;
+    margin-top: 8px !important;
+    padding-top: 12px !important;
+    justify-content: center !important;
   }
 }

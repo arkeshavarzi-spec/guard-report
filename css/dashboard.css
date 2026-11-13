@@ -375,3 +375,16 @@
 .badge-inactive { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
 .badge-reporter { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
 .badge-not-reporter { background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+
+/* ---------- SPACE REDUCTION FIX ---------- */
+.dashboard-header {
+  margin: 12px auto 12px !important; /* کاهش فاصله پایین هدر */
+}
+.dashboard-tabs {
+  margin-bottom: 16px !important; /* کاهش فاصله پایین تب‌ها */
+  padding-bottom: 8px !important;
+  margin-top: 0 !important;
+}
+.kpi-grid {
+  margin-top: 0 !important;
+}

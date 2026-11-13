@@ -64,15 +64,16 @@ async function fetchPersonnel() {
   const tbody = document.getElementById("personnelTableBody");
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr>`;
 
-  const { data, error } = await supabaseClient.from('personnel').select('*').order('full_name');
+  const { data, error } = await supabaseClient.from('personnel').select('*');
   
   if (error) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">خطا در دریافت اطلاعات</td></tr>`;
     return;
   }
   
-  allPersonnelData = data;
-  renderPersonnelTable(data);
+  // مرتب‌سازی الفبایی صحیح فارسی در سمت کلاینت (دیتابیس برای فارسی دقیق نیست)
+  allPersonnelData = data.sort((a, b) => a.full_name.localeCompare(b.full_name, 'fa'));
+  renderPersonnelTable(allPersonnelData);
 }
 
 function renderPersonnelTable(data) {
@@ -141,6 +142,9 @@ function initPersonnelEvents() {
 
   // دکمه افزودن پرسنل
   document.getElementById("addPersonnelBtn")?.addEventListener("click", () => openPersonnelModal(null));
+  
+  // دکمه خروجی اکسل پرسنل
+  document.getElementById("exportPersonnelBtn")?.addEventListener("click", exportPersonnelToExcel);
   
   // دکمه بستن مودال
   document.getElementById("closePersonnelModal")?.addEventListener("click", () => {
@@ -702,4 +706,42 @@ function showToast(message, type = "success") {
   toast.className = `toast show ${type}`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+function exportPersonnelToExcel() {
+  if (!allPersonnelData || allPersonnelData.length === 0) {
+    return showToast("لیست پرسنل خالی است", "error");
+  }
+
+  // مرتب‌سازی الفبایی قبل از خروجی
+  const sorted = [...allPersonnelData].sort((a, b) => a.full_name.localeCompare(b.full_name, 'fa'));
+
+  const exportData = sorted.map((p, idx) => ({
+    'ردیف': idx + 1,
+    'نام و نام خانوادگی': p.full_name,
+    'کد ملی': p.national_id || '',
+    'شماره شبا': p.shaba || '',
+    'شماره تلفن': p.phone || '',
+    'مسئول ثبت گزارش': p.can_report ? 'بله' : 'خیر',
+    'وضعیت': p.is_active ? 'فعال' : 'غیرفعال'
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  // تنظیم عرض ستون‌ها
+  ws['!cols'] = [
+    { wch: 6 },  // ردیف
+    { wch: 30 }, // نام
+    { wch: 15 }, // کد ملی
+    { wch: 30 }, // شبا
+    { wch: 15 }, // تلفن
+    { wch: 18 }, // مسئول ثبت
+    { wch: 10 }  // وضعیت
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "لیست پرسنل");
+
+  const today = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `Personnel-List-${today}.xlsx`);
+  showToast("📥 لیست پرسنل دانلود شد", "success");
 }

@@ -338,3 +338,40 @@
   position: relative !important;
   z-index: 2000 !important;
 }
+
+/* ---------- Dashboard Tabs ---------- */
+.dashboard-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 10px;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 20px;
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.tab-btn:hover {
+  background: #f1f5f9;
+  color: var(--text);
+}
+.tab-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.tab-content.hidden { display: none !important; }
+
+/* استایل بج وضعیت پرسنل */
+.badge-active { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+.badge-inactive { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+.badge-reporter { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+.badge-not-reporter { background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }

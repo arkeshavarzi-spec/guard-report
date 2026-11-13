@@ -33,6 +33,213 @@ const excelLabels = {
   missionPost: "پست سازمانی", missionNumber: "شماره مأموریت", missionEndDate: "تاریخ پایان", missionSubject: "موضوع", missionVehicle: "وسیله", missionCategory: "نوع مأموریت", missionDuration: "مدت", missionEquipment: "تجهیزات", missionIssueDate: "تاریخ صدور", missionStartDate: "تاریخ شروع", missionTypeOfficial: "نوع (رسمی)", missionAccommodation: "محل اقامت", missionGroupStaffNames: "نیروهای گروهی"
 };
 
+
+// =========================================================
+// منطق مدیریت پرسنل
+// =========================================================
+let allPersonnelData = [];
+
+function initTabs() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // حذف active از همه
+      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      
+      // فعال کردن تب کلیک شده
+      tab.classList.add('active');
+      const targetId = tab.dataset.tab;
+      document.getElementById(targetId).classList.remove('hidden');
+
+      // اگر تب پرسنل باز شد، داده‌ها را لود کن
+      if (targetId === 'personnelTab' && allPersonnelData.length === 0) {
+        fetchPersonnel();
+      }
+    });
+  });
+}
+
+async function fetchPersonnel() {
+  const tbody = document.getElementById("personnelTableBody");
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">در حال بارگذاری...</td></tr>`;
+
+  const { data, error } = await supabaseClient.from('personnel').select('*').order('full_name');
+  
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">خطا در دریافت اطلاعات</td></tr>`;
+    return;
+  }
+  
+  allPersonnelData = data;
+  renderPersonnelTable(data);
+}
+
+function renderPersonnelTable(data) {
+  const tbody = document.getElementById("personnelTableBody");
+  
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">پرسنلی یافت نشد.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td style="font-weight: 700;">${p.full_name}</td>
+      <td style="font-family: monospace;">${p.national_id || '—'}</td>
+      <td style="font-family: monospace; direction: ltr; text-align: right;">${p.shaba || '—'}</td>
+      <td style="font-family: monospace;">${p.phone || '—'}</td>
+      <td>
+        ${p.can_report 
+          ? `<span class="badge-reporter">✅ بله</span>` 
+          : `<span class="badge-not-reporter">❌ خیر</span>`}
+      </td>
+      <td>
+        ${p.is_active 
+          ? `<span class="badge-active">فعال</span>` 
+          : `<span class="badge-inactive">غیرفعال</span>`}
+      </td>
+      <td>
+        <div class="table-actions">
+          <button class="btn-table action-p-btn" data-action="edit" data-id="${p.id}" title="ویرایش">✏️</button>
+          <button class="btn-table action-p-btn" data-action="toggle-active" data-id="${p.id}" title="${p.is_active ? 'غیرفعال کردن' : 'فعال کردن'}">
+            ${p.is_active ? '🚫' : '✅'}
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function initPersonnelEvents() {
+  const searchInput = document.getElementById("searchPersonnel");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const filtered = allPersonnelData.filter(p => 
+        p.full_name.toLowerCase().includes(q) || 
+        (p.national_id && p.national_id.includes(q))
+      );
+      renderPersonnelTable(filtered);
+    });
+  }
+
+  // Event Delegation برای دکمه‌های جدول پرسنل
+  const tbody = document.getElementById("personnelTableBody");
+  if (tbody) {
+    tbody.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".action-p-btn");
+      if (!btn) return;
+      
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+
+      if (action === "edit") openPersonnelModal(id);
+      else if (action === "toggle-active") await togglePersonnelActive(id);
+    });
+  }
+
+  // دکمه افزودن پرسنل
+  document.getElementById("addPersonnelBtn")?.addEventListener("click", () => openPersonnelModal(null));
+  
+  // دکمه بستن مودال
+  document.getElementById("closePersonnelModal")?.addEventListener("click", () => {
+    document.getElementById("personnelModal").classList.add("hidden");
+  });
+
+  // دکمه ذخیره
+  document.getElementById("savePersonnelBtn")?.addEventListener("click", savePersonnel);
+}
+
+function openPersonnelModal(id) {
+  const modal = document.getElementById("personnelModal");
+  const title = document.getElementById("personnelModalTitle");
+  const editId = document.getElementById("editPersonnelId");
+  
+  if (id) {
+    // ویرایش
+    const p = allPersonnelData.find(x => x.id === id);
+    if (!p) return;
+    title.textContent = "ویرایش پرسنل";
+    editId.value = p.id;
+    document.getElementById("pFullName").value = p.full_name;
+    document.getElementById("pNationalId").value = p.national_id || '';
+    document.getElementById("pShaba").value = p.shaba || '';
+    document.getElementById("pPhone").value = p.phone || '';
+    document.getElementById("pCanReport").checked = p.can_report;
+  } else {
+    // افزودن
+    title.textContent = "افزودن پرسنل جدید";
+    editId.value = "";
+    document.getElementById("pFullName").value = "";
+    document.getElementById("pNationalId").value = "";
+    document.getElementById("pShaba").value = "";
+    document.getElementById("pPhone").value = "";
+    document.getElementById("pCanReport").checked = false;
+  }
+  modal.classList.remove("hidden");
+}
+
+async function savePersonnel() {
+  const id = document.getElementById("editPersonnelId").value;
+  const fullName = document.getElementById("pFullName").value.trim();
+  const natId = document.getElementById("pNationalId").value.trim();
+  const shaba = document.getElementById("pShaba").value.trim();
+  const phone = document.getElementById("pPhone").value.trim();
+  const canReport = document.getElementById("pCanReport").checked;
+
+  if (!fullName || !natId) return showToast("نام و کد ملی الزامی است", "error");
+
+  const payload = {
+    full_name: fullName,
+    national_id: natId,
+    shaba: shaba,
+    phone: phone,
+    can_report: canReport
+  };
+
+  let error;
+  if (id) {
+    // ویرایش
+    const { error: err } = await supabaseClient.from('personnel').update(payload).eq('id', id);
+    error = err;
+  } else {
+    // ثبت جدید (استفاده از کد ملی به عنوان شناسه)
+    const newId = `p_${natId}`;
+    payload.id = newId;
+    payload.is_active = true;
+    const { error: err } = await supabaseClient.from('personnel').insert([payload]);
+    error = err;
+  }
+
+  if (error) {
+    console.error(error);
+    return showToast("خطا در ذخیره‌سازی", "error");
+  }
+
+  showToast("✅ اطلاعات ذخیره شد", "success");
+  document.getElementById("personnelModal").classList.add("hidden");
+  
+  // رفرش لیست و سینک ابری
+  await fetchPersonnel();
+  if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
+}
+
+async function togglePersonnelActive(id) {
+  const p = allPersonnelData.find(x => x.id === id);
+  if (!p) return;
+  
+  const newStatus = !p.is_active;
+  if (!confirm(`آیا از ${newStatus ? 'فعال کردن' : 'غیرفعال کردن'} این شخص مطمئنید؟`)) return;
+  
+  const { error } = await supabaseClient.from('personnel').update({ is_active: newStatus }).eq('id', id);
+  if (error) return showToast("خطا در تغییر وضعیت", "error");
+  
+  showToast(`✅ وضعیت به ${newStatus ? 'فعال' : 'غیرفعال'} تغییر کرد`, "success");
+  await fetchPersonnel();
+  if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     // سینک پرسنل
@@ -65,6 +272,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupTableEvents();
     setupFilterEvents();
     setupModalEvents();
+    initTabs();
+    initPersonnelEvents();
     
   } catch (err) {
     console.error("Dashboard Init Error:", err);

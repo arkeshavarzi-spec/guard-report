@@ -46,7 +46,14 @@
   </header>
 
   <main class="dashboard-container">
-    <!-- کارت‌های آماری -->
+
+  <div class="dashboard-tabs">
+    <button class="tab-btn active" data-tab="reportsTab">📊 داشبورد گزارش‌ها</button>
+    <button class="tab-btn" data-tab="personnelTab">👥 مدیریت پرسنل</button>
+  </div>
+
+  <!-- محتوای تب گزارش‌ها -->
+  <div id="reportsTab" class="tab-content active">    <!-- کارت‌های آماری -->
     <section class="kpi-grid">
       <div class="kpi-card kpi-total">
         <span class="kpi-title">کل گزارش‌ها</span>
@@ -157,6 +164,80 @@
     </section>
   </main>
 
+
+  </div> <!-- پایان تب گزارش‌ها -->
+
+  <!-- محتوای تب پرسنل -->
+  <div id="personnelTab" class="tab-content hidden">
+    <section class="filter-section">
+      <div class="filter-row" style="grid-template-columns: 1fr auto;">
+        <div class="field" style="margin-bottom: 0;">
+          <label>جستجوی پرسنل (نام یا کد ملی)</label>
+          <input type="text" id="searchPersonnel" placeholder="تایپ کنید..." />
+        </div>
+        <div class="field" style="margin-bottom: 0; display: flex; align-items: flex-end;">
+          <button class="btn btn-primary" id="addPersonnelBtn" style="height: 42px;">➕ افزودن پرسنل جدید</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-section">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>نام و نام خانوادگی</th>
+              <th>کد ملی</th>
+              <th>شماره شبا</th>
+              <th>تلفن</th>
+              <th>مسئول ثبت گزارش؟</th>
+              <th>وضعیت</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="personnelTableBody">
+            <!-- توسط JS پر می‌شود -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- مودال ویرایش/افزودن پرسنل -->
+  <div id="personnelModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="personnelModalTitle">افزودن پرسنل جدید</h2>
+        <button class="modal-close" type="button" id="closePersonnelModal">×</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <input type="hidden" id="editPersonnelId" />
+        <div class="field">
+          <label>نام و نام خانوادگی</label>
+          <input type="text" id="pFullName" required />
+        </div>
+        <div class="field">
+          <label>کد ملی</label>
+          <input type="text" id="pNationalId" required />
+        </div>
+        <div class="field">
+          <label>شماره شبا (IR...)</label>
+          <input type="text" id="pShaba" style="direction: ltr; text-align: left;" />
+        </div>
+        <div class="field">
+          <label>شماره تلفن</label>
+          <input type="text" id="pPhone" />
+        </div>
+        <div class="field" style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="pCanReport" style="width: 20px; height: 20px; cursor: pointer;" />
+          <label for="pCanReport" style="margin: 0; cursor: pointer;">این شخص مسئول ثبت گزارش است</label>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn btn-primary" id="savePersonnelBtn">ذخیره اطلاعات</button>
+      </div>
+    </div>
+  </div>
   <!-- مودال جزئیات -->
   <div id="detailsModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 600px; width: 100%;">
@@ -178,10 +259,10 @@
 
   <script src="js/jalalidatepicker.min.js"></script>
   <script src="js/xlsx.full.min.js"></script>
-  <script src="js/supabase.min.js?v=1022"></script>
-  <script src="js/data.js?v=1022"></script>
-  <script src="js/supabase-client.js?v=1022"></script>
+  <script src="js/supabase.min.js?v=1023"></script>
+  <script src="js/data.js?v=1023"></script>
+  <script src="js/supabase-client.js?v=1023"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="js/dashboard.js?v=1022"></script>
+  <script src="js/dashboard.js?v=1023"></script>
 </body>
 </html>

@@ -6,9 +6,12 @@ const STORAGE_KEY = "guard_reports_v1";
 const $ = (sel) => document.querySelector(sel);
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 🚨 سینک پرسنل از ابر (یا کش/پشتیبان)
+  // 🚨 سینک پرسنل و اماکن از ابر (یا کش/پشتیبان)
   if (typeof fetchAndSyncPersonnel === 'function') {
     await fetchAndSyncPersonnel();
+  }
+  if (typeof fetchAndSyncLocations === 'function') {
+    await fetchAndSyncLocations();
   }
 
   initLocationSelect();

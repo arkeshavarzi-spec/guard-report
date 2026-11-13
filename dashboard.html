@@ -50,6 +50,7 @@
   <div class="dashboard-tabs">
     <button class="tab-btn active" data-tab="reportsTab">📊 داشبورد گزارش‌ها</button>
     <button class="tab-btn" data-tab="personnelTab">👥 مدیریت پرسنل</button>
+    <button class="tab-btn" data-tab="locationsTab">🏢 مدیریت اماکن</button>
   </div>
 
   <!-- محتوای تب گزارش‌ها -->
@@ -204,6 +205,81 @@
     </section>
   </div>
 
+
+  <!-- محتوای تب اماکن -->
+  <div id="locationsTab" class="tab-content hidden">
+    <section class="filter-section">
+      <div style="display: flex; gap: 12px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; gap: 12px;">
+          <button class="btn btn-primary" id="addLocationBtn">➕ افزودن دانشکده/واحد</button>
+          <button class="btn btn-ghost" id="toggleInactiveLocBtn" style="color: var(--warning); border-color: var(--warning);">👁️ نمایش غیرفعال‌ها</button>
+        </div>
+      </div>
+    </section>
+    
+    <section class="tree-section">
+      <div id="locationsTree">
+        <!-- توسط JS پر می‌شود -->
+      </div>
+    </section>
+  </div>
+
+  <!-- مودال افزودن/ویرایش دانشکده -->
+  <div id="locationModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="locationModalTitle">افزودن دانشکده/واحد</h2>
+        <button class="modal-close" type="button" id="closeLocationModal">×</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <input type="hidden" id="editLocationId" />
+        <div class="field">
+          <label>شناسه انگلیسی (ID) - قابل تغییر پس از ساخت نیست</label>
+          <input type="text" id="lId" placeholder="مثال: new_faculty" style="direction: ltr; text-align: left;" />
+        </div>
+        <div class="field">
+          <label>نام نمایشی (فارسی)</label>
+          <input type="text" id="lLabel" placeholder="مثال: دانشکده جدید" />
+        </div>
+        <div class="field">
+          <label>ترتیب نمایش (عدد کوچک‌تر = بالاتر)</label>
+          <input type="number" id="lSortOrder" value="100" />
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn btn-primary" id="saveLocationBtn">ذخیره</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال افزودن/ویرایش پست -->
+  <div id="postModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="postModalTitle">افزودن پست حفاظتی</h2>
+        <button class="modal-close" type="button" id="closePostModal">×</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <input type="hidden" id="editPostId" />
+        <div class="field" id="postLocationField">
+          <label>دانشکده/واحد (پس از ساخت قابل تغییر نیست)</label>
+          <select id="pLocationId"></select>
+        </div>
+        <div class="field">
+          <label>نام پست (فارسی)</label>
+          <input type="text" id="pLabel" placeholder="مثال: ورودی اصلی" />
+        </div>
+        <div class="field">
+          <label>ترتیب نمایش</label>
+          <input type="number" id="pSortOrder" value="100" />
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn btn-primary" id="savePostBtn">ذخیره</button>
+      </div>
+    </div>
+  </div>
+
   <!-- مودال ویرایش/افزودن پرسنل -->
   <div id="personnelModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
@@ -260,10 +336,10 @@
 
   <script src="js/jalalidatepicker.min.js"></script>
   <script src="js/xlsx.full.min.js"></script>
-  <script src="js/supabase.min.js?v=1024"></script>
-  <script src="js/data.js?v=1024"></script>
-  <script src="js/supabase-client.js?v=1024"></script>
+  <script src="js/supabase.min.js?v=1031"></script>
+  <script src="js/data.js?v=1031"></script>
+  <script src="js/supabase-client.js?v=1031"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="js/dashboard.js?v=1024"></script>
+  <script src="js/dashboard.js?v=1031"></script>
 </body>
 </html>

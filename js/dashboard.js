@@ -56,6 +56,9 @@ function initTabs() {
       if (targetId === 'personnelTab' && allPersonnelData.length === 0) {
         fetchPersonnel();
       }
+      if (targetId === 'locationsTab' && allLocationsData.length === 0) {
+        fetchLocationsData();
+      }
     });
   });
 }
@@ -244,11 +247,320 @@ async function togglePersonnelActive(id) {
   if (typeof fetchAndSyncPersonnel === 'function') await fetchAndSyncPersonnel();
 }
 
+
+// =========================================================
+// منطق مدیریت اماکن و پست‌ها (درخت)
+// =========================================================
+let allLocationsData = [];
+let allPostsData = [];
+let showInactiveLocations = false;
+
+async function fetchLocationsData() {
+  const container = document.getElementById("locationsTree");
+  if (!container) return;
+  container.innerHTML = '<p style="text-align:center; padding:20px;">در حال بارگذاری...</p>';
+
+  const [locRes, postRes] = await Promise.all([
+    supabaseClient.from('locations').select('*').order('sort_order'),
+    supabaseClient.from('posts').select('*').order('sort_order')
+  ]);
+
+  if (locRes.error || postRes.error) {
+    container.innerHTML = '<p style="color:red; text-align:center; padding:20px;">خطا در بارگذاری اطلاعات</p>';
+    return;
+  }
+
+  allLocationsData = locRes.data || [];
+  allPostsData = postRes.data || [];
+  renderTree();
+}
+
+function renderTree() {
+  const container = document.getElementById("locationsTree");
+  if (!container) return;
+
+  let visibleLocs = showInactiveLocations 
+    ? allLocationsData 
+    : allLocationsData.filter(l => l.is_active);
+
+  if (!visibleLocs.length) {
+    container.innerHTML = '<p style="text-align:center; padding:20px;">دانشکده‌ای یافت نشد.</p>';
+    return;
+  }
+
+  container.innerHTML = visibleLocs.map(loc => {
+    const locPosts = allPostsData.filter(p => 
+      p.location_id === loc.id && (showInactiveLocations || p.is_active)
+    );
+    const activeCount = allPostsData.filter(p => p.location_id === loc.id && p.is_active).length;
+
+    const postsHtml = locPosts.map(post => `
+      <div class="tree-post ${post.is_active ? '' : 'inactive'}">
+        <span class="tree-post-label">${post.label}</span>
+        <div class="tree-post-actions">
+          <button class="btn-table action-loc-btn" data-action="edit-post" data-id="${post.id}" title="ویرایش">✏️</button>
+          <button class="btn-table action-loc-btn ${post.is_active ? 'btn-hide-row' : ''}" data-action="toggle-post" data-id="${post.id}" title="${post.is_active ? 'غیرفعال' : 'فعال'}">
+            ${post.is_active ? '🚫' : '✅'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="tree-location ${loc.is_active ? '' : 'inactive'}" data-loc-id="${loc.id}">
+        <div class="tree-location-header" data-action="toggle-expand">
+          <span class="tree-toggle-icon">◀</span>
+          <span class="tree-location-title">${loc.label}</span>
+          <span class="tree-location-count">${activeCount} پست</span>
+          <div class="tree-location-actions" onclick="event.stopPropagation();">
+            <button class="btn-table action-loc-btn" data-action="edit-loc" data-id="${loc.id}" title="ویرایش">✏️</button>
+            <button class="btn-table action-loc-btn ${loc.is_active ? 'btn-hide-row' : ''}" data-action="toggle-loc" data-id="${loc.id}" title="${loc.is_active ? 'غیرفعال' : 'فعال'}">
+              ${loc.is_active ? '🚫' : '✅'}
+            </button>
+          </div>
+        </div>
+        <div class="tree-posts">
+          ${postsHtml || '<p style="color: var(--text-muted); font-size: 0.85rem;">این دانشکده هنوز پستی ندارد.</p>'}
+          ${loc.is_active ? `<button class="tree-add-post-btn action-loc-btn" data-action="add-post" data-loc-id="${loc.id}">➕ افزودن پست جدید</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function initLocationsEvents() {
+  // باز/بسته کردن درخت
+  document.getElementById("locationsTree")?.addEventListener("click", async (e) => {
+    const header = e.target.closest('[data-action="toggle-expand"]');
+    if (header) {
+      const loc = header.closest('.tree-location');
+      loc.classList.toggle('expanded');
+      return;
+    }
+
+    const btn = e.target.closest('.action-loc-btn');
+    if (!btn) return;
+    
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    const locId = btn.dataset.locId;
+
+    if (action === "edit-loc") openLocationModal(id);
+    else if (action === "toggle-loc") await toggleLocationActive(id);
+    else if (action === "add-post") openPostModal(null, locId);
+    else if (action === "edit-post") openPostModal(id);
+    else if (action === "toggle-post") await togglePostActive(id);
+  });
+
+  // دکمه افزودن دانشکده
+  document.getElementById("addLocationBtn")?.addEventListener("click", () => openLocationModal(null));
+
+  // دکمه نمایش غیرفعال‌ها
+  document.getElementById("toggleInactiveLocBtn")?.addEventListener("click", (e) => {
+    showInactiveLocations = !showInactiveLocations;
+    const btn = e.target;
+    if (showInactiveLocations) {
+      btn.innerHTML = "🙈 مخفی کردن غیرفعال‌ها";
+      btn.style.color = "var(--primary)";
+      btn.style.borderColor = "var(--primary)";
+    } else {
+      btn.innerHTML = "👁️ نمایش غیرفعال‌ها";
+      btn.style.color = "var(--warning)";
+      btn.style.borderColor = "var(--warning)";
+    }
+    renderTree();
+  });
+
+  // مودال دانشکده
+  document.getElementById("closeLocationModal")?.addEventListener("click", () => {
+    document.getElementById("locationModal").classList.add("hidden");
+  });
+  document.getElementById("saveLocationBtn")?.addEventListener("click", saveLocation);
+
+  // مودال پست
+  document.getElementById("closePostModal")?.addEventListener("click", () => {
+    document.getElementById("postModal").classList.add("hidden");
+  });
+  document.getElementById("savePostBtn")?.addEventListener("click", savePost);
+}
+
+function openLocationModal(id) {
+  const modal = document.getElementById("locationModal");
+  const title = document.getElementById("locationModalTitle");
+  const editId = document.getElementById("editLocationId");
+  const idInput = document.getElementById("lId");
+  const labelInput = document.getElementById("lLabel");
+  const sortInput = document.getElementById("lSortOrder");
+
+  if (id) {
+    const loc = allLocationsData.find(l => l.id === id);
+    if (!loc) return;
+    title.textContent = "ویرایش دانشکده/واحد";
+    editId.value = loc.id;
+    idInput.value = loc.id;
+    idInput.disabled = true;
+    idInput.style.background = "#f1f5f9";
+    labelInput.value = loc.label;
+    sortInput.value = loc.sort_order;
+  } else {
+    title.textContent = "افزودن دانشکده/واحد جدید";
+    editId.value = "";
+    idInput.value = "";
+    idInput.disabled = false;
+    idInput.style.background = "";
+    labelInput.value = "";
+    sortInput.value = 100;
+  }
+  modal.classList.remove("hidden");
+}
+
+async function saveLocation() {
+  const editId = document.getElementById("editLocationId").value;
+  const id = document.getElementById("lId").value.trim();
+  const label = document.getElementById("lLabel").value.trim();
+  const sortOrder = parseInt(document.getElementById("lSortOrder").value) || 100;
+
+  if (!id || !label) return showToast("ID و نام الزامی هستند", "error");
+  if (!/^[a-z0-9_]+$/.test(id)) return showToast("ID فقط با حروف کوچک انگلیسی، عدد و _", "error");
+
+  if (!editId) {
+    // چک تکراری بودن
+    const { data: existing } = await supabaseClient.from('locations').select('id').eq('id', id);
+    if (existing && existing.length > 0) return showToast("این ID قبلاً استفاده شده است", "error");
+    
+    if (!confirm(`⚠️ توجه مهم:\n\nدانشکده «${label}» با شناسه «${id}» ساخته می‌شود.\n\nاین شناسه پس از ساخت قابل تغییر نیست و گزارش‌های آینده به آن وابسته می‌شوند.\n\nآیا مطمئنید؟`)) return;
+
+    const { error } = await supabaseClient.from('locations').insert([{
+      id, label, sort_order: sortOrder, is_active: true
+    }]);
+    if (error) { console.error(error); return showToast("خطا در ثبت", "error"); }
+  } else {
+    // ویرایش (فقط label و sort_order)
+    if (!confirm(`آیا از تغییر نام به «${label}» مطمئنید؟`)) return;
+
+    const { error } = await supabaseClient.from('locations').update({ label, sort_order: sortOrder }).eq('id', id);
+    if (error) return showToast("خطا در ویرایش", "error");
+  }
+
+  showToast("✅ ذخیره شد", "success");
+  document.getElementById("locationModal").classList.add("hidden");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+async function toggleLocationActive(id) {
+  const loc = allLocationsData.find(l => l.id === id);
+  if (!loc) return;
+  
+  const newStatus = !loc.is_active;
+  const locPosts = allPostsData.filter(p => p.location_id === id && p.is_active);
+  
+  let msg = `آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} دانشکده «${loc.label}» مطمئنید؟\n\n`;
+  if (!newStatus) {
+    msg += `⚠️ با این کار، این دانشکده و ${locPosts.length} پست فعال آن از فرم گزارش‌دهی حذف می‌شوند.\n\n`;
+    msg += `✅ گزارش‌های قبلی که به این دانشکده ارجاع داده‌اند، دست‌نخورده باقی می‌مانند.\n\n`;
+    msg += `🔄 هر زمان می‌توانید آن را دوباره فعال کنید.`;
+  }
+  
+  if (!confirm(msg)) return;
+
+  const { error } = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id);
+  if (error) return showToast("خطا در تغییر وضعیت", "error");
+
+  showToast(`✅ ${newStatus ? 'فعال' : 'غیرفعال'} شد`, "success");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+function openPostModal(id, locationId) {
+  const modal = document.getElementById("postModal");
+  const title = document.getElementById("postModalTitle");
+  const editId = document.getElementById("editPostId");
+  const locSelect = document.getElementById("pLocationId");
+  const locField = document.getElementById("postLocationField");
+  const labelInput = document.getElementById("pLabel");
+  const sortInput = document.getElementById("pSortOrder");
+
+  // پر کردن لیست دانشکده‌های فعال
+  const activeLocs = allLocationsData.filter(l => l.is_active);
+  locSelect.innerHTML = activeLocs.map(l => `<option value="${l.id}">${l.label}</option>`).join('');
+
+  if (id) {
+    const post = allPostsData.find(p => p.id === id);
+    if (!post) return;
+    title.textContent = "ویرایش پست";
+    editId.value = post.id;
+    locField.style.display = "none"; // امکان تغییر دانشکده نیست
+    labelInput.value = post.label;
+    sortInput.value = post.sort_order;
+  } else {
+    title.textContent = "افزودن پست جدید";
+    editId.value = "";
+    locField.style.display = "block";
+    locSelect.value = locationId || activeLocs[0]?.id;
+    labelInput.value = "";
+    sortInput.value = 100;
+  }
+  modal.classList.remove("hidden");
+}
+
+async function savePost() {
+  const editId = document.getElementById("editPostId").value;
+  const locId = document.getElementById("pLocationId").value;
+  const label = document.getElementById("pLabel").value.trim();
+  const sortOrder = parseInt(document.getElementById("pSortOrder").value) || 100;
+
+  if (!label) return showToast("نام پست الزامی است", "error");
+
+  if (!editId) {
+    if (!locId) return showToast("دانشکده را انتخاب کنید", "error");
+    
+    const timestamp = Date.now().toString().slice(-8);
+    const newId = `${locId}_post_${timestamp}`;
+    
+    const locName = allLocationsData.find(l => l.id === locId)?.label || locId;
+    if (!confirm(`پست «${label}» به دانشکده «${locName}» اضافه می‌شود.\n\n⚠️ این پست پس از ساخت به دانشکده دیگری قابل انتقال نیست.\n\nآیا مطمئنید؟`)) return;
+
+    const { error } = await supabaseClient.from('posts').insert([{
+      id: newId, location_id: locId, label, sort_order: sortOrder, is_active: true
+    }]);
+    if (error) { console.error(error); return showToast("خطا در ثبت", "error"); }
+  } else {
+    if (!confirm(`آیا از تغییر نام پست به «${label}» مطمئنید؟`)) return;
+
+    const { error } = await supabaseClient.from('posts').update({ label, sort_order: sortOrder }).eq('id', editId);
+    if (error) return showToast("خطا در ویرایش", "error");
+  }
+
+  showToast("✅ ذخیره شد", "success");
+  document.getElementById("postModal").classList.add("hidden");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
+async function togglePostActive(id) {
+  const post = allPostsData.find(p => p.id === id);
+  if (!post) return;
+  
+  const newStatus = !post.is_active;
+  if (!confirm(`آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} پست «${post.label}» مطمئنید؟\n\n${!newStatus ? '⚠️ این پست از فرم حذف می‌شود، اما گزارش‌های قبلی دست‌نخورده می‌مانند.' : ''}`)) return;
+
+  const { error } = await supabaseClient.from('posts').update({ is_active: newStatus }).eq('id', id);
+  if (error) return showToast("خطا در تغییر وضعیت", "error");
+
+  showToast(`✅ ${newStatus ? 'فعال' : 'غیرفعال'} شد`, "success");
+  await fetchLocationsData();
+  if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // سینک پرسنل
+    // سینک پرسنل و اماکن
     if (typeof fetchAndSyncPersonnel === 'function') {
       await fetchAndSyncPersonnel();
+    }
+    if (typeof fetchAndSyncLocations === 'function') {
+      await fetchAndSyncLocations();
     }
 
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -277,6 +589,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupFilterEvents();
     setupModalEvents();
     initTabs();
+    initLocationsEvents();
     initPersonnelEvents();
     
   } catch (err) {

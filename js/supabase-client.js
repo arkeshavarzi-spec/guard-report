@@ -320,3 +320,68 @@ function updateGlobalPersonnel(newPersonnel, newReporters) {
     REPORTERS.push(...newReporters);
   }
 }
+
+// =========================================================
+// سینک هوشمند اماکن و پست‌ها (ابر ← کش ← فالبک)
+// =========================================================
+async function fetchAndSyncLocations() {
+  // ۱. بارگذاری از کش
+  const cached = localStorage.getItem('locations_cache_v1');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.locations && parsed.posts) {
+        updateGlobalLocations(parsed.locations, parsed.posts);
+      }
+    } catch(e) { console.warn("Locations cache parse error", e); }
+  }
+
+  // ۲. تلاش برای دریافت از Supabase
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    try {
+      // دریافت همزمان دانشکده‌ها و پست‌ها
+      const [locRes, postRes] = await Promise.all([
+        supabaseClient.from('locations').select('*').eq('is_active', true).order('sort_order'),
+        supabaseClient.from('posts').select('*').eq('is_active', true).order('sort_order')
+      ]);
+
+      if (!locRes.error && !postRes.error && locRes.data && postRes.data) {
+        const newLocations = locRes.data.map(l => ({
+          name: l.id,
+          label: l.label
+        }));
+        
+        // فقط پست‌هایی را نگه می‌داریم که دانشکده‌شان فعال است
+        const activeLocIds = new Set(newLocations.map(l => l.name));
+        const newPosts = postRes.data
+          .filter(p => activeLocIds.has(p.location_id))
+          .map(p => ({
+            name: p.id,
+            label: p.label,
+            location: p.location_id
+          }));
+
+        // ذخیره در کش
+        localStorage.setItem('locations_cache_v1', JSON.stringify({ locations: newLocations, posts: newPosts }));
+        
+        // به‌روزرسانی آرایه‌های سراسری
+        updateGlobalLocations(newLocations, newPosts);
+      }
+    } catch(e) {
+      console.warn("Could not sync locations from cloud. Using cache/fallback.", e);
+    }
+  }
+}
+
+// تابع کمکی برای به‌روزرسانی آرایه‌های LOCATIONS و POSTS
+function updateGlobalLocations(newLocations, newPosts) {
+  if (typeof LOCATIONS !== 'undefined' && Array.isArray(LOCATIONS)) {
+    LOCATIONS.length = 0;
+    LOCATIONS.push(...newLocations);
+  }
+  if (typeof POSTS !== 'undefined' && Array.isArray(POSTS)) {
+    POSTS.length = 0;
+    POSTS.push(...newPosts);
+  }
+}

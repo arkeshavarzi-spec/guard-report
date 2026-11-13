@@ -388,7 +388,6 @@ function openLocationModal(id) {
   const modal = document.getElementById("locationModal");
   const title = document.getElementById("locationModalTitle");
   const editId = document.getElementById("editLocationId");
-  const idInput = document.getElementById("lId");
   const labelInput = document.getElementById("lLabel");
   const sortInput = document.getElementById("lSortOrder");
 
@@ -397,17 +396,11 @@ function openLocationModal(id) {
     if (!loc) return;
     title.textContent = "ویرایش دانشکده/واحد";
     editId.value = loc.id;
-    idInput.value = loc.id;
-    idInput.disabled = true;
-    idInput.style.background = "#f1f5f9";
     labelInput.value = loc.label;
     sortInput.value = loc.sort_order;
   } else {
     title.textContent = "افزودن دانشکده/واحد جدید";
     editId.value = "";
-    idInput.value = "";
-    idInput.disabled = false;
-    idInput.style.background = "";
     labelInput.value = "";
     sortInput.value = 100;
   }
@@ -416,29 +409,23 @@ function openLocationModal(id) {
 
 async function saveLocation() {
   const editId = document.getElementById("editLocationId").value;
-  const id = document.getElementById("lId").value.trim();
   const label = document.getElementById("lLabel").value.trim();
   const sortOrder = parseInt(document.getElementById("lSortOrder").value) || 100;
 
-  if (!id || !label) return showToast("ID و نام الزامی هستند", "error");
-  if (!/^[a-z0-9_]+$/.test(id)) return showToast("ID فقط با حروف کوچک انگلیسی، عدد و _", "error");
+  if (!label) return showToast("نام دانشکده الزامی است", "error");
 
   if (!editId) {
-    // چک تکراری بودن
-    const { data: existing } = await supabaseClient.from('locations').select('id').eq('id', id);
-    if (existing && existing.length > 0) return showToast("این ID قبلاً استفاده شده است", "error");
+    const newId = `loc_${Date.now().toString().slice(-8)}`;
     
-    if (!confirm(`⚠️ توجه مهم:\n\nدانشکده «${label}» با شناسه «${id}» ساخته می‌شود.\n\nاین شناسه پس از ساخت قابل تغییر نیست و گزارش‌های آینده به آن وابسته می‌شوند.\n\nآیا مطمئنید؟`)) return;
+    if (!confirm(`دانشکده «${label}» ساخته می‌شود. آیا مطمئنید؟`)) return;
 
     const { error } = await supabaseClient.from('locations').insert([{
-      id, label, sort_order: sortOrder, is_active: true
+      id: newId, label, sort_order: sortOrder, is_active: true
     }]);
     if (error) { console.error(error); return showToast("خطا در ثبت", "error"); }
   } else {
-    // ویرایش (فقط label و sort_order)
     if (!confirm(`آیا از تغییر نام به «${label}» مطمئنید؟`)) return;
-
-    const { error } = await supabaseClient.from('locations').update({ label, sort_order: sortOrder }).eq('id', id);
+    const { error } = await supabaseClient.from('locations').update({ label, sort_order: sortOrder }).eq('id', editId);
     if (error) return showToast("خطا در ویرایش", "error");
   }
 
@@ -457,17 +444,27 @@ async function toggleLocationActive(id) {
   
   let msg = `آیا از ${newStatus ? 'فعال‌سازی' : 'غیرفعال‌سازی'} دانشکده «${loc.label}» مطمئنید؟\n\n`;
   if (!newStatus) {
-    msg += `⚠️ با این کار، این دانشکده و ${locPosts.length} پست فعال آن از فرم گزارش‌دهی حذف می‌شوند.\n\n`;
+    msg += `⚠️ با این کار، این دانشکده و تمام ${locPosts.length} پست فعال آن به طور خودکار غیرفعال می‌شوند و از فرم گزارش‌دهی حذف می‌شوند.\n\n`;
     msg += `✅ گزارش‌های قبلی که به این دانشکده ارجاع داده‌اند، دست‌نخورده باقی می‌مانند.\n\n`;
-    msg += `🔄 هر زمان می‌توانید آن را دوباره فعال کنید.`;
+    msg += `🔄 هر زمان می‌توانید دانشکده را فعال کنید، اما پست‌ها برای جلوگیری از حواس‌پرتی دستی غیرفعال می‌مانند و باید تک‌تک فعال شوند.`;
+  } else {
+    msg += `ℹ️ توجه: با فعال کردن دانشکده، پست‌های آن به طور خودکار فعال نمی‌شوند. اگر نیاز است، آن‌ها را دستی فعال کنید.`;
   }
   
   if (!confirm(msg)) return;
 
-  const { error } = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id);
-  if (error) return showToast("خطا در تغییر وضعیت", "error");
+  // ۱. تغییر وضعیت خود دانشکده
+  const { error: locError } = await supabaseClient.from('locations').update({ is_active: newStatus }).eq('id', id);
+  if (locError) return showToast("خطا در تغییر وضعیت دانشکده", "error");
 
-  showToast(`✅ ${newStatus ? 'فعال' : 'غیرفعال'} شد`, "success");
+  // ۲. تغییر وضعیت تمام پست‌های زیرمجموعه
+  if (!newStatus) {
+    // اگر دانشکده غیرفعال شد، پست‌هایش هم غیرفعال شوند
+    const { error: postError } = await supabaseClient.from('posts').update({ is_active: false }).eq('location_id', id).eq('is_active', true);
+    if (postError) console.error("Cascade deactivation error:", postError);
+  }
+
+  showToast(`✅ دانشکده و پست‌های آن ${newStatus ? 'فعال' : 'غیرفعال'} شدند`, "success");
   await fetchLocationsData();
   if (typeof fetchAndSyncLocations === 'function') await fetchAndSyncLocations();
 }
@@ -515,8 +512,7 @@ async function savePost() {
   if (!editId) {
     if (!locId) return showToast("دانشکده را انتخاب کنید", "error");
     
-    const timestamp = Date.now().toString().slice(-8);
-    const newId = `${locId}_post_${timestamp}`;
+    const newId = `post_${Date.now().toString().slice(-8)}`;
     
     const locName = allLocationsData.find(l => l.id === locId)?.label || locId;
     if (!confirm(`پست «${label}» به دانشکده «${locName}» اضافه می‌شود.\n\n⚠️ این پست پس از ساخت به دانشکده دیگری قابل انتقال نیست.\n\nآیا مطمئنید؟`)) return;

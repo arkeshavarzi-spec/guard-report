@@ -3,9 +3,15 @@
    ========================================================= */
 
 .dashboard-container {
-  max-width: 1200px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 0 20px 60px;
+  padding: 0 0 60px; /* حذف پدینگ چپ و راست چون هدر خودش پدینگ دارد */
+}
+
+/* هم‌ترازی تب‌ها و سکشن‌ها با عرض هدر */
+.dashboard-tabs, .tab-content {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 

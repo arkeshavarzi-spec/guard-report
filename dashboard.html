@@ -234,16 +234,12 @@
       <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
         <input type="hidden" id="editLocationId" />
         <div class="field">
-          <label>شناسه انگلیسی (ID) - قابل تغییر پس از ساخت نیست</label>
-          <input type="text" id="lId" placeholder="مثال: new_faculty" style="direction: ltr; text-align: left;" />
-        </div>
-        <div class="field">
           <label>نام نمایشی (فارسی)</label>
           <input type="text" id="lLabel" placeholder="مثال: دانشکده جدید" />
         </div>
         <div class="field">
           <label>ترتیب نمایش (عدد کوچک‌تر = بالاتر)</label>
-          <input type="number" id="lSortOrder" value="100" />
+          <input type="text" id="lSortOrder" value="100" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
         </div>
       </div>
       <div class="modal-actions" style="margin-top: 20px;">
@@ -270,8 +266,8 @@
           <input type="text" id="pLabel" placeholder="مثال: ورودی اصلی" />
         </div>
         <div class="field">
-          <label>ترتیب نمایش</label>
-          <input type="number" id="pSortOrder" value="100" />
+          <label>ترتیب نمایش (عدد کوچک‌تر = بالاتر)</label>
+          <input type="text" id="pSortOrder" value="100" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
         </div>
       </div>
       <div class="modal-actions" style="margin-top: 20px;">
@@ -336,10 +332,10 @@
 
   <script src="js/jalalidatepicker.min.js"></script>
   <script src="js/xlsx.full.min.js"></script>
-  <script src="js/supabase.min.js?v=1031"></script>
-  <script src="js/data.js?v=1031"></script>
-  <script src="js/supabase-client.js?v=1031"></script>
+  <script src="js/supabase.min.js?v=1032"></script>
+  <script src="js/data.js?v=1032"></script>
+  <script src="js/supabase-client.js?v=1032"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="js/dashboard.js?v=1031"></script>
+  <script src="js/dashboard.js?v=1032"></script>
 </body>
 </html>

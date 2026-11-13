@@ -39,28 +39,49 @@ let currentUser = null;
 
 // بررسی وضعیت ورود هنگام بارگذاری
 async function checkAuth() {
+  const overlay = document.getElementById('loginOverlay');
+  if (!overlay) return; // اگر در داشبورد هستیم، بررسی احراز هویت را متوقف کن
+  
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session && session.user) {
     currentUser = session.user;
-    showApp(session.user.email);
+    showApp(session.user.email, session.user.id);
   } else {
     showLogin();
   }
 }
 
 function showLogin() {
-  document.getElementById('loginOverlay').classList.remove('hidden');
+  const overlay = document.getElementById('loginOverlay');
+  if (!overlay) return; // اگر در داشبورد هستیم، هیچ کاری نکن
+  overlay.classList.remove('hidden');
   document.getElementById('userMenuContainer').classList.add('hidden');
   const app = document.querySelector('.app-container');
   if (app) app.style.display = 'none';
 }
 
-function showApp(email) {
-  document.getElementById('loginOverlay').classList.add('hidden');
+async function showApp(email, userId) {
+  const overlay = document.getElementById('loginOverlay');
+  if (!overlay) return; // اگر در داشبورد هستیم، هیچ کاری نکن
+  overlay.classList.add('hidden');
   document.getElementById('userMenuContainer').classList.remove('hidden');
   document.getElementById('userEmail').textContent = email;
   const app = document.querySelector('.app-container');
   if (app) app.style.display = '';
+
+  // بررسی نقش کاربر برای نمایش دکمه داشبورد
+  if (userId) {
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+      
+    if (profile && profile.role === 'admin') {
+      const dashBtn = document.getElementById('goToDashboardBtn');
+      if (dashBtn) dashBtn.classList.remove('hidden');
+    }
+  }
 }
 
 // رویداد ورود
@@ -85,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         currentUser = data.user;
-        showApp(data.user.email);
+        showApp(data.user.email, data.user.id);
         showToast('✅ خوش آمدید', 'success');
   if (typeof renderRecentReports === 'function') renderRecentReports();
       } catch (e) {

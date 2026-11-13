@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>داشبورد مدیریتی حفاظت فیزیکی</title>
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+  <div class="bg-decoration"></div>
+
+  <!-- هدر داشبورد -->
+  <header class="app-header dashboard-header">
+    <div class="header-branding">
+      <div class="logo">
+        <img src="img/app-logo.png" alt="لوگو" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
+      </div>
+      <div class="header-text">
+        <h1>داشبورد مدیریتی</h1>
+        <p>مدیریت و نظارت بر گزارش‌های حفاظت فیزیکی</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn-ghost" style="color: #fff; border-color: rgba(255,255,255,0.4); text-decoration: none;">بازگشت به فرم</a>
+      <div id="userMenuContainer" class="user-menu-container hidden">
+        <button type="button" id="userMenuBtn" class="avatar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
+        <div id="userDropdown" class="user-dropdown hidden">
+          <div class="dropdown-header">
+            <span id="userEmail">admin@example.com</span>
+          </div>
+          <button type="button" id="logoutBtn" class="dropdown-logout" title="خروج">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    <!-- کارت‌های آماری -->
+    <section class="kpi-grid">
+      <div class="kpi-card kpi-total">
+        <span class="kpi-title">کل گزارش‌ها</span>
+        <span class="kpi-value" id="kpiTotal">0</span>
+      </div>
+      <div class="kpi-card kpi-unread">
+        <span class="kpi-title">خوانده نشده</span>
+        <span class="kpi-value" id="kpiUnread">0</span>
+      </div>
+      <div class="kpi-card kpi-followup">
+        <span class="kpi-title">نیازمند پیگیری</span>
+        <span class="kpi-value" id="kpiFollowup">0</span>
+      </div>
+      <div class="kpi-card kpi-today">
+        <span class="kpi-title">گزارش‌های امروز</span>
+        <span class="kpi-value" id="kpiToday">0</span>
+      </div>
+    </section>
+
+
+    <!-- نمودار دایره‌ای -->
+    <section class="chart-section">
+      <div class="chart-card">
+        <h3>درصد فراوانی انواع گزارش‌ها</h3>
+        <div class="chart-wrapper">
+          <canvas id="reportsChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- نوار فیلترها -->
+    <section class="filter-section">
+      <div class="filter-row">
+        <div class="field">
+          <label>از تاریخ</label>
+          <input type="text" id="filterDateFrom" data-jdp placeholder="۱۴۰۵/۰۸/۰۱" />
+        </div>
+        <div class="field">
+          <label>تا تاریخ</label>
+          <input type="text" id="filterDateTo" data-jdp placeholder="۱۴۰۵/۰۸/۳۰" />
+        </div>
+        <div class="field">
+          <label>نوع گزارش</label>
+          <select id="filterType">
+            <option value="">همه</option>
+            <option value="patrol">گشت شبانه</option>
+            <option value="illness">گزارش بیماری</option>
+            <option value="fire">گزارش حریق</option>
+            <option value="mission">مأموریت</option>
+            <option value="gathering">گزارش تجمع</option>
+            <option value="incident">گزارش موردی</option>
+            <option value="theft">گزارش سرقت</option>
+            <option value="disciplinary">تخلف انضباطی</option>
+            <option value="ceremony">مراسمات</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>محل / دانشکده</label>
+          <select id="filterLocation">
+            <option value="">همه</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>وضعیت</label>
+          <select id="filterStatus">
+            <option value="">همه</option>
+            <option value="unread">خوانده نشده</option>
+            <option value="read">خوانده شده</option>
+            <option value="follow_up">نیازمند پیگیری</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ثبت‌کننده</label>
+          <input type="text" id="filterReporter" placeholder="جستجوی نام..." />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary" id="applyFilterBtn">اعمال فیلتر</button>
+        <button class="btn btn-ghost" id="resetFilterBtn">حذف فیلترها</button>
+        <button class="btn btn-secondary" id="exportFullExcelBtn" style="margin-right: auto;">📊 خروجی اکسل کامل</button>
+      </div>
+    </section>
+
+    <!-- جدول داده‌ها -->
+    <section class="table-section">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>وضعیت</th>
+              <th>نوع گزارش</th>
+              <th>موضوع / محل</th>
+              <th>ثبت‌کننده</th>
+              <th>تاریخ و ساعت</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardTableBody">
+            <!-- داده‌ها توسط JS پر می‌شوند -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- مودال جزئیات -->
+  <div id="detailsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 600px; width: 100%;">
+      <div class="modal-header">
+        <h2>جزئیات گزارش</h2>
+        <button class="modal-close" type="button" id="closeModalBtn">×</button>
+      </div>
+      <div id="modalBody" class="modal-body" style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+        <!-- جزئیات توسط JS پر می‌شود -->
+      </div>
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button class="btn btn-primary" id="markAsReadBtn">✅ علامت‌گذاری به عنوان خوانده شده</button>
+        <button class="btn btn-secondary" id="markAsFollowUpBtn" style="color: #f59e0b; border-color: #f59e0b;">⚠️ نیازمند پیگیری</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/jalalidatepicker.min.js"></script>
+  <script src="js/xlsx.full.min.js"></script>
+  <script src="js/supabase.min.js?v=1007"></script>
+  <script src="js/data.js?v=1007"></script>
+  <script src="js/supabase-client.js?v=1007"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/dashboard.js?v=1007"></script>
+</body>
+</html>

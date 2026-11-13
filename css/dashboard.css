@@ -314,25 +314,45 @@
 .btn-delete-row:hover { background: #fee2e2 !important; color: #ef4444 !important; border-color: #ef4444 !important; }
 .btn-hide-row:hover { background: #fef3c7 !important; color: #f59e0b !important; border-color: #f59e0b !important; }
 
-/* اصلاح قطعی هدر و آواتار در داشبورد */
+
+
+
+
+
+
+/* ---------- DASHBOARD HEADER HEIGHT FIX ---------- */
 .dashboard-header {
   max-width: 1200px !important;
-  margin: 20px auto 24px !important;
-  overflow: visible !important; /* بسیار مهم برای نمایش منوی آواتار */
+  margin: 16px auto 20px !important;
+  padding: 10px 20px !important; /* کاهش پدینگ برای باریک شدن */
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 16px 24px !important;
+  flex-wrap: nowrap !important;
+  height: auto !important;
+  min-height: unset !important; /* حذف ارتفاع حداقلی قبلی */
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 2000 !important;
 }
 
-.user-menu-container {
-  z-index: 9999 !important;
+.header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
 }
 
-.user-dropdown {
-  z-index: 10000 !important;
+.header-actions .btn-ghost {
+  padding: 6px 12px !important; /* کوچک‌تر کردن دکمه بازگشت */
+  font-size: 0.8rem !important;
+  height: auto !important;
 }
 
-.table-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.btn-delete-row:hover { background: #fee2e2 !important; color: #ef4444 !important; border-color: #ef4444 !important; }
-.btn-hide-row:hover { background: #fef3c7 !important; color: #f59e0b !important; border-color: #f59e0b !important; }
+
+
+/* دکمه‌های عملیات */
+.btn-unhide-row:hover {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #065f46 !important;
+}

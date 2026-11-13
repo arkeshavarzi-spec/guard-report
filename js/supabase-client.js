@@ -86,6 +86,9 @@ async function showApp(email, userId) {
 
 // رویداد ورود
 document.addEventListener('DOMContentLoaded', () => {
+  // اگر در صفحه داشبورد هستیم، منطق‌های فرم اصلی را اجرا نکن
+  if (window.location.pathname.includes('dashboard.html')) return;
+
   const loginForm = document.getElementById('loginForm');
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {

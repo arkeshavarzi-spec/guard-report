@@ -1,12 +1,12 @@
 /* =========================================================
-   منطق داشبورد مدیریتی (نسخه پایدار و ضدباگ)
+   منطق داشبورد مدیریتی (نسخه تمیز - شبیه ویندوز)
    ========================================================= */
 
 let allReports = [];
-let currentUserRole = 'user';
+let currentUserId = null;
+let showHiddenReports = false; // وضعیت نمایش فایل‌های پنهان (پیش‌فرض: خاموش)
 let selectedReportIdForModal = null;
 let myChart = null;
-let currentUserId = null; // متغیر سراسری برای شناسه کاربر
 
 const typeLabels = { 
   patrol: "گشت شبانه", illness: "گزارش بیماری", incident: "گزارش موردی", 
@@ -20,7 +20,6 @@ const statusLabels = {
   follow_up: "نیازمند پیگیری" 
 };
 
-// لیبل‌های فارسی برای خروجی اکسل
 const excelLabels = {
   reportType: "نوع گزارش", reportDate: "تاریخ", reportTime: "ساعت", reporterName: "ثبت‌کننده",
   notes: "توضیحات", locationLabel: "محل", postLabel: "پست", status: "وضعیت", personnelNames: "پرسنل",
@@ -36,17 +35,12 @@ const excelLabels = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // ۱. بررسی لاگین بودن
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { window.location.href = 'index.html'; return; }
-    currentUserId = session.user.id; // ذخیره شناسه کاربر برای استفاده در توابع دیگر
+    currentUserId = session.user.id;
 
-    // ۲. بررسی نقش مدیر
     const { data: profile, error: profileErr } = await supabaseClient
-      .from('profiles')
-      .select('role, email')
-      .eq('id', session.user.id)
-      .single();
+      .from('profiles').select('role, email').eq('id', session.user.id).single();
 
     if (profileErr || !profile || profile.role !== 'admin') {
       alert("شما دسترسی به داشبورد ندارید.");
@@ -54,30 +48,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // ۳. تنظیم هدر
     document.getElementById('userEmail').textContent = profile.email;
     document.getElementById('userMenuContainer').classList.remove('hidden');
     setupHeaderEvents();
 
-    // ۴. بارگذاری داده‌ها
     await fetchAllReports();
     populateLocationFilter();
     applyFilters();
     
-    // ۵. تنظیم رویدادها
     setupTableEvents();
     setupFilterEvents();
     setupModalEvents();
     
   } catch (err) {
     console.error("Dashboard Init Error:", err);
-    document.getElementById("dashboardTableBody").innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding: 30px;">خطا در بارگذاری داشبورد. لطفاً کنسول (F12) را بررسی کنید.</td></tr>`;
   }
 });
 
-// ---------------------------------------------------------
-// توابع دریافت داده و نمایش
-// ---------------------------------------------------------
 async function fetchAllReports() {
   const tbody = document.getElementById("dashboardTableBody");
   tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px;">در حال بارگذاری...</td></tr>`;
@@ -85,28 +72,31 @@ async function fetchAllReports() {
   const { data, error } = await supabaseClient.from('reports').select('*').order('created_at', { ascending: false });
 
   if (error) {
-    console.error(error);
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding: 30px;">خطا در دریافت اطلاعات</td></tr>`;
     return;
   }
 
-  // فقط گزارش‌هایی که توسط ادمین پنهان نشده‌اند
-  allReports = data
-    .filter(r => {
-       const hiddenBy = r.hidden_by || [];
-       return !hiddenBy.includes(currentUserId);
-    })
-    .map(r => ({ ...r.details, _dbId: r.id, _status: r.status, _createdAt: r.created_at }));
+  allReports = data.map(r => {
+     const hiddenBy = r.hidden_by || [];
+     return { 
+       ...r.details, 
+       _dbId: r.id, 
+       _status: r.status, 
+       _createdAt: r.created_at,
+       _isHidden: hiddenBy.includes(currentUserId) // آیا این گزارش توسط من پنهان شده؟
+     };
+  });
 
   updateKPIs();
 }
 
 function updateKPIs() {
-  const total = allReports.length;
-  const unread = allReports.filter(r => r._status === 'unread').length;
-  const followup = allReports.filter(r => r._status === 'follow_up').length;
+  const activeReports = allReports.filter(r => !r._isHidden);
+  const total = activeReports.length;
+  const unread = activeReports.filter(r => r._status === 'unread').length;
+  const followup = activeReports.filter(r => r._status === 'follow_up').length;
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const todayCount = allReports.filter(r => new Date(r._createdAt) > oneDayAgo).length;
+  const todayCount = activeReports.filter(r => new Date(r._createdAt) > oneDayAgo).length;
 
   document.getElementById("kpiTotal").textContent = total;
   document.getElementById("kpiUnread").textContent = unread;
@@ -118,12 +108,12 @@ function updateKPIs() {
 
 function drawChart() {
   const counts = {};
-  allReports.forEach(r => { counts[r.reportType] = (counts[r.reportType] || 0) + 1; });
+  allReports.filter(r => !r._isHidden).forEach(r => { counts[r.reportType] = (counts[r.reportType] || 0) + 1; });
   const labels = Object.keys(counts).map(k => typeLabels[k] || k);
   const data = Object.values(counts);
-  const ctx = document.getElementById('reportsChart').getContext('2d');
   
   if (myChart) myChart.destroy();
+  const ctx = document.getElementById('reportsChart').getContext('2d');
   myChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -134,9 +124,6 @@ function drawChart() {
   });
 }
 
-// ---------------------------------------------------------
-// فیلترها و رندر جدول
-// ---------------------------------------------------------
 function populateLocationFilter() {
   const locSelect = document.getElementById("filterLocation");
   locSelect.innerHTML = '<option value="">همه</option>';
@@ -159,11 +146,17 @@ function applyFilters() {
 
   let filtered = [...allReports];
 
+  // 🚨 فیلتر ویندوزی: اگر دکمه نمایش پنهان‌ها خاموش است، موارد پنهان را نشان نده
+  if (!showHiddenReports) {
+    filtered = filtered.filter(r => !r._isHidden);
+  }
+
   if (dateFrom) filtered = filtered.filter(r => r.reportDate && r.reportDate >= dateFrom);
   if (dateTo) filtered = filtered.filter(r => r.reportDate && r.reportDate <= dateTo);
   if (type) filtered = filtered.filter(r => r.reportType === type);
   if (status) filtered = filtered.filter(r => r._status === status);
   if (reporter) filtered = filtered.filter(r => r.reporterName && r.reporterName.toLowerCase().includes(reporter));
+  
   if (location) {
     filtered = filtered.filter(r => {
       const loc = r.locationLabel || r.fireLocation || r.theftLocation || r.gatheringLocation || r.illnessLocation || r.missionLocation || '';
@@ -183,6 +176,8 @@ function renderTable(reports) {
   }
 
   tbody.innerHTML = reports.map(r => {
+    // استایل اختصاصی برای موارد پنهان‌شده (شبیه ویندوز - کمی محو)
+    const rowStyle = r._isHidden ? 'opacity: 0.5; background: #f8fafc;' : '';
     const typeTitle = typeLabels[r.reportType] || "گزارش";
     let subject = r.incidentSubject || r.notes || '—';
     
@@ -196,7 +191,7 @@ function renderTable(reports) {
     else if (r.reportType === 'disciplinary') subject = r.discName || '—';
 
     return `
-      <tr>
+      <tr style="${rowStyle}">
         <td><span class="dash-status ${r._status}">${statusLabels[r._status] || r._status}</span></td>
         <td style="font-weight: 600;">${typeTitle}</td>
         <td>${subject}</td>
@@ -207,8 +202,13 @@ function renderTable(reports) {
             ${r.photoUrl ? `<a href="${r.photoUrl}" target="_blank" class="btn-table" title="عکس">📷</a>` : ''}
             <button class="btn-table action-btn" data-action="view" data-id="${r._dbId}" title="مشاهده">👁</button>
             <button class="btn-table action-btn" data-action="download" data-id="${r._dbId}" title="دانلود">📥</button>
-            <button class="btn-table action-btn btn-hide-row" data-action="hide" data-id="${r._dbId}" title="پنهان">🙈</button>
-            <button class="btn-table action-btn btn-delete-row" data-action="delete" data-id="${r._dbId}" title="حذف">🗑</button>
+            
+            ${r._isHidden 
+              ? `<button class="btn-table action-btn" data-action="unhide" data-id="${r._dbId}" title="نمایش مجدد">👁️‍🗨️</button>`
+              : `<button class="btn-table action-btn btn-hide-row" data-action="hide" data-id="${r._dbId}" title="پنهان کردن">🙈</button>`
+            }
+            
+            <button class="btn-table action-btn btn-delete-row" data-action="delete" data-id="${r._dbId}" title="حذف کامل">🗑</button>
           </div>
         </td>
       </tr>
@@ -216,9 +216,6 @@ function renderTable(reports) {
   }).join("");
 }
 
-// ---------------------------------------------------------
-// Event Delegation (راه‌حل قطعی برای فعال بودن دکمه‌ها)
-// ---------------------------------------------------------
 function setupTableEvents() {
   const tbody = document.getElementById("dashboardTableBody");
   tbody.addEventListener("click", async (e) => {
@@ -230,37 +227,39 @@ function setupTableEvents() {
 
     if (action === "view") openModal(id);
     else if (action === "download") downloadSingleReport(id);
-    else if (action === "hide") await hideReportFromDashboard(id);
+    else if (action === "hide") await toggleVisibility(id, true);
+    else if (action === "unhide") await toggleVisibility(id, false);
     else if (action === "delete") await deleteReportPermanently(id);
   });
 }
 
-function setupHeaderEvents() {
-  const userMenuBtn = document.getElementById('userMenuBtn');
-  const userDropdown = document.getElementById('userDropdown');
+// ---------------------------------------------------------
+// توابع اصلی (پنهان کردن و نمایش)
+// ---------------------------------------------------------
+async function toggleVisibility(dbId, shouldHide) {
+  const { data: report, error: getErr } = await supabaseClient.from('reports').select('hidden_by').eq('id', dbId).single();
+  if (getErr) return showToast("خطا در ارتباط با سرور", "error");
   
-  if (userMenuBtn && userDropdown) {
-    userMenuBtn.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      userDropdown.classList.toggle('hidden');
-      userMenuBtn.classList.toggle('active');
-    });
-    document.addEventListener('click', (e) => {
-      if (!userDropdown.classList.contains('hidden') && !userDropdown.contains(e.target) && !userMenuBtn.contains(e.target)) {
-        userDropdown.classList.add('hidden');
-        userMenuBtn.classList.remove('active');
-      }
-    });
+  let hidden = report.hidden_by || [];
+  
+  if (shouldHide) {
+    if (!hidden.includes(currentUserId)) hidden.push(currentUserId);
+  } else {
+    hidden = hidden.filter(id => id !== currentUserId);
   }
-  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-    await supabaseClient.auth.signOut();
-    window.location.href = 'index.html';
-  });
+  
+  const { error } = await supabaseClient.from('reports').update({ hidden_by: hidden }).eq('id', dbId);
+  if (error) return showToast("خطا در تغییر وضعیت", "error");
+  
+  const rep = allReports.find(r => r._dbId === dbId);
+  if (rep) rep._isHidden = shouldHide;
+  
+  updateKPIs(); 
+  applyFilters();
+  
+  showToast(shouldHide ? "🙈 گزارش پنهان شد" : "👁️‍🗨️ گزارش نمایش داده شد", "success");
 }
 
-// ---------------------------------------------------------
-// عملیات روی گزارش‌ها (دانلود، پنهان، حذف)
-// ---------------------------------------------------------
 function downloadSingleReport(dbId) {
   const r = allReports.find(rep => rep._dbId === dbId);
   if (!r) return showToast("گزارش پیدا نشد", "error");
@@ -285,23 +284,6 @@ function downloadSingleReport(dbId) {
   showToast("📥 دانلود شد", "success");
 }
 
-async function hideReportFromDashboard(dbId) {
-  if (!confirm("این گزارش از دید شما پنهان شود؟")) return;
-  const { data: report, error: getErr } = await supabaseClient.from('reports').select('hidden_by').eq('id', dbId).single();
-  if (getErr) return showToast("خطا در خواندن", "error");
-  
-  const hidden = report.hidden_by || [];
-  if (!hidden.includes(currentUserId)) {
-    hidden.push(currentUserId);
-    const { error } = await supabaseClient.from('reports').update({ hidden_by: hidden }).eq('id', dbId);
-    if (error) return showToast("خطا در پنهان‌سازی", "error");
-    
-    allReports = allReports.filter(r => r._dbId !== dbId);
-    updateKPIs(); applyFilters();
-    showToast("🙈 پنهان شد", "success");
-  }
-}
-
 async function deleteReportPermanently(dbId) {
   if (!confirm("⚠️ هشدار: حذف کامل از دیتابیس! مطمئنید؟")) return;
   const { error } = await supabaseClient.from('reports').delete().eq('id', dbId);
@@ -313,8 +295,87 @@ async function deleteReportPermanently(dbId) {
 }
 
 // ---------------------------------------------------------
-// مودال و تنظیمات فیلتر
+// تنظیمات فیلترها و هدر
 // ---------------------------------------------------------
+function setupHeaderEvents() {
+  const userMenuBtn = document.getElementById('userMenuBtn');
+  const userDropdown = document.getElementById('userDropdown');
+  
+  if (userMenuBtn && userDropdown) {
+    userMenuBtn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      userDropdown.classList.toggle('hidden');
+      userMenuBtn.classList.toggle('active');
+    });
+    document.addEventListener('click', (e) => {
+      if (!userDropdown.classList.contains('hidden') && !userDropdown.contains(e.target) && !userMenuBtn.contains(e.target)) {
+        userDropdown.classList.add('hidden');
+        userMenuBtn.classList.remove('active');
+      }
+    });
+  }
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  });
+}
+
+function setupFilterEvents() {
+  document.getElementById("applyFilterBtn").addEventListener("click", applyFilters);
+  document.getElementById("resetFilterBtn").addEventListener("click", () => {
+    document.getElementById("filterDateFrom").value = ""; document.getElementById("filterDateTo").value = "";
+    document.getElementById("filterType").value = ""; document.getElementById("filterLocation").value = "";
+    document.getElementById("filterStatus").value = ""; document.getElementById("filterReporter").value = "";
+    applyFilters();
+  });
+
+  // دکمه نمایش/عدم نمایش موارد پنهان (شبیه ویندوز)
+  const toggleBtn = document.getElementById("toggleHiddenBtn");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      showHiddenReports = !showHiddenReports;
+      if (showHiddenReports) {
+        toggleBtn.innerHTML = "🙈 مخفی کردن موارد پنهان";
+        toggleBtn.style.color = "var(--primary)";
+        toggleBtn.style.borderColor = "var(--primary)";
+      } else {
+        toggleBtn.innerHTML = "👁️ نمایش موارد پنهان";
+        toggleBtn.style.color = "var(--warning)";
+        toggleBtn.style.borderColor = "var(--warning)";
+      }
+      applyFilters();
+    });
+  }
+
+  document.getElementById("exportFullExcelBtn").addEventListener("click", () => {
+    const reports = window.currentFilteredReports || allReports.filter(r => !r._isHidden);
+    if (!reports.length) return showToast("گزارشی نیست", "error");
+    
+    const exportData = reports.map(r => {
+      const row = { 'وضعیت': statusLabels[r._status] || r._status, 'نوع': typeLabels[r.reportType] || r.reportType };
+      for (const [k, v] of Object.entries(r)) {
+        if (k.startsWith('_') || ['id', 'createdAt', 'photoUrl', 'photo', 'reportType', 'reporterId', 'location', 'post', 'personnelIds', 'fireStaffIds'].includes(k)) continue;
+        if (!v || (Array.isArray(v) && v.length === 0)) continue;
+        row[excelLabels[k] || k] = Array.isArray(v) ? v.join(' | ') : v;
+      }
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "گزارش‌ها");
+    XLSX.writeFile(wb, `Dashboard-${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast("📥 خروجی اکسل دانلود شد", "success");
+  });
+}
+
+function setupModalEvents() {
+  document.getElementById("closeModalBtn").addEventListener("click", () => {
+    document.getElementById("detailsModal").classList.add("hidden");
+    selectedReportIdForModal = null;
+  });
+  document.getElementById("markAsReadBtn").addEventListener("click", () => updateReportStatus('read'));
+  document.getElementById("markAsFollowUpBtn").addEventListener("click", () => updateReportStatus('follow_up'));
+}
+
 function openModal(dbId) {
   const r = allReports.find(rep => rep._dbId === dbId);
   if (!r) return;
@@ -340,11 +401,6 @@ function openModal(dbId) {
   document.getElementById("detailsModal").classList.remove("hidden");
 }
 
-function closeModal() {
-  document.getElementById("detailsModal").classList.add("hidden");
-  selectedReportIdForModal = null;
-}
-
 async function updateReportStatus(newStatus) {
   if (!selectedReportIdForModal) return;
   const { error } = await supabaseClient.from('reports').update({ status: newStatus }).eq('id', selectedReportIdForModal);
@@ -354,41 +410,8 @@ async function updateReportStatus(newStatus) {
   if (rep) rep._status = newStatus;
   
   showToast("✅ وضعیت تغییر کرد", "success");
-  closeModal(); updateKPIs(); applyFilters();
-}
-
-function setupFilterEvents() {
-  document.getElementById("applyFilterBtn").addEventListener("click", applyFilters);
-  document.getElementById("resetFilterBtn").addEventListener("click", () => {
-    document.getElementById("filterDateFrom").value = ""; document.getElementById("filterDateTo").value = "";
-    document.getElementById("filterType").value = ""; document.getElementById("filterLocation").value = "";
-    document.getElementById("filterStatus").value = ""; document.getElementById("filterReporter").value = "";
-    applyFilters();
-  });
-  document.getElementById("exportFullExcelBtn").addEventListener("click", () => {
-    const reports = window.currentFilteredReports || allReports;
-    if (!reports.length) return showToast("گزارشی نیست", "error");
-    
-    const exportData = reports.map(r => {
-      const row = { 'وضعیت': statusLabels[r._status] || r._status, 'نوع': typeLabels[r.reportType] || r.reportType };
-      for (const [k, v] of Object.entries(r)) {
-        if (k.startsWith('_') || ['id', 'createdAt', 'photoUrl', 'photo', 'reportType', 'reporterId', 'location', 'post', 'personnelIds', 'fireStaffIds'].includes(k)) continue;
-        if (!v || (Array.isArray(v) && v.length === 0)) continue;
-        row[excelLabels[k] || k] = Array.isArray(v) ? v.join(' | ') : v;
-      }
-      return row;
-    });
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "گزارش‌ها");
-    XLSX.writeFile(wb, `Dashboard-${new Date().toISOString().slice(0,10)}.xlsx`);
-    showToast("📥 خروجی اکسل دانلود شد", "success");
-  });
-}
-
-function setupModalEvents() {
-  document.getElementById("closeModalBtn").addEventListener("click", closeModal);
-  document.getElementById("markAsReadBtn").addEventListener("click", () => updateReportStatus('read'));
-  document.getElementById("markAsFollowUpBtn").addEventListener("click", () => updateReportStatus('follow_up'));
+  document.getElementById("detailsModal").classList.add("hidden");
+  updateKPIs(); applyFilters();
 }
 
 let toastTimer;

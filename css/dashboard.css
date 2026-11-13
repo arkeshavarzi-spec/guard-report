@@ -328,23 +328,6 @@
 
 
 
-/* ---------- PERFECTLY ALIGNED DASHBOARD HEADER ---------- */
-.dashboard-header {
-  max-width: 1160px !important; /* هم‌عرض با پنل‌های زیرین */
-  margin: 16px auto 20px !important;
-  padding: 10px 20px !important;
-  min-height: 60px !important; /* هم‌ارتفاع با هدر فرم اصلی */
-  height: auto !important;
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-wrap: nowrap !important;
-  box-sizing: border-box !important;
-  overflow: visible !important;
-  position: relative !important;
-  z-index: 2000 !important;
-}
-
 /* ---------- Dashboard Tabs ---------- */
 .dashboard-tabs {
   display: flex;
@@ -490,28 +473,10 @@
 
 
 
-/* ---------- PERFECT MOBILE VIEW (Header & Tables) ---------- */
-@media (max-width: 768px) {
-  /* هدر کاملاً افقی و باریک */
-  .dashboard-header {
-    flex-direction: row !important;
-    padding: 10px 16px !important;
-    gap: 10px !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    min-height: 60px !important;
-  }
-  .header-branding {
-    flex-direction: row !important;
-    gap: 10px !important;
-    text-align: right !important;
-  }
-  .header-branding .logo { width: 34px !important; height: 34px !important; }
-  .header-text h1 { font-size: 0.95rem !important; margin: 0 !important; }
-  .header-text p { font-size: 0.7rem !important; margin: 0 !important; }
-  .header-actions { margin-right: auto !important; }
 
-  /* تبدیل جدول به کارت */
+
+/* ---------- MOBILE TABLE TO CARD ---------- */
+@media (max-width: 768px) {
   .table-responsive { overflow-x: visible !important; }
   .data-table, .data-table tbody, .data-table tr, .data-table td {
     display: block !important;

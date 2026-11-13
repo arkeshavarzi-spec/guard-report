@@ -366,9 +366,7 @@
 .badge-not-reporter { background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
 
 /* ---------- SPACE REDUCTION FIX ---------- */
-.dashboard-header {
-  margin: 12px auto 12px !important; /* کاهش فاصله پایین هدر */
-}
+
 .dashboard-tabs {
   margin-bottom: 16px !important; /* کاهش فاصله پایین تب‌ها */
   padding-bottom: 8px !important;
@@ -611,19 +609,104 @@
   position: relative;
 }
 
-/* ---------- FIX DESKTOP HEADER WIDTH ---------- */
-.dashboard-header {
-  max-width: 1160px !important;
-  margin: 20px auto 24px !important;
+
+
+
+
+/* ---------- DESKTOP LAYOUT & SPACING FIX ---------- */
+@media (min-width: 769px) {
+  .dashboard-container {
+    max-width: 1160px !important;
+    margin: 0 auto !important;
+    padding: 0 0 60px 0 !important;
+  }
+  .dashboard-tabs {
+    margin-bottom: 12px !important; /* کاهش فاصله تب‌ها تا پنل */
+  }
+  .tab-content {
+    margin-top: 0 !important;
+  }
+  .filter-section {
+    margin-top: 0 !important;
+    padding: 16px 24px !important; /* کاهش پدینگ داخلی پنل */
+  }
+}
+
+
+
+
+
+/* =========================================================
+   ULTIMATE FIX: DASHBOARD SEARCH BAR (NO CONFLICTS)
+   ========================================================= */
+.dash-search-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  gap: 15px !important;
   width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
 }
 
-/* اطمینان از هم‌عرض بودن کانتینر اصلی */
-.dashboard-container {
-  max-width: 1160px !important;
-  margin: 0 auto !important;
-  padding: 0 0 60px 0 !important;
+.dash-search-field {
+  flex: 1 !important; /* کادر جستجو تمام فضای خالی را پر می‌کند */
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.dash-search-field label {
+  display: block !important;
+  font-family: var(--font) !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  margin-bottom: 8px !important;
+}
+
+/* ریست کردن input برای اینکه با دکمه‌ها هم‌تراز شود */
+.dash-search-input {
   width: 100% !important;
+  height: 48px !important;
+  margin: 0 !important; /* حذف مارجین پایین که باعث ناهماهنگی می‌شد */
+  padding: 0 16px !important;
+  font-family: var(--font) !important;
+  font-size: 0.95rem !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
   box-sizing: border-box !important;
+  background: #f8fafc !important;
+}
+
+.dash-search-input:focus {
+  border-color: var(--primary) !important;
+  background: #fff !important;
+  outline: none !important;
+}
+
+/* ریست کردن دکمه‌ها برای اینکه کشیده نشوند */
+.btn.dash-action-btn {
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 24px !important;
+  flex: none !important; /* جلوگیری از کشیده شدن دکمه */
+  width: auto !important;
+  font-size: 0.9rem !important;
+  border-radius: var(--radius-sm) !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+/* واکنش‌گرا برای موبایل */
+@media (max-width: 768px) {
+  .dash-search-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .btn.dash-action-btn {
+    width: 100% !important;
+  }
 }

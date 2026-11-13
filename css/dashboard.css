@@ -320,39 +320,21 @@
 
 
 
-/* ---------- DASHBOARD HEADER HEIGHT FIX ---------- */
+
+
+/* ---------- PERFECTLY ALIGNED DASHBOARD HEADER ---------- */
 .dashboard-header {
-  max-width: 1200px !important;
+  max-width: 1160px !important; /* هم‌عرض با پنل‌های زیرین */
   margin: 16px auto 20px !important;
-  padding: 10px 20px !important; /* کاهش پدینگ برای باریک شدن */
+  padding: 10px 20px !important;
+  min-height: 60px !important; /* هم‌ارتفاع با هدر فرم اصلی */
+  height: auto !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
   flex-wrap: nowrap !important;
-  height: auto !important;
-  min-height: unset !important; /* حذف ارتفاع حداقلی قبلی */
+  box-sizing: border-box !important;
   overflow: visible !important;
   position: relative !important;
   z-index: 2000 !important;
-}
-
-.header-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-}
-
-.header-actions .btn-ghost {
-  padding: 6px 12px !important; /* کوچک‌تر کردن دکمه بازگشت */
-  font-size: 0.8rem !important;
-  height: auto !important;
-}
-
-
-
-/* دکمه‌های عملیات */
-.btn-unhide-row:hover {
-  background: #d1fae5 !important;
-  color: #065f46 !important;
-  border-color: #065f46 !important;
 }

@@ -777,3 +777,8 @@
     margin-bottom: 0 !important; /* آخرین کارت به کف سینی بچسبد */
   }
 }
+
+/* فاصله هدر از بالای صفحه در داشبورد */
+.dashboard-container {
+  padding-top: 24px !important;
+}
